@@ -60,6 +60,7 @@ export interface ProductColor {
   name: string;
   hex: string;
   imageUrl?: string;
+  quantity?: number;
 }
 
 export interface Product {
@@ -103,6 +104,21 @@ export interface Vendor {
   description: string;
   vendorType?: 'fashion_designer' | 'boutique_seller';
   phone?: string;
+}
+
+export interface VendorProfile {
+  brandName: string;
+  designerName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  location: string;
+  vendorType: 'fashion_designer' | 'boutique_seller';
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  instagram: string;
+  bio: string;
 }
 
 export interface ActiveOutfit {

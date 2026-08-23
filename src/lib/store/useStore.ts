@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   ActiveOutfit, BodyProfile, CartItem, Product, GarmentCategory,
-  GarmentOriginType, Order, NotificationItem
+  GarmentOriginType, Order, NotificationItem, VendorProfile
 } from '@/types';
 import { products as initialProducts } from '@/lib/data/products';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
@@ -72,12 +72,34 @@ interface VeyraState {
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
 
+  // Vendor Portal State
+  isVendorLoggedIn: boolean;
+  setIsVendorLoggedIn: (loggedIn: boolean) => void;
+  vendorProfile: VendorProfile;
+  setVendorProfile: (profile: Partial<VendorProfile>) => void;
+  vendorLogout: () => void;
+
   // Modals
   isProfileWizardOpen: boolean;
   setIsProfileWizardOpen: (open: boolean) => void;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
 }
+
+export const defaultVendorProfile: VendorProfile = {
+  brandName: 'Klassic Wears',
+  designerName: 'Adeola Klassic',
+  contactPerson: 'Adeola Klassic',
+  email: 'contact@klassicwears.ng',
+  phone: '+234 802 345 6789',
+  location: 'Ijebu Ode, Ogun / Lagos',
+  vendorType: 'fashion_designer',
+  bankName: 'Guaranty Trust Bank (GTBank)',
+  accountNumber: '0123456789',
+  accountName: 'KLASSIC WEARS ENTERPRISE',
+  instagram: '@klassic_wears',
+  bio: 'Bespoke Nigerian native wears, hand-cut Senators, and modern traditional sets tailored to perfection.',
+};
 
 const defaultProfile: BodyProfile = {
   name: 'Chukwudi Eze',
@@ -508,6 +530,16 @@ export const useStore = create<VeyraState>()(
       },
       clearCart: () => set({ cart: [] }),
 
+      // Vendor Portal State
+      isVendorLoggedIn: true,
+      setIsVendorLoggedIn: (loggedIn) => set({ isVendorLoggedIn: loggedIn }),
+      vendorProfile: defaultVendorProfile,
+      setVendorProfile: (profile) =>
+        set((state) => ({
+          vendorProfile: { ...state.vendorProfile, ...profile }
+        })),
+      vendorLogout: () => set({ isVendorLoggedIn: false }),
+
       // UI Modals
       isProfileWizardOpen: false,
       setIsProfileWizardOpen: (open) => set({ isProfileWizardOpen: open }),
@@ -521,6 +553,8 @@ export const useStore = create<VeyraState>()(
         selectedGender: state.selectedGender,
         userAuth: state.userAuth,
         bodyProfile: state.bodyProfile,
+        isVendorLoggedIn: state.isVendorLoggedIn,
+        vendorProfile: state.vendorProfile,
         cart: state.cart,
         userOrders: state.userOrders,
         userNotifications: state.userNotifications,

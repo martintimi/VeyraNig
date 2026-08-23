@@ -390,12 +390,12 @@ export default function AuthPage() {
             <p className="text-xs text-[var(--text-secondary)] font-light">
               Are you a Nigerian fashion designer or boutique seller?{' '}
               <a
-                href="/vendor-portal"
+                href="/vendor-portal/auth"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[var(--gold-accent)] font-semibold hover:underline inline-flex items-center gap-1"
               >
-                <span>Open Vendor Portal</span>
+                <span>Open Atelier Portal</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             </p>

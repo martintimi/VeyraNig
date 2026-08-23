@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -13,6 +13,19 @@ import SmoothScrollProvider from '@/components/common/SmoothScrollProvider';
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
+  // Enforce dark mode on vendor-portal routes, light mode on all shopper pages
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (pathname.startsWith('/vendor-portal')) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      } else {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [pathname]);
+
   // Standalone portals (Auth, Vendor Portal, and Super Admin have their own dedicated standalone workspace)
   const isStandalonePage =
     pathname.startsWith('/auth') ||

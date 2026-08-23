@@ -299,7 +299,7 @@ export default function BrandStorefrontPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
+                  <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[var(--border-subtle)]">
                     <button
                       onClick={() => {
                         if (isWorn) {
@@ -308,7 +308,7 @@ export default function BrandStorefrontPage() {
                           setOutfitItem(product);
                         }
                       }}
-                      className={`flex items-center justify-center gap-1.5 py-3 px-3 rounded-full text-xs font-mono-luxury uppercase tracking-wider font-semibold transition-all ${
+                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap transition-all ${
                         isWorn
                           ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
                           : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--border-hover)]'
@@ -316,23 +316,23 @@ export default function BrandStorefrontPage() {
                     >
                       {isWorn ? (
                         <>
-                          <Check className="h-3.5 w-3.5 stroke-[3]" />
-                          <span>On Model</span>
+                          <Check className="h-3 w-3 stroke-[3] shrink-0" />
+                          <span className="truncate">On Model</span>
                         </>
                       ) : (
                         <>
-                          <Sparkles className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-                          <span>Try on Model</span>
+                          <Sparkles className="h-3 w-3 text-[var(--gold-accent)] shrink-0" />
+                          <span className="truncate">Try on Model</span>
                         </>
                       )}
                     </button>
 
                     <button
                       onClick={() => addToCart(product, fitResult.recommendedSize)}
-                      className="flex items-center justify-center gap-1.5 py-3 px-3 rounded-full text-xs font-mono-luxury uppercase tracking-wider font-semibold bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+                      className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
                     >
-                      <ShoppingBag className="h-3.5 w-3.5" />
-                      <span>Add to Bag</span>
+                      <ShoppingBag className="h-3 w-3 shrink-0" />
+                      <span className="truncate">Add to Bag</span>
                     </button>
                   </div>
                 </div>
