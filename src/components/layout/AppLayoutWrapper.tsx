@@ -13,8 +13,11 @@ import SmoothScrollProvider from '@/components/common/SmoothScrollProvider';
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Standalone portals (Auth and Vendor Portal have their own dedicated standalone workspace)
-  const isStandalonePage = pathname.startsWith('/auth') || pathname.startsWith('/vendor');
+  // Standalone portals (Auth, Vendor Portal, and Super Admin have their own dedicated standalone workspace)
+  const isStandalonePage =
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/vendor') ||
+    pathname.startsWith('/admin');
 
   return (
     <SmoothScrollProvider>

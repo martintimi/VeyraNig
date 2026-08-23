@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory, GarmentOriginType } from '@/types';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
-import { Sparkles, Check, ShoppingBag, Search, Scissors } from 'lucide-react';
+import { Sparkles, Check, ShoppingBag, Search, Scissors, ArrowRight, Eye } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function MarketplaceGrid() {
   const {
@@ -102,7 +103,7 @@ export default function MarketplaceGrid() {
             </button>
             <button
               onClick={() => setSelectedOriginType('handmade_designer')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full transition-all ${
+              className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${
                 selectedOriginType === 'handmade_designer'
                   ? 'bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold border border-[var(--gold-accent)]/20'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -113,40 +114,38 @@ export default function MarketplaceGrid() {
             </button>
             <button
               onClick={() => setSelectedOriginType('ready_made_boutique')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full transition-all ${
+              className={`px-3 py-1.5 rounded-full transition-all ${
                 selectedOriginType === 'ready_made_boutique'
-                  ? 'bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold border border-[var(--gold-accent)]/20'
+                  ? 'bg-[var(--badge-bg)] text-[var(--text-primary)] font-bold'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
               }`}
             >
-              <ShoppingBag className="h-3 w-3" />
-              <span>Ready-Made</span>
+              Ready-Made
             </button>
           </div>
 
         </div>
-
       </div>
 
-      {/* Category Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {categories.map((c) => (
+      {/* Category Pills Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {categories.map((category) => (
           <button
-            key={c.id}
-            onClick={() => setSelectedCategory(c.id)}
-            className={`px-5 py-2.5 rounded-full text-xs font-mono-luxury uppercase tracking-wider whitespace-nowrap transition-all ${
-              selectedCategory === c.id
-                ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold shadow-md'
-                : 'bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)]'
+            key={category.id}
+            onClick={() => setSelectedCategory(category.id)}
+            className={`px-5 py-2.5 rounded-full text-xs font-mono-luxury tracking-wider uppercase font-semibold whitespace-nowrap transition-all ${
+              selectedCategory === category.id
+                ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+                : 'surface-card text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)]'
             }`}
           >
-            {c.label}
+            {category.label}
           </button>
         ))}
       </div>
 
-      {/* Product Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {/* Garments Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredProducts.map((product) => {
           const isWorn = activeOutfit[product.category]?.id === product.id;
           const fitResult = calculateFitMatch(bodyProfile, product);
@@ -154,12 +153,12 @@ export default function MarketplaceGrid() {
           return (
             <div
               key={product.id}
-              className={`group relative rounded-3xl surface-card overflow-hidden flex flex-col justify-between hover:shadow-2xl transition-all duration-500 ${
-                isWorn ? 'border-[var(--gold-accent)] shadow-md' : ''
+              className={`group relative rounded-3xl surface-card overflow-hidden flex flex-col justify-between hover:shadow-2xl transition-all duration-500 border border-[var(--border-subtle)] ${
+                isWorn ? 'border-[var(--gold-accent)] shadow-md ring-1 ring-[var(--gold-accent)]/30' : ''
               }`}
             >
-              {/* Image Container */}
-              <div className="relative h-80 w-full bg-[var(--bg-secondary)] overflow-hidden">
+              {/* Image Container with Link */}
+              <Link href={`/shop/${product.id}`} className="relative h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block">
                 <Image
                   src={product.imageUrl}
                   alt={product.name}
@@ -195,16 +194,18 @@ export default function MarketplaceGrid() {
                     Size {fitResult.recommendedSize}
                   </span>
                 </div>
-              </div>
+              </Link>
 
               {/* Product Info */}
               <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div>
                   <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                      {product.name}
-                    </h3>
-                    <span className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                    <Link href={`/shop/${product.id}`} className="hover:text-[var(--gold-accent)] transition-colors">
+                      <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                        {product.name}
+                      </h3>
+                    </Link>
+                    <span className="font-editorial text-xl font-bold text-[var(--text-primary)] shrink-0">
                       ₦{product.price.toLocaleString()}
                     </span>
                   </div>
@@ -213,12 +214,22 @@ export default function MarketplaceGrid() {
                     {product.description}
                   </p>
 
-                  <div className="flex flex-wrap gap-1.5 mt-3 font-mono-luxury text-[10px] text-[var(--text-muted)] uppercase">
-                    {product.tags.map((t) => (
-                      <span key={t} className="px-2 py-0.5 rounded-md bg-[var(--badge-bg)] border border-[var(--border-subtle)]">
-                        #{t}
-                      </span>
-                    ))}
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex flex-wrap gap-1 font-mono-luxury text-[9px] text-[var(--text-muted)] uppercase">
+                      {product.tags.slice(0, 2).map((t) => (
+                        <span key={t} className="px-2 py-0.5 rounded-md bg-[var(--badge-bg)] border border-[var(--border-subtle)]">
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+
+                    <Link
+                      href={`/shop/${product.id}`}
+                      className="text-[10px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Details</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
                   </div>
                 </div>
 
@@ -259,7 +270,6 @@ export default function MarketplaceGrid() {
                     <span>Add to Bag</span>
                   </button>
                 </div>
-
               </div>
 
             </div>
