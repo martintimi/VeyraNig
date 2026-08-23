@@ -179,9 +179,9 @@ export default function HeroSection() {
             >
               
               {/* Header Status Bar */}
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
+              <div className="flex items-center justify-between pb-3 border-b   ">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--gold-subtle)] text-[var(--gold-accent)]">
+                  <div className="flex h-7 w-7 items-center justify-center  text-[var(--gold-accent)]">
                     <Scissors className="h-3.5 w-3.5" />
                   </div>
                   <div>

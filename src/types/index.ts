@@ -85,6 +85,7 @@ export interface Product {
   badge?: string;
   layerZIndex: number;
   isUserUploaded?: boolean;
+  stockQuantity?: number;
 }
 
 export interface Vendor {
