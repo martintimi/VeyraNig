@@ -1,0 +1,586 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useStore } from '@/lib/store/useStore';
+import {
+  User, Phone, Mail, MapPin, Package, Bell, Star, ShieldCheck,
+  CheckCircle2, Clock, Sparkles, ArrowRight, Layers, LogOut,
+  Scissors, ChevronRight, Check, Heart, Edit3, MessageSquare
+} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import confetti from 'canvas-confetti';
+
+export default function ProfilePage() {
+  const {
+    bodyProfile, setBodyProfile, userOrders, rateOrder,
+    userNotifications, markNotificationAsRead, markAllNotificationsAsRead,
+    logout
+  } = useStore();
+
+  const [activeTab, setActiveTab] = useState<'profile' | 'body_twin' | 'orders' | 'notifications'>('orders');
+
+  // Profile Form state
+  const [profileForm, setProfileForm] = useState({
+    name: bodyProfile.name || 'Chukwudi Eze',
+    email: bodyProfile.email || 'chukwudi.eze@gmail.com',
+    phone: bodyProfile.phone || '+234 803 456 7890',
+    deliveryAddress: bodyProfile.deliveryAddress || 'Plot 14B, Adeola Odeku Street',
+    city: bodyProfile.city || 'Victoria Island',
+    state: bodyProfile.state || 'Lagos',
+  });
+
+  // Rating Modal state
+  const [ratingModalOrder, setRatingModalOrder] = useState<string | null>(null);
+  const [starRating, setStarRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('World-class bespoke tailoring. Fits my broad shoulder line perfectly.');
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setBodyProfile(profileForm);
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.6 },
+      colors: ['#e6c367', '#10b981', '#ffffff']
+    });
+  };
+
+  const handleRatingSubmit = (orderId: string) => {
+    rateOrder(orderId, starRating, reviewComment);
+    setRatingModalOrder(null);
+    confetti({
+      particleCount: 70,
+      spread: 60,
+      origin: { y: 0.6 },
+      colors: ['#e6c367', '#10b981', '#ffffff']
+    });
+  };
+
+  const unreadCount = userNotifications.filter(n => !n.read).length;
+
+  return (
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      
+      {/* Top Profile Banner Header */}
+      <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center font-editorial font-bold text-2xl shadow-md">
+            {profileForm.name.charAt(0)}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                {profileForm.name}
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">
+                ● Verified Digital Twin
+              </span>
+            </div>
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1 flex items-center gap-3 flex-wrap">
+              <span className="flex items-center gap-1">
+                <Phone className="h-3 w-3 text-[var(--gold-accent)]" />
+                <span>{profileForm.phone}</span>
+              </span>
+              <span>·</span>
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3 text-[var(--gold-accent)]" />
+                <span>{profileForm.city}, {profileForm.state}</span>
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Stats Pill Bar */}
+        <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+          <div className="px-4 py-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center shrink-0">
+            <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Orders</span>
+            <span className="font-bold text-sm text-[var(--text-primary)]">{userOrders.length} Completed</span>
+          </div>
+          <div className="px-4 py-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center shrink-0">
+            <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Body Twin ID</span>
+            <span className="font-mono-luxury font-bold text-xs text-[var(--gold-accent)]">{bodyProfile.twinId}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Navigation Tabs */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono-luxury uppercase tracking-wider font-bold transition-all shrink-0 ${
+            activeTab === 'orders'
+              ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          <span>Order History ({userOrders.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('body_twin')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono-luxury uppercase tracking-wider font-bold transition-all shrink-0 ${
+            activeTab === 'body_twin'
+              ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <Scissors className="h-4 w-4" />
+          <span>3D Digital Body Twin</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('notifications')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono-luxury uppercase tracking-wider font-bold transition-all shrink-0 relative ${
+            activeTab === 'notifications'
+              ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <Bell className="h-4 w-4" />
+          <span>Notifications</span>
+          {unreadCount > 0 && (
+            <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono-luxury uppercase tracking-wider font-bold transition-all shrink-0 ${
+            activeTab === 'profile'
+              ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <User className="h-4 w-4" />
+          <span>Account & Delivery Details</span>
+        </button>
+      </div>
+
+      {/* ======================================================== */}
+      {/* TAB 1: ORDER HISTORY & RATINGS */}
+      {/* ======================================================== */}
+      {activeTab === 'orders' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div>
+            <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              Your Orders & Tailoring Progress
+            </h2>
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+              Consolidated single-box deliveries dispatched directly from Veyra Lagos Logistics Hub.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {userOrders.map((order) => (
+              <div
+                key={order.id}
+                className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-lg"
+              >
+                {/* Order Top Meta */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)]">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-mono-luxury font-bold text-[var(--gold-accent)]">
+                        {order.orderNumber}
+                      </span>
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-xs font-mono-luxury font-bold capitalize">
+                        ● {order.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[var(--text-muted)] font-mono-luxury mt-1">
+                      Ordered on {order.date} · Destination: {order.deliveryAddress}
+                    </div>
+                  </div>
+
+                  <div className="text-left sm:text-right">
+                    <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Total Amount</span>
+                    <span className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                      ₦{order.totalAmount.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Garments in this Order */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {order.items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3.5"
+                    >
+                      <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-[var(--bg-secondary)] shrink-0">
+                        <Image src={item.imageUrl} alt={item.productName} fill unoptimized className="object-cover" />
+                      </div>
+                      <div className="truncate">
+                        <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold block truncate">
+                          {item.vendorName}
+                        </span>
+                        <h4 className="font-bold text-xs text-[var(--text-primary)] truncate">
+                          {item.productName}
+                        </h4>
+                        <div className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-0.5">
+                          Size: {item.size} · ₦{item.price.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Rating & Review Section */}
+                <div className="pt-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  {order.isRated ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono-luxury font-bold text-[var(--gold-accent)]">Your Verified Fit Review:</span>
+                        <div className="flex items-center text-amber-400 text-xs">
+                          {'★'.repeat(order.rating || 5)}
+                        </div>
+                      </div>
+                      <p className="text-xs text-[var(--text-secondary)] italic font-light">
+                        &quot;{order.reviewComment}&quot;
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-[var(--text-primary)]">How did your clothes fit?</span>
+                      <p className="text-xs text-[var(--text-muted)] font-light">Rate the fabric drape and tailoring fidelity for the designers.</p>
+                    </div>
+                  )}
+
+                  {!order.isRated && (
+                    <button
+                      onClick={() => setRatingModalOrder(order.id)}
+                      className="px-5 py-2.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md flex items-center gap-1.5"
+                    >
+                      <Star className="h-3.5 w-3.5 fill-current text-[var(--gold-accent)]" />
+                      <span>Rate & Review Fit</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 2: 3D DIGITAL BODY TWIN */}
+      {/* ======================================================== */}
+      {activeTab === 'body_twin' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div>
+            <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              Your 3D Digital Body Twin
+            </h2>
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+              Used by Nigerian tailors & designers to guarantee 100% precision fit on Senator sets, Agbadas, and streetwear.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* 6 Measurement Metric Cards */}
+            <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="p-5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase">Height</span>
+                <div className="font-editorial text-2xl font-bold text-[var(--text-primary)]">{bodyProfile.heightCm} cm</div>
+                <span className="text-[10px] text-emerald-500 font-mono-luxury">Calibrated</span>
+              </div>
+
+              <div className="p-5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase">Weight</span>
+                <div className="font-editorial text-2xl font-bold text-[var(--text-primary)]">{bodyProfile.weightKg} kg</div>
+                <span className="text-[10px] text-emerald-500 font-mono-luxury">Athletic Build</span>
+              </div>
+
+              <div className="p-5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase">Chest Circumference</span>
+                <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)]">{bodyProfile.chestCm} cm</div>
+                <span className="text-[10px] text-emerald-500 font-mono-luxury">Zero Pull Fit</span>
+              </div>
+
+              <div className="p-5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase">Shoulder Breadth</span>
+                <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)]">{bodyProfile.shoulderWidthCm} cm</div>
+                <span className="text-[10px] text-emerald-500 font-mono-luxury">Broad Cut</span>
+              </div>
+
+              <div className="p-5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase">Waistline</span>
+                <div className="font-editorial text-2xl font-bold text-[var(--text-primary)]">{bodyProfile.waistCm} cm</div>
+                <span className="text-[10px] text-emerald-500 font-mono-luxury">Tailored Inseam</span>
+              </div>
+
+              <div className="p-5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase">Trouser Inseam</span>
+                <div className="font-editorial text-2xl font-bold text-[var(--text-primary)]">{bodyProfile.inseamCm} cm</div>
+                <span className="text-[10px] text-emerald-500 font-mono-luxury">Slim Break</span>
+              </div>
+            </div>
+
+            {/* Right Mannequin Silhouette Card */}
+            <div className="lg:col-span-4 p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 text-center">
+              <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold">
+                Digital Anatomy Model
+              </span>
+              <div className="h-64 w-full relative flex items-center justify-center">
+                <svg viewBox="0 0 200 400" className="w-full h-full text-[var(--gold-accent)]" fill="none">
+                  <circle cx="100" cy="40" r="22" stroke="currentColor" strokeWidth="2" />
+                  <path d="M65 85 L135 85 L125 180 L75 180 Z" stroke="currentColor" strokeWidth="2" />
+                  <path d="M75 185 L125 185 L120 360 L80 360 Z" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="65" cy="85" r="4" fill="currentColor" />
+                  <circle cx="135" cy="85" r="4" fill="currentColor" />
+                  <circle cx="100" cy="130" r="4" fill="currentColor" />
+                </svg>
+              </div>
+              <Link
+                href="/studio"
+                className="w-full py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Open Virtual Fitting Studio</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 3: NOTIFICATIONS CENTER */}
+      {/* ======================================================== */}
+      {activeTab === 'notifications' && (
+        <div className="space-y-6 animate-fadeIn max-w-4xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                Notifications & Order Updates
+              </h2>
+              <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+                Real-time tracking notifications from Nigerian ateliers & Veyra Lagos delivery hub.
+              </p>
+            </div>
+
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllNotificationsAsRead}
+                className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold hover:underline"
+              >
+                Mark all as read
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {userNotifications.map((notif) => (
+              <div
+                key={notif.id}
+                onClick={() => markNotificationAsRead(notif.id)}
+                className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 ${
+                  notif.read
+                    ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)] opacity-75'
+                    : 'surface-card border-[var(--gold-accent)]/50 shadow-md ring-1 ring-[var(--gold-accent)]/20'
+                }`}
+              >
+                <div className="h-10 w-10 rounded-xl bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center shrink-0">
+                  <Bell className="h-5 w-5" />
+                </div>
+
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm text-[var(--text-primary)]">{notif.title}</h4>
+                    <span className="text-[10px] font-mono-luxury text-[var(--text-muted)]">{notif.timestamp}</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                    {notif.message}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 4: ACCOUNT & MANDATORY MOBILE DETAILS */}
+      {/* ======================================================== */}
+      {activeTab === 'profile' && (
+        <div className="max-w-2xl space-y-6 animate-fadeIn">
+          <div>
+            <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              Account & Delivery Contacts
+            </h2>
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+              Your mobile phone number is shared with dispatchers for seamless Lagos & Nationwide delivery.
+            </p>
+          </div>
+
+          <form onSubmit={handleSaveProfile} className="p-6 sm:p-8 rounded-3xl surface-card space-y-4 border border-[var(--border-subtle)]">
+            <div>
+              <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={profileForm.name}
+                onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                  Mobile Phone Number (Required)
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--gold-accent)]" />
+                  <input
+                    type="tel"
+                    required
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    placeholder="+234 803 123 4567"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                  <input
+                    type="email"
+                    required
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                Street Delivery Address
+              </label>
+              <input
+                type="text"
+                required
+                value={profileForm.deliveryAddress}
+                onChange={(e) => setProfileForm({ ...profileForm, deliveryAddress: e.target.value })}
+                placeholder="Plot 14B, Adeola Odeku Street"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                  City / Area
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileForm.city}
+                  onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                  placeholder="Victoria Island or Lekki"
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                  State
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileForm.state}
+                  onChange={(e) => setProfileForm({ ...profileForm, state: e.target.value })}
+                  placeholder="Lagos or Abuja"
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)]"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md mt-2"
+            >
+              Save Account Information
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 5-STAR RATING & REVIEW MODAL */}
+      {/* ======================================================== */}
+      {ratingModalOrder && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-5 shadow-2xl animate-fadeIn">
+            <div className="text-center space-y-2">
+              <div className="h-12 w-12 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center mx-auto">
+                <Star className="h-6 w-6 fill-current" />
+              </div>
+              <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                Rate Your Garments & Fit
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)]">
+                How accurately did the tailoring match your body twin dimensions?
+              </p>
+            </div>
+
+            {/* Interactive Stars */}
+            <div className="flex items-center justify-center gap-2 py-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setStarRating(star)}
+                  className="p-1 text-2xl transition-transform hover:scale-125 focus:outline-none"
+                >
+                  <span className={star <= starRating ? 'text-amber-400' : 'text-zinc-600'}>
+                    ★
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                Review Feedback for Ateliers
+              </label>
+              <textarea
+                rows={3}
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Share thoughts on fabric quality, shoulder drape, and delivery..."
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setRatingModalOrder(null)}
+                className="w-1/2 py-3 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase text-[var(--text-primary)] font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRatingSubmit(ratingModalOrder)}
+                className="w-1/2 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold hover:opacity-90 transition-all shadow-md"
+              >
+                Submit Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
