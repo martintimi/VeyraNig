@@ -28,19 +28,38 @@ html.light {
   --text-muted: #a1a1aa;
   --border-subtle: rgba(0, 0, 0, 0.08);
   --border-hover: rgba(0, 0, 0, 0.16);
-  --gold-accent: #92400e;
+  --gold-accent: #b45309;
   --gold-subtle: rgba(180, 83, 9, 0.08);
   --gold-glow: rgba(180, 83, 9, 0.15);
   --badge-bg: rgba(0, 0, 0, 0.04);
+}
+
+/* Global Smooth Transitions for Theme & Interactions */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth color/bg transitions across containers */
+header, nav, footer, main, .surface-card, .surface-glass {
+  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Button & Interactive Micro-Animations */
+button, a {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:active, a:active {
+  transform: scale(0.97);
 }
 
 .font-editorial {
@@ -56,7 +75,7 @@ body {
 .surface-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .surface-card:hover {

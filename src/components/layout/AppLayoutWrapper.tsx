@@ -2,29 +2,38 @@
 
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useStore } from '@/lib/store/useStore';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import SplitCartDrawer from '@/components/cart/SplitCartDrawer';
 import BodyTwinWizard from '@/components/profile/BodyTwinWizard';
-import AuthModal from '@/components/auth/AuthModal';
 import LuxuryLoader from '@/components/common/LuxuryLoader';
 import SmoothScrollProvider from '@/components/common/SmoothScrollProvider';
+import MobileBottomNav from '@/components/layout/MobileBottomNav';
+import MobileHeader from '@/components/layout/MobileHeader';
+import WardrobeVaultDrawer from '@/components/vault/WardrobeVaultDrawer';
 
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { theme } = useStore();
   
-  // Enforce dark mode on vendor-portal routes, light mode on all shopper pages
+  // Persist dark / light mode on reload
   useEffect(() => {
     if (typeof document !== 'undefined') {
       if (pathname.startsWith('/vendor-portal')) {
         document.documentElement.classList.add('dark');
         document.documentElement.classList.remove('light');
       } else {
-        document.documentElement.classList.add('light');
-        document.documentElement.classList.remove('dark');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
       }
     }
-  }, [pathname]);
+  }, [pathname, theme]);
 
   // Standalone portals (Auth, Vendor Portal, and Super Admin have their own dedicated standalone workspace)
   const isStandalonePage =
@@ -35,14 +44,20 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
   return (
     <SmoothScrollProvider>
       <LuxuryLoader />
-      {!isStandalonePage && <Navbar />}
-      <main className={!isStandalonePage ? "min-h-[calc(100vh-4rem)]" : "min-h-screen"}>
+      {!isStandalonePage && (
+        <>
+          <Navbar />
+          <MobileHeader />
+        </>
+      )}
+      <main className={!isStandalonePage ? "min-h-[calc(100vh-4rem)] pb-20 md:pb-0" : "min-h-screen"}>
         {children}
       </main>
       {!isStandalonePage && <Footer />}
       <SplitCartDrawer />
+      <WardrobeVaultDrawer />
       <BodyTwinWizard />
-      <AuthModal />
+      <MobileBottomNav />
     </SmoothScrollProvider>
   );
 }

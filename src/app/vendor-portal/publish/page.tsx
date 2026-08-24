@@ -24,7 +24,7 @@ const PRESET_COLORS = [
 
 export default function PublishGarmentPage() {
   const { addCustomProduct, vendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
 
   // Form State
   const [formData, setFormData] = useState({

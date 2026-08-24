@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 
+import Image from 'next/image';
+
 export default function LuxuryLoader() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1100);
+    }, 900);
     return () => clearTimeout(timer);
   }, []);
 
@@ -20,10 +22,14 @@ export default function LuxuryLoader() {
       
       {/* Monogram Brand Mark with Shimmer */}
       <div className="relative flex flex-col items-center space-y-4 animate-pulse">
-        <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/30 shadow-2xl">
-          <span className="font-editorial text-4xl font-bold tracking-widest text-[var(--gold-accent)]">
-            V
-          </span>
+        <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/30 shadow-2xl p-3">
+          <Image
+            src="/images/logo/veyra-emblem.png"
+            alt="Veyra"
+            width={64}
+            height={64}
+            className="h-14 w-auto object-contain"
+          />
           <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
         </div>
 
@@ -31,8 +37,8 @@ export default function LuxuryLoader() {
           <div className="font-editorial text-2xl font-bold tracking-[0.3em] text-[var(--text-primary)]">
             VEYRA
           </div>
-          <div className="text-[9px] font-mono-luxury uppercase tracking-[0.35em] text-[var(--text-muted)]">
-            Virtual Dressing Room · Nigeria
+          <div className="text-[9px] font-mono-luxury uppercase tracking-[0.35em] text-[var(--gold-accent)] font-bold">
+            See It · Fit It · Own It
           </div>
         </div>
 

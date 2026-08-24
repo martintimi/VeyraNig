@@ -1,12 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useStore } from '@/lib/store/useStore';
-import { Sparkles, ArrowRight, ArrowLeft, User, Lock, Mail, Phone, ExternalLink } from 'lucide-react';
+import {
+  Sparkles, ArrowRight, ArrowLeft, User, Lock, Mail, Phone,
+  ExternalLink, Loader2, Eye, EyeOff, KeyRound, CheckCircle2, RotateCw
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import confetti from 'canvas-confetti';
+import { signUpCustomer, signInCustomer, verifyOtpCode, resendOtpCode } from '@/lib/services/auth';
 
 const editorialSlides = [
   {
@@ -29,22 +33,39 @@ const editorialSlides = [
   }
 ];
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get('redirect') || '/shop';
   const { setUserAuth, setSelectedGender, setBodyProfile } = useStore();
 
-  const [mode, setMode] = useState<'signup' | 'login'>('signup');
+  const [mode, setMode] = useState<'signup' | 'login' | 'verify_otp'>('login');
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('+234 803 456 7890');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [heightCm, setHeightCm] = useState(180);
-  const [weightKg, setWeightKg] = useState(78);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // OTP Verification State
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [pendingUserData, setPendingUserData] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    gender: 'male' | 'female';
+    twinId: string;
+  } | null>(null);
+  const [resendTimer, setResendTimer] = useState(30);
+  const [isResending, setIsResending] = useState(false);
 
   // Auto-rotate editorial slideshow
   useEffect(() => {
@@ -54,49 +75,226 @@ export default function AuthPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Auto-dismiss error message after 10 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage('');
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  // Resend OTP countdown timer
+  useEffect(() => {
+    if (resendTimer > 0 && mode === 'verify_otp') {
+      const timer = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [resendTimer, mode]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage('');
 
-    const userName = name || (email ? email.split('@')[0] : 'Fashion Patron');
     const twinId = `VY-NIG-${Math.floor(100 + Math.random() * 900)}`;
 
-    setTimeout(() => {
+    try {
+      if (mode === 'signup') {
+        if (password !== confirmPassword) {
+          setErrorMessage('Passwords do not match. Please re-enter your password.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const res = await signUpCustomer({
+          email,
+          password,
+          fullName: name,
+          phone,
+          gender,
+        });
+
+        if (!res.success) {
+          setErrorMessage(res.error || 'Account registration failed. Please check your details.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Registration successful! Switch to 6-digit OTP verification screen!
+        setPendingEmail(email);
+        setPendingUserData({
+          name: name || email.split('@')[0],
+          email,
+          phone,
+          gender,
+          twinId,
+        });
+        setOtp(['', '', '', '', '', '']);
+        setResendTimer(30);
+        setMode('verify_otp');
+        setIsSubmitting(false);
+        return;
+      } else {
+        const res = await signInCustomer(email, password);
+        if (!res.success) {
+          setErrorMessage(res.error || 'Invalid email or password. Please check your credentials.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const loggedInName = res.profile?.full_name || res.profile?.name || email.split('@')[0];
+        const loggedInPhone = res.profile?.phone || '';
+
+        setUserAuth({
+          isLoggedIn: true,
+          name: loggedInName,
+          email: email,
+          phone: loggedInPhone,
+          gender,
+          userType: 'shopper',
+        });
+
+        setSelectedGender(gender);
+
+        setBodyProfile({
+          name: loggedInName,
+          email: email,
+          phone: loggedInPhone,
+          gender,
+          twinId,
+          isInitialized: true,
+        });
+
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#e6c367', '#10b981', '#ffffff']
+        });
+
+        router.push(redirectTarget);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Authentication failed. Please check your connection.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // OTP Input handler with auto-advance and paste support
+  const handleOtpChange = (index: number, value: string) => {
+    // Paste support for 6 digits
+    if (value.length > 1) {
+      const digits = value.replace(/[^0-9]/g, '').slice(0, 6).split('');
+      const newOtp = [...otp];
+      digits.forEach((d, i) => {
+        if (i < 6) newOtp[i] = d;
+      });
+      setOtp(newOtp);
+      const nextIdx = Math.min(digits.length, 5);
+      const el = document.getElementById(`otp-input-${nextIdx}`);
+      if (el) el.focus();
+      return;
+    }
+
+    const digit = value.replace(/[^0-9]/g, '');
+    const newOtp = [...otp];
+    newOtp[index] = digit;
+    setOtp(newOtp);
+
+    // Auto focus next box
+    if (digit && index < 5) {
+      const el = document.getElementById(`otp-input-${index + 1}`);
+      if (el) el.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      const el = document.getElementById(`otp-input-${index - 1}`);
+      if (el) el.focus();
+    }
+  };
+
+  const handleVerifyOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const token = otp.join('').trim();
+    if (token.length < 6) {
+      setErrorMessage('Please enter all 6 digits of the confirmation code.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const activeEmail = pendingEmail || email;
+      const res = await verifyOtpCode(activeEmail, token, 'signup');
+      if (!res.success) {
+        setErrorMessage(res.error || 'Invalid or expired 6-digit code. Please check your email.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const activeName = res.profile?.name || pendingUserData?.name || name || activeEmail.split('@')[0];
+      const activePhone = res.profile?.phone || pendingUserData?.phone || phone;
+
       setUserAuth({
         isLoggedIn: true,
-        name: userName,
-        email: email || 'shopper@veyra.ng',
-        phone: phone || '+234 803 456 7890',
-        gender,
+        name: activeName,
+        email: activeEmail,
+        phone: activePhone,
+        gender: pendingUserData?.gender || gender,
         userType: 'shopper',
       });
 
-      setSelectedGender(gender);
+      setSelectedGender(pendingUserData?.gender || gender);
 
       setBodyProfile({
-        name: userName,
-        email: email || 'shopper@veyra.ng',
-        phone: phone || '+234 803 456 7890',
-        gender,
-        heightCm,
-        weightKg,
-        chestCm: gender === 'male' ? 104 : 88,
-        waistCm: gender === 'male' ? 84 : 68,
-        hipsCm: gender === 'male' ? 100 : 96,
-        twinId,
+        name: activeName,
+        email: activeEmail,
+        phone: activePhone,
+        gender: pendingUserData?.gender || gender,
+        twinId: pendingUserData?.twinId || `VY-NIG-${Math.floor(100 + Math.random() * 900)}`,
         isInitialized: true,
       });
 
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 90,
+        spread: 80,
         origin: { y: 0.6 },
         colors: ['#e6c367', '#10b981', '#ffffff']
       });
 
+      router.push(redirectTarget);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'OTP verification failed.');
+    } finally {
       setIsSubmitting(false);
-      router.push('/studio');
-    }, 900);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0 || isResending) return;
+    setIsResending(true);
+    setErrorMessage('');
+    try {
+      const activeEmail = pendingEmail || email;
+      const res = await resendOtpCode(activeEmail);
+      if (res.success) {
+        setResendTimer(30);
+      } else {
+        setErrorMessage(res.error || 'Failed to resend confirmation code.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Network error while resending code.');
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -110,68 +308,68 @@ export default function AuthPage() {
           <div
             key={idx}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              currentSlide === idx ? 'opacity-70 scale-105 transition-transform duration-[6000ms]' : 'opacity-0'
-            }`}
+              idx === currentSlide ? 'opacity-80 scale-100' : 'opacity-0 scale-105 pointer-events-none'
+            } transition-transform duration-7000`}
           >
             <Image
               src={slide.image}
               alt={slide.title}
               fill
-              unoptimized
               priority={idx === 0}
               className="object-cover object-center"
             />
             {/* Cinematic Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/30" />
           </div>
         ))}
 
-        {/* Top Branding */}
+        {/* Top Floating Badge & Back Link */}
         <div className="relative z-20 flex items-center justify-between">
-          <Link href="/" className="group flex items-center gap-2">
-            <span className="font-editorial text-2xl lg:text-3xl font-bold tracking-[0.25em] text-white">
-              VEYRA
-            </span>
-            <span className="text-[9px] font-mono-luxury tracking-[0.3em] text-[var(--gold-accent)] uppercase">
-              Nigeria
-            </span>
-          </Link>
-
           <Link
-            href="/"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-xs font-mono-luxury uppercase text-white/90 hover:text-white border border-white/10 transition-colors"
+            href="/shop"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 border border-white/10 text-white/90 hover:text-white text-xs font-mono-luxury uppercase tracking-wider backdrop-blur-md transition-all hover:bg-black/80"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Storefront</span>
+            <span>Return to Shop</span>
           </Link>
+
+          <span className="px-3 py-1 rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase tracking-widest font-bold backdrop-blur-md">
+            {editorialSlides[currentSlide].tag}
+          </span>
         </div>
 
-        {/* Dynamic Editorial Content on Slide */}
-        <div className="relative z-20 space-y-3 max-w-lg mt-auto pb-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase tracking-widest font-bold">
-            <Sparkles className="h-3 w-3" />
-            <span>{editorialSlides[currentSlide].tag}</span>
+        {/* Bottom Section: Caption & Micro Footer anchored to bottom */}
+        <div className="relative z-20 space-y-6 mt-auto">
+          {/* Editorial Story Caption */}
+          <div className="space-y-4 max-w-lg">
+            <div className="flex items-center gap-2">
+              {editorialSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    idx === currentSlide ? 'w-8 bg-[var(--gold-accent)]' : 'w-2 bg-white/30 hover:bg-white/60'
+                  }`}
+                  aria-label={`Slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            <div className="space-y-1.5">
+              <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                {editorialSlides[currentSlide].title}
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-300 font-light leading-relaxed">
+                {editorialSlides[currentSlide].subtitle}
+              </p>
+            </div>
           </div>
 
-          <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-            {editorialSlides[currentSlide].title}
-          </h2>
-
-          <p className="text-xs text-zinc-300 font-light leading-relaxed hidden sm:block">
-            {editorialSlides[currentSlide].subtitle}
-          </p>
-
-          {/* Slide Indicator Dots */}
-          <div className="flex items-center gap-2 pt-1">
-            {editorialSlides.map((_, dotIdx) => (
-              <button
-                key={dotIdx}
-                onClick={() => setCurrentSlide(dotIdx)}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  currentSlide === dotIdx ? 'w-7 bg-[var(--gold-accent)]' : 'w-2 bg-white/30'
-                }`}
-              />
-            ))}
+          {/* Bottom Micro Footer */}
+          <div className="flex items-center justify-between text-[11px] font-mono-luxury text-zinc-400 border-t border-white/10 pt-4">
+            <span>VEYRA SECURED GATEWAY</span>
+            <span>LAGOS · NIGERIA</span>
           </div>
         </div>
 
@@ -186,204 +384,333 @@ export default function AuthPage() {
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
-                {mode === 'signup' ? 'Personalized Fitting Suite' : 'Welcome Back'}
+                {mode === 'verify_otp'
+                  ? 'Email Confirmation'
+                  : mode === 'signup'
+                  ? 'Join Veyra Club'
+                  : 'Welcome Back'}
               </span>
             </div>
             
             <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-              {mode === 'signup' ? 'Create Your Body Profile' : 'Sign in to Veyra'}
+              {mode === 'verify_otp'
+                ? 'Enter 6-Digit Code'
+                : mode === 'signup'
+                ? 'Create Your Account'
+                : 'Sign in to Veyra'}
             </h1>
             
-            <p className="text-xs text-[var(--text-secondary)] font-light">
-              {mode === 'signup'
-                ? 'Configure your 3D digital body twin once to unlock automatic size matching across all Nigerian fashion houses.'
-                : 'Access your saved virtual outfits and digital body model.'}
+            <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+              {mode === 'verify_otp'
+                ? `We sent a 6-digit confirmation code to ${pendingEmail || email}. Enter it below to activate your account.`
+                : mode === 'signup'
+                ? 'Join Nigeria’s premier ready-to-wear fashion marketplace with 24-48h dispatch.'
+                : 'Access your saved items, cart, and express checkout.'}
             </p>
           </div>
 
-          {/* Mode Tabs */}
-          <div className="grid grid-cols-2 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase tracking-wider">
-            <button
-              onClick={() => setMode('signup')}
-              className={`py-2.5 rounded-xl transition-all font-semibold ${
-                mode === 'signup'
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Create Account
-            </button>
-            <button
-              onClick={() => setMode('login')}
-              className={`py-2.5 rounded-xl transition-all font-semibold ${
-                mode === 'login'
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Sign In
-            </button>
-          </div>
+          {/* Mode Tabs: Login on Left, Sign Up on Right (Hidden in OTP mode) */}
+          {mode !== 'verify_otp' && (
+            <div className="grid grid-cols-2 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase tracking-wider">
+              <button
+                onClick={() => {
+                  setMode('login');
+                  setErrorMessage('');
+                }}
+                className={`py-2.5 rounded-xl transition-all font-semibold ${
+                  mode === 'login'
+                    ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setMode('signup');
+                  setErrorMessage('');
+                }}
+                className={`py-2.5 rounded-xl transition-all font-semibold ${
+                  mode === 'signup'
+                    ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                Create Account
+              </button>
+            </div>
+          )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* Full Name */}
-            {mode === 'signup' && (
+          {/* Error Message Alert with Auto-Dismiss */}
+          {errorMessage && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono-luxury flex items-center justify-between gap-2.5 animate-fadeIn">
+              <div className="flex items-center gap-2.5">
+                <div className="h-2 w-2 rounded-full bg-rose-500 shrink-0 animate-ping" />
+                <span>{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMessage('')}
+                className="text-[10px] text-rose-400/60 hover:text-rose-300 transition-colors uppercase font-bold"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* MODE: VERIFY OTP */}
+          {mode === 'verify_otp' ? (
+            <form onSubmit={handleVerifyOtp} className="space-y-6">
+              
+              {/* 6 Digit OTP Inputs */}
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-3 text-center">
+                  6-Digit Verification Code
+                </label>
+                <div className="flex items-center justify-between gap-2 sm:gap-3">
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`otp-input-${index}`}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      autoFocus={index === 0}
+                      className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold font-mono-luxury rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:ring-2 focus:ring-[var(--gold-accent)]/20 focus:outline-none transition-all shadow-inner"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit OTP */}
+              <button
+                type="submit"
+                disabled={isSubmitting || otp.join('').length < 6}
+                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Verifying Code...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <span>Confirm & Enter Shop</span>
+                  </>
+                )}
+              </button>
+
+              {/* Resend Code & Back Controls */}
+              <div className="flex flex-col items-center gap-3 pt-2 text-center text-xs font-mono-luxury">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resendTimer > 0 || isResending}
+                  className={`inline-flex items-center gap-1.5 ${
+                    resendTimer > 0
+                      ? 'text-[var(--text-muted)] cursor-not-allowed'
+                      : 'text-[var(--gold-accent)] font-semibold hover:underline'
+                  }`}
+                >
+                  <RotateCw className={`h-3.5 w-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                  <span>
+                    {resendTimer > 0
+                      ? `Resend code in ${resendTimer}s`
+                      : 'Didn’t receive code? Resend OTP'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('signup');
+                    setErrorMessage('');
+                  }}
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  <span>Wrong email? Change Email</span>
+                </button>
+              </div>
+
+            </form>
+          ) : (
+            /* MODE: SIGN IN / SIGN UP */
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              {/* Full Name */}
+              {mode === 'signup' && (
+                <div>
+                  <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. David Elgard or Fatima Bello"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Email Address */}
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
-                  Full Name
+                  Email Address
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
                   <input
-                    type="text"
+                    type="email"
                     required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Chukwudi Eze or Fatima Bello"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@email.com"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
                   />
                 </div>
               </div>
-            )}
 
-            {/* Email Address */}
-            <div>
-              <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Mobile Phone Number (Required for Nigerian Delivery & Tailoring) */}
-            {mode === 'signup' && (
-              <div>
-                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
-                  Mobile Phone Number (Required for Dispatch)
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--gold-accent)]" />
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+234 803 123 4567"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Gender Preference & Body Stats for Sign-Up */}
-            {mode === 'signup' && (
-              <div className="space-y-3 pt-1">
-                
+              {/* Mobile Phone Number (Required for Nigerian Delivery & Dispatch) */}
+              {mode === 'signup' && (
                 <div>
                   <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
-                    Primary Department
+                    Mobile Phone Number (Required for Dispatch)
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setGender('male')}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center ${
-                        gender === 'male'
-                          ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] text-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30'
-                          : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                      }`}
-                    >
-                      Men&apos;s Fashion
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGender('female')}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center ${
-                        gender === 'female'
-                          ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] text-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30'
-                          : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                      }`}
-                    >
-                      Women&apos;s Fashion
-                    </button>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--gold-accent)]" />
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="08167060460"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
+                    />
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">Height (cm)</label>
-                    <input
-                      type="number"
-                      value={heightCm}
-                      onChange={(e) => setHeightCm(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
-                    />
-                    <span className="text-[10px] text-[var(--text-muted)] font-mono-luxury">e.g. 178cm (5ft 10in)</span>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">Weight (kg)</label>
-                    <input
-                      type="number"
-                      value={weightKg}
-                      onChange={(e) => setWeightKg(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
-                    />
-                    <span className="text-[10px] text-[var(--text-muted)] font-mono-luxury">e.g. 74 - 82kg</span>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* Submit Action */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-3"
-            >
-              {isSubmitting ? (
-                <>
-                  <Sparkles className="h-4 w-4 animate-spin" />
-                  <span>Calibrating Digital Model...</span>
-                </>
-              ) : (
-                <>
-                  <span>{mode === 'signup' ? 'Activate Account & Enter Studio' : 'Sign In to Fitting Room'}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
               )}
-            </button>
 
-          </form>
+              {/* Password */}
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password (Sign-up only) */}
+              {mode === 'signup' && (
+                <div>
+                  <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-11 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Gender Preference for Sign-Up */}
+              {mode === 'signup' && (
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
+                      Primary Department
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setGender('male')}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center ${
+                          gender === 'male'
+                            ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] text-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30'
+                            : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        Men&apos;s Fashion
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGender('female')}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center ${
+                          gender === 'female'
+                            ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] text-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30'
+                            : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                        }`}
+                      >
+                        Women&apos;s Fashion
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Action */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-3"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Sparkles className="h-4 w-4 animate-spin" />
+                    <span>Processing Request...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{mode === 'signup' ? 'Create Account & Receive Code' : 'Sign In to Shop'}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+
+            </form>
+          )}
 
           {/* Designer / Vendor Note */}
           <div className="pt-3 border-t border-[var(--border-subtle)] text-center">
@@ -405,5 +732,13 @@ export default function AuthPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-primary)]" />}>
+      <AuthPageContent />
+    </Suspense>
   );
 }

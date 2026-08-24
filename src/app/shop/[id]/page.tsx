@@ -122,7 +122,7 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 rounded-2xl surface-card border border-[var(--border-subtle)] text-center space-y-1">
               <ShieldCheck className="h-4 w-4 text-emerald-500 mx-auto" />
-              <span className="text-[9px] font-mono-luxury uppercase block text-[var(--text-muted)] font-bold">Paystack Escrow</span>
+              <span className="text-[9px] font-mono-luxury uppercase block text-[var(--text-muted)] font-bold">Verified Escrow</span>
               <span className="text-[10px] text-[var(--text-primary)] font-bold block">100% Protected</span>
             </div>
 

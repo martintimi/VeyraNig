@@ -8,7 +8,7 @@ import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 
 export default function StudioPage() {
-  const { bodyProfile, setIsProfileWizardOpen } = useStore();
+  const { bodyProfile, setIsProfileWizardOpen, userAuth } = useStore();
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -37,10 +37,10 @@ export default function StudioPage() {
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <div className="text-left">
             <div className="font-bold text-[11px] font-mono-luxury uppercase">
-              Model: {bodyProfile.name}
+              {userAuth.isLoggedIn && userAuth.name ? `Model: ${userAuth.name}` : `Model: Standard ${bodyProfile.gender === 'male' ? 'Male' : 'Female'}`}
             </div>
             <div className="text-[10px] text-[var(--text-secondary)] font-mono-luxury">
-              {bodyProfile.heightCm}cm · {bodyProfile.gender}
+              {bodyProfile.heightCm}cm · {bodyProfile.gender} {userAuth.isLoggedIn ? '' : '· Tap to Calibrate'}
             </div>
           </div>
           <SlidersHorizontal className="h-4 w-4 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors ml-1" />

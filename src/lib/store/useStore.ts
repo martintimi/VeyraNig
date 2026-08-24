@@ -77,7 +77,13 @@ interface VeyraState {
   setIsVendorLoggedIn: (loggedIn: boolean) => void;
   vendorProfile: VendorProfile;
   setVendorProfile: (profile: Partial<VendorProfile>) => void;
-  vendorLogout: () => void;
+  // Wardrobe Vault (Curated Wishlist)
+  vault: Product[];
+  toggleVaultItem: (product: Product) => void;
+  isInVault: (productId: string) => boolean;
+  isVaultOpen: boolean;
+  setIsVaultOpen: (open: boolean) => void;
+  clearVault: () => void;
 
   // Modals
   isProfileWizardOpen: boolean;
@@ -102,27 +108,27 @@ export const defaultVendorProfile: VendorProfile = {
 };
 
 const defaultProfile: BodyProfile = {
-  name: 'Chukwudi Eze',
-  email: 'chukwudi.eze@gmail.com',
-  phone: '+234 803 456 7890',
-  deliveryAddress: 'Plot 14B, Adeola Odeku Street',
-  city: 'Victoria Island',
+  name: '',
+  email: '',
+  phone: '',
+  deliveryAddress: '',
+  city: 'Lagos',
   state: 'Lagos',
-  heightCm: 182,
-  weightKg: 78,
+  heightCm: 180,
+  weightKg: 75,
   gender: 'male',
   bodyShape: 'athletic',
   fitPreference: 'tailored',
   avatarStyle: 'minimal_editorial',
   skinTone: 'deep',
-  chestCm: 104,
+  chestCm: 102,
   waistCm: 84,
   hipsCm: 100,
   inseamCm: 84,
-  shoulderWidthCm: 49,
-  twinId: 'VY-TWIN-9281',
-  isInitialized: true,
-  isLoggedIn: true,
+  shoulderWidthCm: 48,
+  twinId: 'VY-TWIN-STD',
+  isInitialized: false,
+  isLoggedIn: false,
 };
 
 const initialOrders: Order[] = [
@@ -310,10 +316,10 @@ export const useStore = create<VeyraState>()(
 
       // User Auth
       userAuth: {
-        isLoggedIn: true,
-        name: 'Chukwudi Eze',
-        email: 'chukwudi.eze@gmail.com',
-        phone: '+234 803 456 7890',
+        isLoggedIn: false,
+        name: '',
+        email: '',
+        phone: '',
         gender: 'male',
         userType: 'shopper',
       },
@@ -529,6 +535,25 @@ export const useStore = create<VeyraState>()(
         }));
       },
       clearCart: () => set({ cart: [] }),
+
+      // Wardrobe Vault (Curated Wishlist)
+      vault: [
+        initialProducts[0], // Pre-curate a featured piece for instant discovery
+        initialProducts[2],
+      ],
+      isVaultOpen: false,
+      setIsVaultOpen: (open) => set({ isVaultOpen: open }),
+      isInVault: (productId) => get().vault.some(p => p.id === productId),
+      toggleVaultItem: (product) => {
+        const { vault } = get();
+        const exists = vault.some(p => p.id === product.id);
+        if (exists) {
+          set({ vault: vault.filter(p => p.id !== product.id) });
+        } else {
+          set({ vault: [...vault, product] });
+        }
+      },
+      clearVault: () => set({ vault: [] }),
 
       // Vendor Portal State
       isVendorLoggedIn: true,

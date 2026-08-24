@@ -10,7 +10,7 @@ import {
 
 export default function VendorOrdersPage() {
   const { vendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
 
   const tailorOrders = [
     {

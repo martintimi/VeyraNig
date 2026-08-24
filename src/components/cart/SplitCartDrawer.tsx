@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/lib/store/useStore';
 import { vendors } from '@/lib/data/vendors';
 import { X, Trash2, Plus, Minus, Check, Sparkles, Truck, ArrowRight, Store, Lock } from 'lucide-react';
@@ -15,10 +16,10 @@ export default function SplitCartDrawer() {
     setIsCartOpen,
     removeFromCart,
     updateCartQuantity,
-    bodyProfile
+    bodyProfile,
+    userAuth,
+    setIsAuthModalOpen
   } = useStore();
-
-  if (!isCartOpen) return null;
 
   const groupedItems = cart.reduce((acc, item) => {
     const vendorId = item.product.vendorId;
@@ -45,12 +46,35 @@ export default function SplitCartDrawer() {
 
   const handleProceedToCheckout = () => {
     setIsCartOpen(false);
+    if (!userAuth?.isLoggedIn) {
+      router.push('/auth?redirect=/checkout');
+      return;
+    }
     router.push('/checkout');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-lg h-full bg-[var(--bg-surface)] border-l border-[var(--border-subtle)] shadow-2xl flex flex-col justify-between overflow-hidden">
+    <AnimatePresence>
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Smooth Backdrop Fade */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.28, ease: 'easeInOut' }}
+            onClick={() => setIsCartOpen(false)}
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+          />
+
+          {/* Smooth Spring Sliding Drawer */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.8 }}
+            className="relative w-full max-w-lg h-full bg-[var(--bg-surface)] border-l border-[var(--border-subtle)] shadow-2xl flex flex-col justify-between overflow-hidden z-10"
+          >
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
@@ -187,7 +211,9 @@ export default function SplitCartDrawer() {
           </div>
         )}
 
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

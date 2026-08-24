@@ -11,6 +11,7 @@ import confetti from 'canvas-confetti';
 
 export default function VendorAtelierProfilePage() {
   const { vendorProfile, setVendorProfile } = useStore();
+  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
   const [saved, setSaved] = useState(false);
 
   const [form, setForm] = useState({
@@ -37,10 +38,12 @@ export default function VendorAtelierProfilePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-            Atelier Profile & Storefront
+            {isBoutique ? 'Boutique Store Profile & Branding' : 'Atelier Profile & Storefront'}
           </h1>
           <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-            Configure your brand identity, lead tailor credentials, and social links visible across Veyra.
+            {isBoutique
+              ? 'Configure your store identity, boutique manager contacts, and Instagram showcase across Veyra.'
+              : 'Configure your brand identity, lead tailor credentials, and social links visible across Veyra.'}
           </p>
         </div>
 
@@ -49,7 +52,7 @@ export default function VendorAtelierProfilePage() {
           target="_blank"
           className="px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold hover:opacity-90 transition-all shadow-md flex items-center gap-2"
         >
-          <span>View Public Storefront</span>
+          <span>{isBoutique ? 'View Boutique Storefront' : 'View Public Storefront'}</span>
           <ExternalLink className="h-4 w-4" />
         </Link>
       </div>
@@ -62,7 +65,7 @@ export default function VendorAtelierProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                Atelier Brand Name
+                {isBoutique ? 'Boutique / Store Name' : 'Atelier Brand Name'}
               </label>
               <input
                 type="text"
@@ -75,7 +78,7 @@ export default function VendorAtelierProfilePage() {
 
             <div>
               <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                Lead Designer / Tailor
+                {isBoutique ? 'Store Manager / Contact Person' : 'Lead Designer / Tailor'}
               </label>
               <input
                 type="text"

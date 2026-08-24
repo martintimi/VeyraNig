@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { Sparkles, ShieldCheck, Truck, RotateCcw, Heart, Lock } from 'lucide-react';
 
+import Image from 'next/image';
+
 export default function Footer() {
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors">
@@ -62,9 +64,15 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           
           <div className="col-span-2 md:col-span-1 space-y-3">
-            <span className="font-editorial text-2xl font-bold tracking-[0.2em] text-[var(--text-primary)]">
-              VEYRA
-            </span>
+            <Link href="/" className="inline-block">
+              <Image
+                src="/images/logo/veyra-logo-horizontal.png"
+                alt="Veyra Nigeria"
+                width={200}
+                height={55}
+                className="h-12 w-auto object-contain drop-shadow-sm"
+              />
+            </Link>
             <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed max-w-xs">
               Nigeria&apos;s premier multi-brand virtual fitting room and fashion marketplace.
             </p>

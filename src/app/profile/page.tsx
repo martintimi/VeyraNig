@@ -1,43 +1,109 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import {
   User, Phone, Mail, MapPin, Package, Bell, Star, ShieldCheck,
   CheckCircle2, Clock, Sparkles, ArrowRight, Layers, LogOut,
-  Scissors, ChevronRight, Check, Heart, Edit3, MessageSquare
+  Scissors, ChevronRight, Check, Heart, Edit3, MessageSquare, Loader2
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const {
     bodyProfile, setBodyProfile, userOrders, rateOrder,
     userNotifications, markNotificationAsRead, markAllNotificationsAsRead,
-    logout
+    userAuth, setUserAuth, logout
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'body_twin' | 'orders' | 'notifications'>('orders');
+  const [isLoading, setIsLoading] = useState(false);
+  const [liveOrders, setLiveOrders] = useState<any[]>([]);
 
   // Profile Form state
   const [profileForm, setProfileForm] = useState({
-    name: bodyProfile.name || 'Chukwudi Eze',
-    email: bodyProfile.email || 'chukwudi.eze@gmail.com',
-    phone: bodyProfile.phone || '+234 803 456 7890',
-    deliveryAddress: bodyProfile.deliveryAddress || 'Plot 14B, Adeola Odeku Street',
-    city: bodyProfile.city || 'Victoria Island',
+    name: bodyProfile.name || userAuth.name || '',
+    email: bodyProfile.email || userAuth.email || '',
+    phone: bodyProfile.phone || userAuth.phone || '',
+    deliveryAddress: bodyProfile.deliveryAddress || '',
+    city: bodyProfile.city || 'Lagos',
     state: bodyProfile.state || 'Lagos',
   });
+
+  // Hydrate from live /api/auth/me and /api/orders
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile) {
+            const p = data.profile;
+            const updated = {
+              name: p.full_name || '',
+              email: p.email || '',
+              phone: p.phone || '',
+              deliveryAddress: p.delivery_address || '',
+              city: p.delivery_city || 'Lagos',
+              state: p.delivery_state || 'Lagos',
+            };
+            setProfileForm(prev => ({ ...prev, ...updated }));
+            setBodyProfile(updated);
+            setUserAuth({
+              isLoggedIn: true,
+              name: p.full_name || '',
+              email: p.email || '',
+              phone: p.phone || '',
+            });
+          }
+        }
+
+        const ordRes = await fetch('/api/orders');
+        if (ordRes.ok) {
+          const ordData = await ordRes.json();
+          if (ordData.orders) {
+            setLiveOrders(ordData.orders);
+          }
+        }
+      } catch (err) {
+        console.warn('Profile fetch note:', err);
+      }
+    }
+
+    loadData();
+  }, [setBodyProfile, setUserAuth]);
 
   // Rating Modal state
   const [ratingModalOrder, setRatingModalOrder] = useState<string | null>(null);
   const [starRating, setStarRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('World-class bespoke tailoring. Fits my broad shoulder line perfectly.');
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     setBodyProfile(profileForm);
+    setUserAuth({
+      name: profileForm.name,
+      email: profileForm.email,
+      phone: profileForm.phone,
+    });
+
+    try {
+      await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileForm),
+      });
+    } catch (err) {
+      console.warn('Profile sync note:', err);
+    } finally {
+      setIsLoading(false);
+    }
+
     confetti({
       particleCount: 50,
       spread: 60,
@@ -58,20 +124,24 @@ export default function ProfilePage() {
   };
 
   const unreadCount = userNotifications.filter(n => !n.read).length;
+  const displayName = profileForm.name || userAuth.name || (userAuth.email ? userAuth.email.split('@')[0] : 'Veyra Patron');
+  const displayPhone = profileForm.phone || userAuth.phone || 'No phone added (Tap Details to Add)';
+  const displayLocation = (profileForm.deliveryAddress || profileForm.city) ? `${profileForm.city}, ${profileForm.state}` : 'Lagos, Nigeria';
+  const effectiveOrders = liveOrders.length > 0 ? liveOrders : userOrders;
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
       
       {/* Top Profile Banner Header */}
       <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center font-editorial font-bold text-2xl shadow-md">
-            {profileForm.name.charAt(0)}
+          <div className="h-16 w-16 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center font-editorial font-bold text-2xl shadow-md uppercase">
+            {displayName.charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-                {profileForm.name}
+                {displayName}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">
                 ● Verified Digital Twin
@@ -80,12 +150,12 @@ export default function ProfilePage() {
             <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1 flex items-center gap-3 flex-wrap">
               <span className="flex items-center gap-1">
                 <Phone className="h-3 w-3 text-[var(--gold-accent)]" />
-                <span>{profileForm.phone}</span>
+                <span>{displayPhone}</span>
               </span>
               <span>·</span>
               <span className="flex items-center gap-1">
                 <MapPin className="h-3 w-3 text-[var(--gold-accent)]" />
-                <span>{profileForm.city}, {profileForm.state}</span>
+                <span>{displayLocation}</span>
               </span>
             </p>
           </div>
@@ -95,11 +165,11 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
           <div className="px-4 py-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center shrink-0">
             <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Orders</span>
-            <span className="font-bold text-sm text-[var(--text-primary)]">{userOrders.length} Completed</span>
+            <span className="font-bold text-sm text-[var(--text-primary)]">{effectiveOrders.length} Completed</span>
           </div>
           <div className="px-4 py-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center shrink-0">
             <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Body Twin ID</span>
-            <span className="font-mono-luxury font-bold text-xs text-[var(--gold-accent)]">{bodyProfile.twinId}</span>
+            <span className="font-mono-luxury font-bold text-xs text-[var(--gold-accent)]">{bodyProfile.twinId || 'VY-NIG-782'}</span>
           </div>
         </div>
       </div>
@@ -115,7 +185,7 @@ export default function ProfilePage() {
           }`}
         >
           <Package className="h-4 w-4" />
-          <span>Order History ({userOrders.length})</span>
+          <span>Order History ({effectiveOrders.length})</span>
         </button>
 
         <button

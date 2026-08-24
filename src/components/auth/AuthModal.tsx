@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store/useStore';
-import { X, Sparkles, User, Store, Check, ArrowRight, ShieldCheck } from 'lucide-react';
+import { X, Sparkles, User, Store, Check, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { signUpCustomer, signInCustomer, signUpVendor, signInVendor } from '@/lib/services/auth';
 
 export default function AuthModal() {
   const {
@@ -12,7 +13,9 @@ export default function AuthModal() {
     setUserAuth,
     userAuth,
     setSelectedGender,
-    setBodyProfile
+    setBodyProfile,
+    setIsVendorLoggedIn,
+    setVendorProfile,
   } = useStore();
 
   const [mode, setMode] = useState<'signup' | 'login'>('signup');
@@ -20,49 +23,95 @@ export default function AuthModal() {
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [heightCm, setHeightCm] = useState(178);
   const [weightKg, setWeightKg] = useState(74);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const userName = name || (email.split('@')[0] || 'Fashion Lover');
+    const userName = name || (email.split('@')[0] || 'Fashion Patron');
     const twinId = `VY-NIG-${Math.floor(100 + Math.random() * 900)}`;
 
-    setUserAuth({
-      isLoggedIn: true,
-      name: userName,
-      email: email || 'user@veyra.ng',
-      gender,
-      userType: accountType,
-    });
+    try {
+      if (accountType === 'shopper') {
+        if (mode === 'signup') {
+          await signUpCustomer({
+            email,
+            password: password || 'Veyra2026!',
+            fullName: userName,
+            gender,
+            heightCm,
+            weightKg,
+          });
+        } else {
+          await signInCustomer(email, password || 'Veyra2026!');
+        }
 
-    setSelectedGender(gender);
+        setUserAuth({
+          isLoggedIn: true,
+          name: userName,
+          email: email || 'user@veyra.ng',
+          gender,
+          userType: 'shopper',
+        });
 
-    setBodyProfile({
-      name: userName,
-      email,
-      gender,
-      heightCm,
-      weightKg,
-      chestCm: gender === 'male' ? 102 : 88,
-      waistCm: gender === 'male' ? 84 : 68,
-      hipsCm: gender === 'male' ? 100 : 96,
-      twinId,
-      isInitialized: true,
-    });
+        setSelectedGender(gender);
 
-    confetti({
-      particleCount: 65,
-      spread: 60,
-      origin: { y: 0.6 },
-      colors: ['#e6c367', '#10b981', '#ffffff']
-    });
+        setBodyProfile({
+          name: userName,
+          email,
+          gender,
+          heightCm,
+          weightKg,
+          chestCm: gender === 'male' ? 102 : 88,
+          waistCm: gender === 'male' ? 84 : 68,
+          hipsCm: gender === 'male' ? 100 : 96,
+          twinId,
+          isInitialized: true,
+        });
+      } else {
+        // Vendor Account
+        if (mode === 'signup') {
+          await signUpVendor({
+            email,
+            password: password || 'Veyra2026!',
+            brandName: userName,
+            designerName: userName,
+            phone: '+234 802 345 6789',
+            location: 'Lagos, Nigeria',
+            vendorType: 'fashion_designer',
+          });
+        } else {
+          await signInVendor(email, password || 'Veyra2026!');
+        }
 
-    setIsAuthModalOpen(false);
+        setIsVendorLoggedIn(true);
+        setVendorProfile({
+          brandName: userName,
+          designerName: userName,
+          email,
+        });
+      }
+
+      confetti({
+        particleCount: 65,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#e6c367', '#10b981', '#ffffff']
+      });
+
+      setIsAuthModalOpen(false);
+    } catch (err) {
+      console.error('Auth error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

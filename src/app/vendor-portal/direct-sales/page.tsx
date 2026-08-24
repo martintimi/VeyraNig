@@ -80,23 +80,31 @@ export default function DirectSalesAssistantPage() {
       ctx.font = 'bold 24px sans-serif';
       ctx.fillText(vendorProfile.brandName.toUpperCase(), 80, 93);
 
-      // 2. Top Right VEYRA Signature Logo & 3D Atelier Watermark Badge
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-      ctx.beginPath();
-      ctx.roundRect(740, 50, 290, 68, 34);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(230, 195, 103, 0.6)';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      // Veyra Brand text
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 26px serif';
-      ctx.fillText('VEYRA', 775, 93);
-
-      ctx.fillStyle = '#e6c367';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText('● 3D ATELIER', 885, 92);
+      // 2. Top Right VEYRA Signature Logo Badge
+      try {
+        const logoImg = new (window as any).Image();
+        logoImg.crossOrigin = 'anonymous';
+        logoImg.src = '/images/logo/veyra-logo.png';
+        await new Promise((res) => {
+          logoImg.onload = res;
+          logoImg.onerror = res;
+        });
+        if (logoImg.width > 0) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.beginPath();
+          ctx.roundRect(740, 48, 290, 72, 36);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(230, 195, 103, 0.6)';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.drawImage(logoImg, 765, 56, 170, 54);
+          ctx.fillStyle = '#e6c367';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.fillText('3D', 960, 90);
+        }
+      } catch (e) {
+        console.error('Logo render error', e);
+      }
 
       // 3. Bottom Product Title
       ctx.fillStyle = '#ffffff';

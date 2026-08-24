@@ -5,12 +5,13 @@ import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory, GarmentOriginType } from '@/types';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
 import {
-  Sparkles, Check, ShoppingBag, Search, Scissors, ArrowRight, ArrowLeft,
-  Building, ExternalLink, Filter, Layers, ChevronLeft, ChevronRight,
-  RotateCcw, PackageSearch
+  Sparkles, Check, ShoppingBag, Search, Scissors, ArrowRight,
+  ChevronLeft, ChevronRight, RotateCcw, PackageSearch, Layers,
+  Bookmark, Eye
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import ProductQuickLookModal from '@/components/shop/ProductQuickLookModal';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -26,12 +27,15 @@ export default function MarketplaceGrid() {
     setSelectedGender,
     selectedOriginType,
     setSelectedOriginType,
+    toggleVaultItem,
+    isInVault,
   } = useStore();
 
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<GarmentCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [quickLookProduct, setQuickLookProduct] = useState<any>(null);
 
   const categories: { id: GarmentCategory | 'all'; label: string }[] = [
     { id: 'all', label: 'All Garments' },
@@ -90,25 +94,25 @@ export default function MarketplaceGrid() {
   );
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
       
       {/* ======================================================== */}
       {/* 1. UNIFIED WELCOME CARD WITH EMBEDDED BRAND FILTERS */}
       {/* ======================================================== */}
-      <div className="relative rounded-3xl surface-card p-6 sm:p-10 overflow-hidden shadow-xl border border-[var(--border-subtle)]">
+      <div className="relative rounded-2xl sm:rounded-3xl surface-card p-5 sm:p-10 overflow-hidden shadow-xl border border-[var(--border-subtle)]">
         
         {/* Subtle Ambient Glow */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--gold-subtle)]/25 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative space-y-6">
+        <div className="relative space-y-5 sm:space-y-6">
           
           <div className="space-y-2 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[var(--gold-accent)] text-xs font-mono-luxury uppercase tracking-widest font-bold">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[var(--gold-accent)] text-[10px] sm:text-xs font-mono-luxury uppercase tracking-widest font-bold">
+              <Sparkles className="h-3 w-3" />
               <span>NIGERIAN APPAREL CATALOG</span>
             </div>
 
-            <h1 className="font-editorial text-3xl sm:text-5xl font-bold text-[var(--text-primary)] leading-tight">
+            <h1 className="font-editorial text-2xl sm:text-5xl font-bold text-[var(--text-primary)] leading-tight">
               Shop Senator, Native & Streetwear
             </h1>
 
@@ -123,39 +127,13 @@ export default function MarketplaceGrid() {
             {/* Left Button */}
             <Link
               href="/studio"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest text-xs font-bold hover:opacity-90 transition-all shadow-md shrink-0"
+              className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest text-xs font-bold hover:opacity-90 transition-all shadow-md shrink-0"
             >
               <Layers className="h-4 w-4" />
               <span>Open Virtual Dressing Room</span>
             </Link>
 
-            {/* Right: Integrated Brand Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-              <span className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-muted)] shrink-0 hidden sm:inline-block">
-                Atelier:
-              </span>
-
-              {brandOptions.map((brand) => (
-                <button
-                  key={brand.id}
-                  onClick={() => handleBrandChange(brand.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-mono-luxury uppercase whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
-                    selectedBrand === brand.id
-                      ? 'bg-[var(--gold-accent)] text-black font-bold shadow-sm'
-                      : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                  }`}
-                >
-                  <span>{brand.name}</span>
-                  {brand.count > 0 && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
-                      selectedBrand === brand.id ? 'bg-black text-white' : 'bg-[var(--badge-bg)] text-[var(--text-muted)]'
-                    }`}>
-                      {brand.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+        
 
           </div>
 
@@ -165,7 +143,7 @@ export default function MarketplaceGrid() {
       {/* ======================================================== */}
       {/* 2. SEARCH & GLOBAL FILTERS BAR */}
       {/* ======================================================== */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 p-4 rounded-3xl surface-card border border-[var(--border-subtle)]">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl surface-card border border-[var(--border-subtle)]">
         
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
@@ -178,12 +156,12 @@ export default function MarketplaceGrid() {
               setCurrentPage(1);
             }}
             placeholder="Search Senator, Ankara, Hoodies, Denim..."
-            className="w-full pl-11 pr-4 py-2.5 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+            className="w-full pl-11 pr-4 py-2.5 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs sm:text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
           />
         </div>
 
         {/* Gender Switcher & Handmade vs ReadyMade Filter */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           
           {/* Gender Switcher */}
           <div className="flex items-center p-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
@@ -192,7 +170,7 @@ export default function MarketplaceGrid() {
                 setSelectedGender('male');
                 setCurrentPage(1);
               }}
-              className={`px-4 py-1.5 rounded-full text-xs font-mono-luxury uppercase transition-all ${
+              className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-mono-luxury uppercase transition-all ${
                 selectedGender === 'male'
                   ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -205,7 +183,7 @@ export default function MarketplaceGrid() {
                 setSelectedGender('female');
                 setCurrentPage(1);
               }}
-              className={`px-4 py-1.5 rounded-full text-xs font-mono-luxury uppercase transition-all ${
+              className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-mono-luxury uppercase transition-all ${
                 selectedGender === 'female'
                   ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -222,7 +200,7 @@ export default function MarketplaceGrid() {
                 setSelectedOriginType('all');
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1.5 rounded-full transition-all ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-full transition-all ${
                 selectedOriginType === 'all'
                   ? 'bg-[var(--badge-bg)] text-[var(--text-primary)] font-bold'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -235,7 +213,7 @@ export default function MarketplaceGrid() {
                 setSelectedOriginType('handmade_designer');
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${
                 selectedOriginType === 'handmade_designer'
                   ? 'bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold border border-[var(--gold-accent)]/20'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -249,7 +227,7 @@ export default function MarketplaceGrid() {
                 setSelectedOriginType('ready_made_boutique');
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1.5 rounded-full transition-all ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-full transition-all ${
                 selectedOriginType === 'ready_made_boutique'
                   ? 'bg-[var(--badge-bg)] text-[var(--text-primary)] font-bold'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
@@ -260,32 +238,26 @@ export default function MarketplaceGrid() {
           </div>
 
         </div>
+
       </div>
 
       {/* ======================================================== */}
-      {/* 3. CATEGORY PILLS BAR */}
+      {/* 3. CATEGORY PILL SELECTOR */}
       {/* ======================================================== */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.id)}
-              className={`px-5 py-2.5 rounded-full text-xs font-mono-luxury tracking-wider uppercase font-semibold whitespace-nowrap transition-all ${
-                selectedCategory === category.id
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
-                  : 'surface-card text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] border border-[var(--border-subtle)]'
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Results Counter */}
-        <span className="text-xs font-mono-luxury text-[var(--text-muted)] uppercase">
-          Showing {filteredProducts.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} pieces
-        </span>
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => handleCategoryChange(cat.id)}
+            className={`px-4 py-2 rounded-full text-xs font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap transition-all ${
+              selectedCategory === cat.id
+                ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+                : 'surface-card text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
       </div>
 
       {/* ======================================================== */}
@@ -322,8 +294,8 @@ export default function MarketplaceGrid() {
 
       ) : (
 
-        /* PRODUCT GRID */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        /* PRODUCT GRID (2-COLUMNS ON MOBILE, 4-COLUMNS ON DESKTOP) */
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
           {paginatedProducts.map((product) => {
             const isWorn = activeOutfit[product.category]?.id === product.id;
             const fitResult = calculateFitMatch(bodyProfile, product);
@@ -331,12 +303,15 @@ export default function MarketplaceGrid() {
             return (
               <div
                 key={product.id}
-                className={`group relative rounded-3xl surface-card overflow-hidden flex flex-col justify-between hover:shadow-2xl transition-all duration-500 border border-[var(--border-subtle)] ${
+                className={`group relative rounded-2xl sm:rounded-3xl surface-card overflow-hidden flex flex-col justify-between hover:shadow-2xl transition-all duration-500 border border-[var(--border-subtle)] ${
                   isWorn ? 'border-[var(--gold-accent)] shadow-md ring-1 ring-[var(--gold-accent)]/30' : ''
                 }`}
               >
-                {/* Image Container with Link */}
-                <Link href={`/shop/${product.id}`} className="relative h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block">
+                {/* Image Container with Quick Look Click */}
+                <div
+                  onClick={() => setQuickLookProduct(product)}
+                  className="relative h-48 sm:h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block cursor-pointer group/img"
+                >
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
@@ -345,74 +320,92 @@ export default function MarketplaceGrid() {
                     className="object-cover group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-100"
                   />
                   
-                  {/* Badges */}
-                  <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
-                    <span className="px-3 py-1 rounded-full bg-black/85 backdrop-blur-md text-[10px] font-mono-luxury uppercase tracking-wider text-white border border-white/10 font-semibold">
+                  {/* Top Left: Atelier Attribution */}
+                  <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10">
+                    <span className="px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md text-[9px] sm:text-[10px] font-mono-luxury uppercase tracking-wider text-white border border-white/10 font-bold shadow-md">
                       {product.vendorName}
                     </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-mono-luxury font-bold uppercase tracking-wider ${
-                      product.garmentOriginType === 'handmade_designer'
-                        ? 'bg-[var(--gold-accent)] text-black'
-                        : 'bg-white text-black'
-                    }`}>
-                      {product.garmentOriginType === 'handmade_designer' ? 'Handmade' : 'Ready-Made'}
+                  </div>
+
+                  {/* Top Right: Curated Vault Bookmark Button */}
+                  <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleVaultItem(product);
+                      }}
+                      className={`p-2 sm:p-2.5 rounded-full backdrop-blur-md border transition-all ${
+                        isInVault(product.id)
+                          ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md scale-105'
+                          : 'bg-black/60 text-white/80 border-white/10 hover:text-white hover:bg-black/85'
+                      }`}
+                      title={isInVault(product.id) ? 'In Curated Vault' : 'Curate to Wardrobe Vault'}
+                    >
+                      <Bookmark className={`h-3.5 w-3.5 ${isInVault(product.id) ? 'fill-current' : ''}`} />
+                    </button>
+                  </div>
+
+                  {/* Quick View Center Overlay */}
+                  <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <span className="px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md text-white text-[10px] font-mono-luxury uppercase tracking-wider font-bold border border-white/20 shadow-lg flex items-center gap-1.5">
+                      <Eye className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                      <span>Quick View</span>
                     </span>
                   </div>
 
                   {/* Sizing Match Pill */}
-                  <div className="absolute bottom-4 left-4 right-4 p-2.5 rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between z-10">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[11px] font-mono-luxury text-emerald-400 font-semibold uppercase">
-                        {fitResult.matchScore}% Fit Match
+                  <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between z-10 shadow-md">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[9px] sm:text-[11px] font-mono-luxury text-emerald-400 font-semibold uppercase">
+                        {fitResult.matchScore}% Match
                       </span>
                     </div>
 
-                    <span className="text-[11px] font-mono-luxury text-white font-bold bg-emerald-500/20 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
-                      Size {fitResult.recommendedSize}
+                    <span className="text-[9px] sm:text-[11px] font-mono-luxury text-white font-bold bg-emerald-500/20 px-1.5 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg border border-emerald-500/30">
+                      {fitResult.recommendedSize}
                     </span>
                   </div>
-                </Link>
+                </div>
 
                 {/* Product Info */}
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-3 sm:space-y-4">
                   <div>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <Link href={`/shop/${product.id}`} className="hover:text-[var(--gold-accent)] transition-colors">
-                        <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      <span className="font-editorial text-xl font-bold text-[var(--text-primary)] shrink-0">
-                        ₦{product.price.toLocaleString()}
+                    {/* Atelier & Details Link */}
+                    <div className="flex items-center justify-between gap-2 pb-1">
+                      <span className="text-[10px] sm:text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold tracking-wider truncate">
+                        {product.vendorName}
                       </span>
-                    </div>
-
-                    <p className="text-xs text-[var(--text-secondary)] mt-1.5 line-clamp-2 leading-relaxed font-light">
-                      {product.description}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex flex-wrap gap-1 font-mono-luxury text-[9px] text-[var(--text-muted)] uppercase">
-                        {product.tags.slice(0, 2).map((t) => (
-                          <span key={t} className="px-2 py-0.5 rounded-md bg-[var(--badge-bg)] border border-[var(--border-subtle)]">
-                            #{t}
-                          </span>
-                        ))}
-                      </div>
 
                       <Link
                         href={`/shop/${product.id}`}
-                        className="text-[10px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold hover:underline inline-flex items-center gap-1"
+                        className="text-[10px] sm:text-xs font-mono-luxury uppercase text-[var(--text-muted)] hover:text-[var(--gold-accent)] font-bold inline-flex items-center gap-1 shrink-0 transition-colors"
                       >
                         <span>Details</span>
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     </div>
+
+                    {/* Title */}
+                    <Link href={`/shop/${product.id}`} className="hover:text-[var(--gold-accent)] transition-colors block">
+                      <h3 className="font-editorial text-sm sm:text-2xl font-bold text-[var(--text-primary)] leading-snug line-clamp-1">
+                        {product.name}
+                      </h3>
+                    </Link>
+
+                    {/* Prominent Eye-Catching Gold Price & Stock Status */}
+                    <div className="flex items-baseline gap-2 pt-1.5">
+                      <span className="font-editorial text-lg sm:text-2xl font-bold text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm">
+                        ₦{product.price.toLocaleString()}
+                      </span>
+                      <span className="text-[9px] sm:text-[11px] font-mono-luxury text-emerald-500 font-bold">
+                        ● In Stock
+                      </span>
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[var(--border-subtle)]">
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-2.5 sm:pt-3 border-t border-[var(--border-subtle)]">
                     <button
                       onClick={() => {
                         if (isWorn) {
@@ -421,10 +414,10 @@ export default function MarketplaceGrid() {
                           setOutfitItem(product);
                         }
                       }}
-                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap transition-all ${
+                      className={`flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1 sm:px-2 rounded-full text-[9px] sm:text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap transition-all ${
                         isWorn
                           ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                          : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--border-hover)]'
+                          : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--border-hover)] hover:text-[var(--gold-accent)]'
                       }`}
                     >
                       {isWorn ? (
@@ -442,7 +435,7 @@ export default function MarketplaceGrid() {
 
                     <button
                       onClick={() => addToCart(product, fitResult.recommendedSize)}
-                      className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+                      className="flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1 sm:px-2 rounded-full text-[9px] sm:text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)] hover:text-[var(--gold-accent)] transition-all"
                     >
                       <ShoppingBag className="h-3 w-3 shrink-0" />
                       <span className="truncate">Add to Bag</span>
@@ -457,14 +450,14 @@ export default function MarketplaceGrid() {
       )}
 
       {/* ======================================================== */}
-      {/* 5. INTERACTIVE PAGINATION CONTROLS */}
+      {/* 5. CLASSIC PAGINATION CONTROLS */}
       {/* ======================================================== */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-6 border-t border-[var(--border-subtle)]">
+        <div className="flex items-center justify-center gap-2 pt-8 border-t border-[var(--border-subtle)]">
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="flex items-center gap-1 px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all disabled:opacity-30 disabled:pointer-events-none"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] hover:text-[var(--gold-accent)] transition-all disabled:opacity-30 disabled:pointer-events-none"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
             <span>Prev</span>
@@ -477,8 +470,8 @@ export default function MarketplaceGrid() {
                 onClick={() => setCurrentPage(pageNum)}
                 className={`h-9 w-9 rounded-full text-xs font-mono-luxury font-bold transition-all flex items-center justify-center ${
                   currentPage === pageNum
-                    ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md scale-105'
-                    : 'surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    ? 'bg-black dark:bg-white text-white dark:text-black font-bold shadow-md scale-105'
+                    : 'surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--gold-accent)]'
                 }`}
               >
                 {pageNum}
@@ -489,13 +482,19 @@ export default function MarketplaceGrid() {
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="flex items-center gap-1 px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all disabled:opacity-30 disabled:pointer-events-none"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] hover:text-[var(--gold-accent)] transition-all disabled:opacity-30 disabled:pointer-events-none"
           >
             <span>Next</span>
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
+
+      {/* Garment Quick Look Editorial Modal */}
+      <ProductQuickLookModal
+        product={quickLookProduct}
+        onClose={() => setQuickLookProduct(null)}
+      />
 
     </div>
   );

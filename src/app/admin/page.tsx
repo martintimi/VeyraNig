@@ -219,7 +219,7 @@ export default function SuperAdminPage() {
                 VEYRA Super Admin
               </h1>
               <p className="text-xs text-zinc-400 font-light mt-1">
-                Master management suite for Nigerian ateliers, catalog moderation, logistics, and Paystack escrow payouts.
+                Master management suite for Nigerian ateliers, catalog moderation, logistics, and automated escrow payouts.
               </p>
             </div>
 
@@ -282,7 +282,7 @@ export default function SuperAdminPage() {
               <div className="hidden md:flex items-center gap-2 text-xs font-mono-luxury text-[var(--text-muted)]">
                 <span>/</span>
                 <span className="text-[var(--text-primary)] font-bold capitalize">
-                  {activeTab === 'overview' ? 'Financial Overview' : activeTab === 'vendors' ? 'Atelier & Vendor Management' : activeTab === 'catalog' ? 'Catalog Moderation' : activeTab === 'logistics' ? 'Lagos Central Hub Logistics' : 'Paystack Escrow Settings'}
+                  {activeTab === 'overview' ? 'Financial Overview' : activeTab === 'vendors' ? 'Atelier & Vendor Management' : activeTab === 'catalog' ? 'Catalog Moderation' : activeTab === 'logistics' ? 'Lagos Central Hub Logistics' : 'Gateway Escrow Controls'}
                 </span>
               </div>
             </div>
@@ -408,14 +408,14 @@ export default function SuperAdminPage() {
                     }`}
                   >
                     <DollarSign className="h-4 w-4" />
-                    <span>Paystack & Escrow</span>
+                    <span>Gateway & Escrow</span>
                   </button>
                 </nav>
               </div>
 
               {/* Bottom System Status */}
               <div className="pt-4 border-t border-[var(--border-subtle)] text-[11px] font-mono-luxury text-[var(--text-muted)] space-y-1">
-                <div>Paystack Split Engine: <strong className="text-emerald-500">Live</strong></div>
+                <div>Payment Split Engine: <strong className="text-emerald-500">Live</strong></div>
                 <div>Lagos Express Hub: <strong className="text-[var(--gold-accent)]">Active</strong></div>
                 <div>App Version: <strong className="text-[var(--text-primary)]">v2.4 Production</strong></div>
               </div>
@@ -466,7 +466,7 @@ export default function SuperAdminPage() {
                         <PackageCheck className="h-4 w-4 text-indigo-500" />
                       </div>
                       <div className="font-editorial text-3xl font-bold text-[var(--text-primary)]">₦41,580,000</div>
-                      <span className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">Paid via Paystack Subaccounts</span>
+                      <span className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">Disbursed to Merchant Bank Accounts</span>
                     </div>
 
                     <div className="p-6 rounded-3xl surface-card space-y-2 border border-[var(--border-subtle)]">
@@ -811,34 +811,60 @@ export default function SuperAdminPage() {
                             <span className="text-[var(--text-muted)]">Consolidated From:</span>
                             {ord.vendorsInvolved.map((vName, idx) => (
                               <span key={idx} className="px-2 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--gold-accent)] font-bold">
-                                {vName}
-                              </span>
-                            ))}
-                          </div>
+                      Lagos Central Hub Logistics
+                    </h1>
+                    <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+                      Multi-brand consolidated receiving, quality inspection, and last-mile dispatch across Lagos State.
+                    </p>
+                  </div>
 
-                          <button className="px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] uppercase text-[10px] font-bold hover:opacity-90 transition-all shadow-sm">
-                            Update Dispatch Status
-                          </button>
-                        </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3">
+                      <div className="flex items-center gap-2 text-[var(--gold-accent)] font-bold">
+                        <Truck className="h-5 w-5" />
+                        <h3 className="font-editorial text-lg font-bold text-[var(--text-primary)]">Hub Routing</h3>
                       </div>
-                    ))}
+                      <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                        Ateliers dispatch tailored garments to Victoria Island Quality Hub for consolidated single-box delivery.
+                      </p>
+                    </div>
+
+                    <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3">
+                      <div className="flex items-center gap-2 text-emerald-500 font-bold">
+                        <ShieldCheck className="h-5 w-5" />
+                        <h3 className="font-editorial text-lg font-bold text-[var(--text-primary)]">Stitch & Fit Audit</h3>
+                      </div>
+                      <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                        Garment dimensions are checked against customer 3D body twin profile before rider dispatch.
+                      </p>
+                    </div>
+
+                    <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3">
+                      <div className="flex items-center gap-2 text-indigo-400 font-bold">
+                        <Package className="h-5 w-5" />
+                        <h3 className="font-editorial text-lg font-bold text-[var(--text-primary)]">24h Express Dispatch</h3>
+                      </div>
+                      <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                        Same-day dispatch for Ready-to-Wear pieces; 3-5 days for bespoke native embroidery.
+                      </p>
+                    </div>
                   </div>
 
                 </div>
               )}
 
               {/* ======================================================== */}
-              {/* VIEW 5: PAYSTACK & ESCROW SETTINGS */}
+              {/* VIEW 5: GATEWAY & ESCROW SETTINGS */}
               {/* ======================================================== */}
               {activeTab === 'finance' && (
                 <div className="space-y-6 animate-fadeIn max-w-4xl">
                   
                   <div>
                     <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-                      Paystack Escrow & Fee Controls
+                      Gateway Escrow & Fee Controls
                     </h1>
                     <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                      Configure automated Paystack subaccount transaction splits and Lagos hub inspection logistics fees.
+                      Configure automated merchant transaction splits and Lagos hub inspection logistics fees.
                     </p>
                   </div>
 
@@ -855,7 +881,7 @@ export default function SuperAdminPage() {
                           className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury font-bold"
                         />
                         <span className="text-[10px] text-[var(--text-muted)] font-mono-luxury">
-                          Current rate: {commissionRate}% platform fee retained in master Veyra Paystack account.
+                          Current rate: {commissionRate}% platform fee retained in master Veyra settlement account.
                         </span>
                       </div>
 
@@ -877,7 +903,7 @@ export default function SuperAdminPage() {
 
                     <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
                       <span className="text-xs font-mono-luxury text-emerald-500 font-bold">
-                        ● Paystack Webhook Status: Active & Listening
+                        ● Payment Webhook Engine: Active & Listening
                       </span>
                       <button
                         onClick={() => confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } })}

@@ -3,24 +3,33 @@ import KineticMarquee from '@/components/landing/KineticMarquee';
 import CuratedAteliers from '@/components/landing/CuratedAteliers';
 import ProblemSolution from '@/components/landing/ProblemSolution';
 import BrandShowcase from '@/components/landing/BrandShowcase';
+import MobileHomeView from '@/components/landing/MobileHomeView';
 
 export default function Home() {
   return (
-    <div className="flex flex-col">
-      {/* 1. Hero Section with Automated Morphing FLIP Lookbook */}
-      <HeroSection />
+    <>
+      {/* 1. DEDICATED MOBILE HOME VIEW (Sleek, visual-first, app feel) */}
+      <div className="block md:hidden px-4 py-4">
+        <MobileHomeView />
+      </div>
 
-      {/* 2. Dual-Row Velocity Kinetic Marquee */}
-      <KineticMarquee />
+      {/* 2. DESKTOP LUXURY LANDING VIEW */}
+      <div className="hidden md:flex flex-col">
+        {/* Hero Section with Automated Morphing FLIP Lookbook */}
+        <HeroSection />
 
-      {/* 3. Curated Nigerian Ateliers (Bright, Crisp HD Editorial Cards) */}
-      <CuratedAteliers />
+        {/* Dual-Row Velocity Kinetic Marquee */}
+        <KineticMarquee />
 
-      {/* 4. The Veyra Standards Luxury Pillars */}
-      <ProblemSolution />
+        {/* Curated Nigerian Ateliers (Bright, Crisp HD Editorial Cards) */}
+        <CuratedAteliers />
 
-      {/* 5. Partner Brands & Fast Lagos Delivery Matrix */}
-      <BrandShowcase />
-    </div>
+        {/* The Veyra Standards Luxury Pillars */}
+        <ProblemSolution />
+
+        {/* Partner Brands & Fast Lagos Delivery Matrix */}
+        <BrandShowcase />
+      </div>
+    </>
   );
 }

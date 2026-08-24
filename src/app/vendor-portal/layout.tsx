@@ -10,6 +10,8 @@ import {
   ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors
 } from 'lucide-react';
 
+import Image from 'next/image';
+
 export default function VendorPortalLayout({
   children,
 }: {
@@ -29,7 +31,7 @@ export default function VendorPortalLayout({
     return <>{children}</>;
   }
 
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
 
   const navItems = [
     {
@@ -92,17 +94,16 @@ export default function VendorPortalLayout({
         {/* Left: Brand Identity */}
         <div className="flex items-center gap-4">
           <Link href="/vendor-portal" className="flex items-center gap-3 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[var(--gold-accent)] to-amber-200 flex items-center justify-center text-black font-editorial text-xl font-bold shadow-md">
-              V
-            </div>
-            <div className="flex flex-col">
-              <span className="font-editorial text-xl font-bold tracking-widest leading-none text-[var(--text-primary)]">
-                VEYRA
-              </span>
-              <span className="text-[9px] font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold">
-                {isBoutique ? 'Boutique Merchant Portal' : 'Bespoke Atelier Portal'}
-              </span>
-            </div>
+            <Image
+              src="/images/logo/veyra-logo-horizontal.png"
+              alt="Veyra"
+              width={160}
+              height={45}
+              className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+            />
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20">
+              {isBoutique ? 'Boutique Merchant' : 'Bespoke Atelier'}
+            </span>
           </Link>
 
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-mono-luxury">

@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/lib/store/useStore';
 import {
   ShoppingBag, Sparkles, Sun, Moon, SlidersHorizontal, User, LogOut,
-  Bell, Check, Package, Star, ChevronRight
+  Bell, Check, Package, Star, ChevronRight, Bookmark
 } from 'lucide-react';
 import React, { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,6 +18,8 @@ export default function Navbar() {
     toggleTheme,
     cart,
     setIsCartOpen,
+    vault,
+    setIsVaultOpen,
     userAuth,
     logout,
     setSelectedGender,
@@ -62,35 +66,12 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-xl transition-all">
+    <header className="hidden md:block sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-xl transition-all">
       {/* 100% Full-Width Edge-to-Edge Navigation Bar (Taller & Larger Typography) */}
       <div className="w-full flex h-20 items-center justify-between px-4 sm:px-8 lg:px-12">
         
-        {/* Left: Department Switch (Men / Women) & Navigation Links */}
+        {/* Left: Navigation Links */}
         <nav className="hidden md:flex items-center gap-7">
-          
-          {/* Department Switcher */}
-          <div className="flex items-center gap-3.5 pr-5 border-r border-[var(--border-subtle)] font-mono-luxury text-sm uppercase tracking-wider">
-            <button
-              onClick={() => setSelectedGender('male')}
-              className={`transition-colors font-bold text-sm ${
-                selectedGender === 'male' ? 'text-[var(--gold-accent)] underline underline-offset-4' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Men
-            </button>
-            <span className="text-[var(--border-subtle)] font-light">/</span>
-            <button
-              onClick={() => setSelectedGender('female')}
-              className={`transition-colors font-bold text-sm ${
-                selectedGender === 'female' ? 'text-[var(--gold-accent)] underline underline-offset-4' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Women
-            </button>
-          </div>
-
-          {/* Main Links */}
           <div className="flex items-center gap-6">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
@@ -116,15 +97,17 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* Center: Brand Logo (Bigger & Grand) */}
+        {/* Center: Official Brand Logo (Large, Prominent & Rich Gold) */}
         <div className="flex items-center justify-center">
-          <Link href="/" className="group flex flex-col items-center">
-            <span className="font-editorial text-3xl sm:text-4xl font-bold tracking-[0.25em] text-[var(--text-primary)] group-hover:opacity-80 transition-opacity">
-              VEYRA
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-mono-luxury tracking-[0.35em] text-[var(--gold-accent)] uppercase -mt-0.5 font-bold">
-              Nigeria
-            </span>
+          <Link href="/" className="group flex items-center">
+            <Image
+              src="/images/logo/veyra-logo-horizontal.png"
+              alt="Veyra Nigeria"
+              width={260}
+              height={70}
+              priority
+              className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
+            />
           </Link>
         </div>
 
@@ -161,67 +144,75 @@ export default function Navbar() {
             </button>
 
             {/* Notifications Dropdown Panel */}
-            {isNotifOpen && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl surface-card border border-[var(--border-subtle)] shadow-2xl p-4 space-y-3 z-50 animate-fadeIn">
-                <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-mono-luxury font-bold uppercase text-[var(--text-primary)]">
-                      Notifications
-                    </span>
-                    {unreadNotifs > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[10px] font-bold">
-                        {unreadNotifs} new
+            <AnimatePresence>
+              {isNotifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -12, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.96 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl surface-card border border-[var(--border-subtle)] shadow-2xl p-4 space-y-3 z-50"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-mono-luxury font-bold uppercase text-[var(--text-primary)]">
+                        Notifications
                       </span>
+                      {unreadNotifs > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[10px] font-bold">
+                          {unreadNotifs} new
+                        </span>
+                      )}
+                    </div>
+
+                    {unreadNotifs > 0 && (
+                      <button
+                        onClick={markAllNotificationsAsRead}
+                        className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold hover:underline uppercase"
+                      >
+                        Mark read
+                      </button>
                     )}
                   </div>
 
-                  {unreadNotifs > 0 && (
-                    <button
-                      onClick={markAllNotificationsAsRead}
-                      className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold hover:underline uppercase"
-                    >
-                      Mark read
-                    </button>
-                  )}
-                </div>
-
-                <div className="max-h-72 overflow-y-auto space-y-2">
-                  {userNotifications.slice(0, 4).map((notif) => (
-                    <div
-                      key={notif.id}
-                      onClick={() => {
-                        markNotificationAsRead(notif.id);
-                        setIsNotifOpen(false);
-                      }}
-                      className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
-                        notif.read
-                          ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)] opacity-70'
-                          : 'bg-[var(--bg-surface)] border-[var(--gold-accent)]/30'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-[10px] font-mono-luxury text-[var(--text-muted)]">
-                        <span className="font-bold text-[var(--text-primary)]">{notif.title}</span>
-                        <span>{notif.timestamp}</span>
+                  <div className="max-h-72 overflow-y-auto space-y-2">
+                    {userNotifications.slice(0, 4).map((notif) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => {
+                          markNotificationAsRead(notif.id);
+                          setIsNotifOpen(false);
+                        }}
+                        className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
+                          notif.read
+                            ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)] opacity-70'
+                            : 'bg-[var(--bg-surface)] border-[var(--gold-accent)]/30'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                          <span className="font-bold text-[var(--text-primary)]">{notif.title}</span>
+                          <span>{notif.timestamp}</span>
+                        </div>
+                        <p className="text-xs text-[var(--text-secondary)] font-light mt-0.5 leading-relaxed line-clamp-2">
+                          {notif.message}
+                        </p>
                       </div>
-                      <p className="text-xs text-[var(--text-secondary)] font-light mt-0.5 leading-relaxed line-clamp-2">
-                        {notif.message}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
 
-                <div className="pt-2 border-t border-[var(--border-subtle)] text-center">
-                  <Link
-                    href="/profile"
-                    onClick={() => setIsNotifOpen(false)}
-                    className="text-xs font-mono-luxury text-[var(--gold-accent)] uppercase font-bold hover:underline inline-flex items-center gap-1"
-                  >
-                    <span>View All Orders & Reviews</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            )}
+                  <div className="pt-2 border-t border-[var(--border-subtle)] text-center">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsNotifOpen(false)}
+                      className="text-xs font-mono-luxury text-[var(--gold-accent)] uppercase font-bold hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>View All Orders & Reviews</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* User Profile / Dashboard Link */}
@@ -258,6 +249,21 @@ export default function Navbar() {
             </Link>
           )}
 
+          {/* Curated Wardrobe Vault */}
+          <button
+            onClick={() => setIsVaultOpen(true)}
+            className="relative flex items-center justify-center h-11 w-11 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--gold-accent)] hover:text-[var(--gold-accent)] transition-all shadow-sm"
+            title="Curated Wardrobe Vault"
+            aria-label="Open Wardrobe Vault"
+          >
+            <Bookmark className="h-5 w-5" />
+            {vault.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--gold-accent)] text-[11px] font-bold text-black shadow-md">
+                {vault.length}
+              </span>
+            )}
+          </button>
+
           {/* Shopping Bag */}
           <button
             onClick={() => setIsCartOpen(true)}
@@ -273,30 +279,6 @@ export default function Navbar() {
           </button>
         </div>
 
-      </div>
-
-      {/* Mobile Sub-Navigation Bar */}
-      <div className="md:hidden flex items-center justify-around border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] py-3 px-4 text-xs font-mono-luxury uppercase tracking-wider">
-        <button
-          onClick={() => setSelectedGender(selectedGender === 'male' ? 'female' : 'male')}
-          className="text-[var(--gold-accent)] font-bold px-3 py-1.5 rounded-lg bg-[var(--badge-bg)]"
-        >
-          {selectedGender === 'male' ? "Men's Wear" : "Women's Wear"}
-        </button>
-        {navLinks.map((link) => {
-          const isActive = pathname === link.href;
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`px-2.5 py-1.5 rounded transition-colors ${
-                isActive ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-secondary)]'
-              }`}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
       </div>
     </header>
   );

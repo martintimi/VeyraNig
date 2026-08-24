@@ -31,7 +31,7 @@ export default function OutfitCanvas() {
         <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--bg-primary)]/80 border border-[var(--border-subtle)] backdrop-blur-md shadow-sm">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-xs font-mono-luxury uppercase tracking-wider font-bold text-[var(--text-primary)]">
-            {userAuth.isLoggedIn ? `${userAuth.name.split(' ')[0]}'s Body Twin` : '3D Body Twin'}
+            {userAuth.isLoggedIn && userAuth.name ? `${userAuth.name.split(' ')[0]}'s Body Twin` : 'Standard 3D Twin'}
           </span>
           <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] border-l border-[var(--border-subtle)] pl-2">
             {bodyProfile.heightCm}cm · {bodyProfile.weightKg}kg · {selectedGender}

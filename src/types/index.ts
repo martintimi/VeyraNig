@@ -182,7 +182,8 @@ export interface Order {
     inseamCm: number;
   };
   items: OrderItem[];
-  paystackRef: string;
+  paymentRef?: string;
+  paystackRef?: string;
   isRated?: boolean;
   rating?: number;
   reviewComment?: string;

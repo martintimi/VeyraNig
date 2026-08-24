@@ -9,11 +9,12 @@ import {
   Sparkles, Check, ShoppingBag, Layers, ShieldCheck, Truck, RotateCcw,
   Star, Heart, ArrowLeft, ArrowRight, Share2, Ruler, Scissors,
   Building, Phone, MapPin, CheckCircle2, ChevronRight, MessageCircle,
-  Copy, ExternalLink, SlidersHorizontal
+  Copy, ExternalLink, SlidersHorizontal, Bookmark, Eye
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import ProductQuickLookModal from '@/components/shop/ProductQuickLookModal';
 
 export default function BrandStorefrontPage() {
   const params = useParams();
@@ -27,7 +28,11 @@ export default function BrandStorefrontPage() {
     activeOutfit,
     setOutfitItem,
     removeOutfitItem,
+    toggleVaultItem,
+    isInVault,
   } = useStore();
+
+  const [quickLookProduct, setQuickLookProduct] = useState<any>(null);
 
   // Clean and decode slug (handles %20, dashes, etc.)
   const decodedSlug = rawSlug ? decodeURIComponent(rawSlug).toLowerCase() : 'sartorial-lagos';
@@ -236,8 +241,8 @@ export default function BrandStorefrontPage() {
           </div>
         </div>
 
-        {/* Product Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Product Cards Grid (2-COLUMNS ON MOBILE, 4-COLUMNS ON DESKTOP) */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
           {filteredProducts.map((product) => {
             const isWorn = activeOutfit[product.category]?.id === product.id;
             const fitResult = calculateFitMatch(bodyProfile, product);
@@ -245,12 +250,15 @@ export default function BrandStorefrontPage() {
             return (
               <div
                 key={product.id}
-                className={`group relative rounded-3xl surface-card overflow-hidden flex flex-col justify-between hover:shadow-2xl transition-all duration-500 border border-[var(--border-subtle)] ${
+                className={`group relative rounded-2xl sm:rounded-3xl surface-card overflow-hidden flex flex-col justify-between hover:shadow-2xl transition-all duration-500 border border-[var(--border-subtle)] ${
                   isWorn ? 'border-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30' : ''
                 }`}
               >
-                {/* Image Container with Direct Link */}
-                <Link href={`/shop/${product.id}`} className="relative h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block">
+                {/* Image Container with Quick Look Click */}
+                <div
+                  onClick={() => setQuickLookProduct(product)}
+                  className="relative h-48 sm:h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block cursor-pointer group/img"
+                >
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
@@ -259,47 +267,88 @@ export default function BrandStorefrontPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-100"
                   />
                   
-                  {/* Origin Badge */}
-                  <span className="absolute top-4 left-4 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-mono-luxury font-bold uppercase text-[var(--gold-accent)] border border-[var(--gold-accent)]/20">
-                    {product.garmentOriginType === 'handmade_designer' ? 'Bespoke Tailored' : 'Ready-to-Wear'}
-                  </span>
+                  {/* Top Left: Atelier Attribution */}
+                  <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10">
+                    <span className="px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md text-[9px] sm:text-[10px] font-mono-luxury uppercase tracking-wider text-white border border-white/10 font-bold shadow-md">
+                      {product.vendorName}
+                    </span>
+                  </div>
+
+                  {/* Top Right: Curated Vault Bookmark Button */}
+                  <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleVaultItem(product);
+                      }}
+                      className={`p-2 sm:p-2.5 rounded-full backdrop-blur-md border transition-all ${
+                        isInVault(product.id)
+                          ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md scale-105'
+                          : 'bg-black/60 text-white/80 border-white/10 hover:text-white hover:bg-black/85'
+                      }`}
+                      title={isInVault(product.id) ? 'In Curated Vault' : 'Curate to Wardrobe Vault'}
+                    >
+                      <Bookmark className={`h-3.5 w-3.5 ${isInVault(product.id) ? 'fill-current' : ''}`} />
+                    </button>
+                  </div>
+
+                  {/* Quick View Center Overlay */}
+                  <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <span className="px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md text-white text-[10px] font-mono-luxury uppercase tracking-wider font-bold border border-white/20 shadow-lg flex items-center gap-1.5">
+                      <Eye className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                      <span>Quick View</span>
+                    </span>
+                  </div>
 
                   {/* Sizing Match Pill */}
-                  <div className="absolute bottom-4 left-4 right-4 p-2.5 rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between z-10">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[11px] font-mono-luxury text-emerald-400 font-semibold uppercase">
+                  <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between z-10 shadow-md">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[9px] sm:text-[11px] font-mono-luxury text-emerald-400 font-semibold uppercase">
                         {fitResult.matchScore}% Match
                       </span>
                     </div>
 
-                    <span className="text-[11px] font-mono-luxury text-white font-bold bg-emerald-500/20 px-2.5 py-0.5 rounded-lg border border-emerald-500/30">
+                    <span className="text-[9px] sm:text-[11px] font-mono-luxury text-white font-bold bg-emerald-500/20 px-1.5 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg border border-emerald-500/30">
                       Size {fitResult.recommendedSize}
                     </span>
                   </div>
-                </Link>
+                </div>
 
                 {/* Product Meta */}
-                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-3 sm:space-y-4">
                   <div>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <Link href={`/shop/${product.id}`} className="hover:text-[var(--gold-accent)] transition-colors">
-                        <h4 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                          {product.name}
-                        </h4>
-                      </Link>
-                      <span className="font-editorial text-xl font-bold text-[var(--text-primary)] shrink-0">
-                        ₦{product.price.toLocaleString()}
+                    <div className="flex items-center justify-between gap-2 pb-1">
+                      <span className="text-[10px] sm:text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold tracking-wider truncate">
+                        {product.vendorName}
                       </span>
+                      <Link
+                        href={`/shop/${product.id}`}
+                        className="text-[10px] sm:text-xs font-mono-luxury uppercase text-[var(--text-muted)] hover:text-[var(--gold-accent)] font-bold inline-flex items-center gap-1 shrink-0 transition-colors"
+                      >
+                        <span>Details</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
                     </div>
 
-                    <p className="text-xs text-[var(--text-secondary)] mt-1.5 line-clamp-2 leading-relaxed font-light">
-                      {product.description}
-                    </p>
+                    <Link href={`/shop/${product.id}`} className="hover:text-[var(--gold-accent)] transition-colors block">
+                      <h4 className="font-editorial text-sm sm:text-2xl font-bold text-[var(--text-primary)] leading-snug line-clamp-1">
+                        {product.name}
+                      </h4>
+                    </Link>
+
+                    <div className="flex items-baseline gap-2 pt-1.5">
+                      <span className="font-editorial text-lg sm:text-2xl font-bold text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm">
+                        ₦{product.price.toLocaleString()}
+                      </span>
+                      <span className="text-[9px] sm:text-[11px] font-mono-luxury text-emerald-500 font-bold">
+                        ● In Stock
+                      </span>
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[var(--border-subtle)]">
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-2 sm:pt-3 border-t border-[var(--border-subtle)]">
                     <button
                       onClick={() => {
                         if (isWorn) {
@@ -308,7 +357,7 @@ export default function BrandStorefrontPage() {
                           setOutfitItem(product);
                         }
                       }}
-                      className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap transition-all ${
+                      className={`flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1 sm:px-2 rounded-full text-[9px] sm:text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap transition-all ${
                         isWorn
                           ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
                           : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] hover:border-[var(--border-hover)]'
@@ -329,7 +378,7 @@ export default function BrandStorefrontPage() {
 
                     <button
                       onClick={() => addToCart(product, fitResult.recommendedSize)}
-                      className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-full text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+                      className="flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1 sm:px-2 rounded-full text-[9px] sm:text-[11px] font-mono-luxury uppercase tracking-wider font-semibold whitespace-nowrap bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
                     >
                       <ShoppingBag className="h-3 w-3 shrink-0" />
                       <span className="truncate">Add to Bag</span>
@@ -388,6 +437,12 @@ export default function BrandStorefrontPage() {
 
         </div>
       </div>
+
+      {/* Garment Quick Look Editorial Modal */}
+      <ProductQuickLookModal
+        product={quickLookProduct}
+        onClose={() => setQuickLookProduct(null)}
+      />
 
     </div>
   );
