@@ -87,6 +87,7 @@ export interface Product {
   layerZIndex: number;
   isUserUploaded?: boolean;
   stockQuantity?: number;
+  sizeStock?: Record<string, number>;
 }
 
 export interface Vendor {

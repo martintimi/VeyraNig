@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useStore } from '@/lib/store/useStore';
 import {
   LayoutDashboard, UploadCloud, PackageCheck, BarChart3,
   Building, MessageSquare, DollarSign, LogOut, Sun, Moon,
-  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors
+  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle
 } from 'lucide-react';
 
 import Image from 'next/image';
@@ -25,6 +25,30 @@ export default function VendorPortalLayout({
     theme,
     toggleTheme
   } = useStore();
+
+  const [liveStatus, setLiveStatus] = useState<{
+    isVerified: boolean;
+    approvalStatus: string;
+  }>({
+    isVerified: false,
+    approvalStatus: 'pending'
+  });
+
+  useEffect(() => {
+    async function checkVendorStatus() {
+      try {
+        const res = await fetch('/api/vendor/profile');
+        const data = await res.json();
+        if (res.ok && data.success && data.vendor) {
+          setLiveStatus({
+            isVerified: !!data.vendor.isVerified,
+            approvalStatus: data.vendor.approvalStatus || (data.vendor.isVerified ? 'approved' : 'pending')
+          });
+        }
+      } catch (e) {}
+    }
+    checkVendorStatus();
+  }, [pathname]);
 
   // If on the auth page, render without the dashboard shell
   if (pathname === '/vendor-portal/auth') {
@@ -107,7 +131,7 @@ export default function VendorPortalLayout({
           </Link>
 
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className={`h-2 w-2 rounded-full ${liveStatus.isVerified ? 'bg-emerald-500 animate-pulse' : liveStatus.approvalStatus === 'rejected' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'}`} />
             <span className="font-bold text-[var(--text-primary)]">{vendorProfile.brandName}</span>
             <span className="text-[var(--text-muted)]">({vendorProfile.location})</span>
           </div>
@@ -148,10 +172,10 @@ export default function VendorPortalLayout({
       {/* ======================================================== */}
       {/* 2. BODY LAYOUT (SIDEBAR + ACTIVE PAGE CONTENT) */}
       {/* ======================================================== */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex">
         
-        {/* Left Sidebar */}
-        <aside className="w-64 lg:w-72 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 flex flex-col justify-between p-4 sm:p-6 shrink-0 hidden md:flex">
+        {/* Left Fixed Sticky Sidebar */}
+        <aside className="w-64 lg:w-72 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 flex flex-col justify-between p-4 sm:p-6 shrink-0 hidden md:flex sticky top-[65px] h-[calc(100vh-65px)] self-start overflow-y-auto">
           
           <div className="space-y-6">
             
@@ -209,8 +233,10 @@ export default function VendorPortalLayout({
               <strong className="text-emerald-500">Active</strong>
             </div>
             <div className="flex items-center justify-between">
-              <span>Lagos Dispatch:</span>
-              <strong className="text-[var(--gold-accent)]">24-48h</strong>
+              <span>Storefront Status:</span>
+              <strong className={liveStatus.isVerified ? 'text-emerald-500' : liveStatus.approvalStatus === 'rejected' ? 'text-rose-400' : 'text-amber-400'}>
+                {liveStatus.isVerified ? 'Verified' : liveStatus.approvalStatus === 'rejected' ? 'Action Needed' : 'Pending Review'}
+              </strong>
             </div>
           </div>
 

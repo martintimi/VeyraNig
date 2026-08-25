@@ -1,0 +1,128 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const { slug } = await params;
+
+    if (!slug) {
+      return NextResponse.json({ error: 'Brand slug is required' }, { status: 400 });
+    }
+
+    const decodedSlug = decodeURIComponent(slug).toLowerCase().trim();
+    const cleanBrandName = decodedSlug.replace(/[-_]/g, ' ');
+
+    const supabase = await createClient();
+
+    // 1. Find Vendor in Database
+    const { data: vendorList } = await supabase
+      .from('vendors')
+      .select('*');
+
+    let resolvedVendor = vendorList?.find((v: any) => 
+      v.id?.toLowerCase() === decodedSlug ||
+      v.id?.toLowerCase().replace(/-/g, ' ') === cleanBrandName ||
+      v.brand_name?.toLowerCase() === cleanBrandName ||
+      v.brand_name?.toLowerCase() === decodedSlug
+    );
+
+    if (!resolvedVendor && vendorList && vendorList.length > 0) {
+      resolvedVendor = vendorList[0];
+    }
+
+    const vendorId = resolvedVendor?.id || decodedSlug.replace(/\s+/g, '-');
+    const brandName = resolvedVendor?.brand_name || cleanBrandName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+    // Parse bio and multi-social links
+    let bioText = resolvedVendor?.bio || '';
+    let socialLinks: any = {
+      instagram: '@' + (brandName.toLowerCase().replace(/\s+/g, '_')),
+      tiktok: '',
+      snapchat: '',
+      whatsapp: resolvedVendor?.phone || ''
+    };
+
+    if (bioText.startsWith('{') && bioText.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(bioText);
+        bioText = parsed.bio || '';
+        if (parsed.socialLinks) {
+          socialLinks = { ...socialLinks, ...parsed.socialLinks };
+        }
+      } catch (e) {}
+    }
+
+    if (!bioText) {
+      bioText = resolvedVendor?.vendor_type === 'boutique_merchant'
+        ? 'Contemporary Nigerian ready-to-wear streetwear and boutique fashion drops.'
+        : 'Master bespoke tailoring and luxury artisanal apparel.';
+    }
+
+    // 2. Fetch Products strictly for this Brand from Database
+    const { data: dbProducts } = await supabase
+      .from('products')
+      .select('*')
+      .or(`vendor_id.eq.${vendorId},vendor_id.eq.${decodedSlug}`)
+      .eq('is_published', true)
+      .order('created_at', { ascending: false });
+
+    const formattedProducts = (dbProducts || []).map((p: any) => {
+      let normalizedColors = [];
+      if (Array.isArray(p.colors)) {
+        normalizedColors = p.colors.map((c: any, idx: number) => 
+          typeof c === 'string' ? { name: c === '#111111' ? 'Black' : c === '#ffffff' ? 'White' : `Color ${idx+1}`, hex: c } : c
+        );
+      }
+      return {
+        id: p.id,
+        vendorId: p.vendor_id,
+        vendorName: brandName,
+        name: p.name,
+        price: Number(p.price),
+        description: p.description || '',
+        category: p.category || 'tops',
+        genderTarget: p.gender_target || 'unisex',
+        garmentOriginType: p.garment_origin_type || 'ready_made_boutique',
+        imageUrl: p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
+        tags: Array.isArray(p.tags) ? p.tags : [],
+        colors: normalizedColors,
+        sizes: Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : ['S', 'M', 'L', 'XL', 'XXL'],
+        sizeStock: p.size_stock || { S: 10, M: 25, L: 30, XL: 15, XXL: 5 },
+        stockQuantity: p.stock_quantity || 85,
+        rating: 5.0,
+        reviewCount: 18,
+        createdAt: p.created_at
+      };
+    });
+
+    const vendorPayload = {
+      id: vendorId,
+      name: brandName,
+      designerName: resolvedVendor?.designer_name || 'Boutique Lead',
+      vendorType: resolvedVendor?.vendor_type || 'boutique_merchant',
+      origin: resolvedVendor?.location || 'Victoria Island, Lagos',
+      bio: bioText,
+      socialLinks,
+      instagram: socialLinks.instagram,
+      tiktok: socialLinks.tiktok,
+      snapchat: socialLinks.snapchat,
+      whatsapp: socialLinks.whatsapp || resolvedVendor?.phone,
+      productCount: formattedProducts.length,
+      satisfactionRate: 99.4,
+      deliveryDays: '24 - 48 Hours (Lagos Hub Dispatch)',
+      isVerified: true
+    };
+
+    return NextResponse.json({
+      success: true,
+      vendor: vendorPayload,
+      products: formattedProducts,
+      count: formattedProducts.length
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+  }
+}

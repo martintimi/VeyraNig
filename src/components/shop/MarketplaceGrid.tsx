@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory, GarmentOriginType } from '@/types';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
 import {
   Sparkles, Check, ShoppingBag, Search, Scissors, ArrowRight,
   ChevronLeft, ChevronRight, RotateCcw, PackageSearch, Layers,
-  Bookmark, Eye
+  Bookmark, Eye, Plus
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,7 +29,12 @@ export default function MarketplaceGrid() {
     setSelectedOriginType,
     toggleVaultItem,
     isInVault,
+    fetchProductsFromDb,
   } = useStore();
+
+  useEffect(() => {
+    fetchProductsFromDb();
+  }, [fetchProductsFromDb]);
 
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<GarmentCategory | 'all'>('all');
@@ -46,13 +51,21 @@ export default function MarketplaceGrid() {
     { id: 'accessories', label: 'Fila Caps' },
   ];
 
-  const brandOptions = [
-    { id: 'all', name: 'All Ateliers', count: allProducts.length },
-    { id: 'sartorial-lagos', name: 'Sartorial Lagos', count: allProducts.filter(p => p.vendorId === 'sartorial-lagos').length },
-    { id: 'street-souk', name: 'Street Souk Co.', count: allProducts.filter(p => p.vendorId === 'street-souk').length },
-    { id: 'yaba-denim', name: 'Yaba Denim Works', count: allProducts.filter(p => p.vendorId === 'yaba-denim').length },
-    { id: 'kano-leather', name: 'Kano Artisan Footwear', count: allProducts.filter(p => p.vendorId === 'kano-leather').length },
-  ];
+  const brandOptions = useMemo(() => {
+    const brandsMap = new Map<string, { id: string; name: string; count: number }>();
+    brandsMap.set('all', { id: 'all', name: 'All Ateliers & Boutiques', count: allProducts.length });
+    
+    allProducts.forEach(p => {
+      const vId = p.vendorId || 'boutique';
+      const vName = p.vendorName || (vId.charAt(0).toUpperCase() + vId.slice(1).replace(/-/g, ' '));
+      if (!brandsMap.has(vId)) {
+        brandsMap.set(vId, { id: vId, name: vName, count: 0 });
+      }
+      brandsMap.get(vId)!.count += 1;
+    });
+
+    return Array.from(brandsMap.values());
+  }, [allProducts]);
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter((p) => {
@@ -269,26 +282,29 @@ export default function MarketplaceGrid() {
         <div className="p-12 sm:p-16 rounded-3xl surface-card border border-[var(--border-subtle)] text-center space-y-6 animate-fadeIn max-w-xl mx-auto shadow-xl">
           
           <div className="relative h-20 w-20 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center mx-auto shadow-inner">
-            <PackageSearch className="h-10 w-10 animate-bounce" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 animate-ping" />
+            <PackageSearch className="h-10 w-10 text-[var(--gold-accent)]" />
           </div>
 
           <div className="space-y-2">
             <h3 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-              No Nigerian Garments Found
+              {allProducts.length === 0 ? 'New Season Drops Coming Soon' : 'No Garments Match Filter'}
             </h3>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light max-w-md mx-auto leading-relaxed">
-              We couldn&apos;t find any designs matching &ldquo;{searchQuery || selectedCategory || selectedBrand}&rdquo;. Try adjusting your search query or reset your filters.
+              {allProducts.length === 0
+                ? 'Our partner boutiques and ateliers are currently preparing their upcoming collections. Check back shortly for new exclusive drops.'
+                : `We couldn't find any designs matching "${searchQuery || selectedCategory || selectedBrand}". Try adjusting your filters.`}
             </p>
           </div>
 
-          <button
-            onClick={handleResetFilters}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Reset All Filters</span>
-          </button>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Reset Filters</span>
+            </button>
+          </div>
 
         </div>
 

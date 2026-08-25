@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store/useStore';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
 import {
   Sparkles, Check, ShoppingBag, Layers, ShieldCheck, Truck, RotateCcw,
   Star, Heart, ArrowLeft, ArrowRight, Share2, Ruler, Scissors,
-  Building, Phone, MapPin, CheckCircle2, ChevronRight
+  Building, Phone, MapPin, CheckCircle2, ChevronRight, Loader2, Store
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,32 +19,131 @@ export default function ProductDetailPage() {
   const productId = params?.id as string;
 
   const {
-    allProducts,
     bodyProfile,
     addToCart,
     setOutfitItem,
-    setIsCartOpen,
+    allProducts,
+    fetchProductsFromDb,
+    toggleVaultItem,
+    isInVault,
   } = useStore();
 
-  const product = allProducts.find((p) => p.id === productId) || allProducts[0];
-  const fitResult = calculateFitMatch(bodyProfile, product);
+  const [product, setProduct] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const [selectedSize, setSelectedSize] = useState(fitResult.recommendedSize || product.sizes[0]);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
+  const [selectedSize, setSelectedSize] = useState('M');
+  const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'details' | 'sizing' | 'reviews'>('details');
   const [showSizeModal, setShowSizeModal] = useState(false);
 
-  // Cross-brand styling suggestions
+  // 1. Fetch exact single product from API by ID
+  useEffect(() => {
+    async function loadSingleProduct() {
+      if (!productId) return;
+      setIsLoading(true);
+      setErrorMsg('');
+
+      try {
+        const res = await fetch(`/api/products/${productId}`);
+        const data = await res.json();
+
+        if (res.ok && data.success && data.product) {
+          const p = data.product;
+          setProduct(p);
+          setSelectedSize(p.sizes?.[0] || 'M');
+          setSelectedColor(p.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
+        } else {
+          setErrorMsg(data.error || 'Product not found');
+        }
+      } catch (err: any) {
+        setErrorMsg('Failed to load product details.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadSingleProduct();
+    fetchProductsFromDb();
+  }, [productId, fetchProductsFromDb]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center p-6 space-y-5 animate-fadeIn">
+        <div className="relative flex flex-col items-center space-y-4 animate-pulse">
+          <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/30 shadow-2xl p-3">
+            <Image
+              src="/images/logo/veyra-emblem.png"
+              alt="Veyra"
+              width={64}
+              height={64}
+              className="h-14 w-auto object-contain"
+            />
+            <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
+          </div>
+
+          <div className="text-center space-y-1">
+            <div className="font-editorial text-2xl font-bold tracking-[0.25em] text-[var(--text-primary)]">
+              VEYRA
+            </div>
+            <div className="text-[10px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--gold-accent)] font-bold">
+              Loading Product Specifications...
+            </div>
+          </div>
+
+          <div className="w-36 h-[2px] bg-[var(--border-subtle)] rounded-full overflow-hidden mt-2">
+            <div className="h-full bg-gradient-to-r from-[var(--gold-accent)] to-emerald-400 animate-shimmer" style={{ width: '100%' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product || errorMsg) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center p-6 space-y-4 animate-fadeIn">
+        <div className="h-16 w-16 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mx-auto">
+          <RotateCcw className="h-8 w-8" />
+        </div>
+        <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+          Garment Not Found
+        </h2>
+        <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
+          {errorMsg || 'The requested product is no longer active in the storefront catalog.'}
+        </p>
+        <Link
+          href="/shop"
+          className="px-6 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold hover:opacity-90 transition-all shadow-md inline-flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Return to Storefront</span>
+        </Link>
+      </div>
+    );
+  }
+
+  const fitResult = calculateFitMatch(bodyProfile, product);
+  const isSaved = isInVault(product.id);
+
+  // Stock for chosen size
+  const currentSizeStock = product.sizeStock && selectedSize && product.sizeStock[selectedSize] !== undefined
+    ? product.sizeStock[selectedSize]
+    : (product.stockQuantity ?? 15);
+
+  const isOutOfStock = currentSizeStock === 0;
+
+  // Cross-brand styling suggestions from other products in DB
   const complementaryItems = allProducts
     .filter((p) => p.id !== product.id && p.category !== product.category)
     .slice(0, 3);
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     addToCart(product, selectedSize);
     confetti({
-      particleCount: 40,
-      spread: 50,
+      particleCount: 45,
+      spread: 55,
       origin: { y: 0.6 },
       colors: ['#e6c367', '#10b981', '#ffffff']
     });
@@ -56,14 +155,14 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12 animate-fadeIn">
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12 animate-fadeIn pb-20">
       
       {/* Top Breadcrumbs & Back Navigation */}
-      <div className="flex items-center justify-between text-xs font-mono-luxury text-[var(--text-muted)]">
+      <div className="flex items-center justify-between text-xs font-mono-luxury text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">Home</Link>
           <span>/</span>
-          <Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Shop Catalog</Link>
+          <Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Shop</Link>
           <span>/</span>
           <span className="text-[var(--gold-accent)] uppercase font-bold">{product.category}</span>
           <span>/</span>
@@ -72,10 +171,10 @@ export default function ProductDetailPage() {
 
         <Link
           href="/shop"
-          className="flex items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors font-bold uppercase"
+          className="flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors font-bold uppercase text-xs"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Back to Catalog</span>
+          <span>Back to Shop</span>
         </Link>
       </div>
 
@@ -87,7 +186,7 @@ export default function ProductDetailPage() {
         {/* ======================================================== */}
         <div className="lg:col-span-6 space-y-5 sticky lg:top-24">
           
-          <div className="relative h-[480px] sm:h-[580px] w-full rounded-3xl overflow-hidden surface-card border border-[var(--border-subtle)] shadow-2xl group">
+          <div className="relative h-[480px] sm:h-[540px] w-full rounded-3xl overflow-hidden surface-card border border-[var(--border-subtle)] shadow-xl group">
             <Image
               src={product.imageUrl}
               alt={product.name}
@@ -97,11 +196,8 @@ export default function ProductDetailPage() {
               className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
             />
 
-            {/* Badges Overlays */}
+            {/* Vendor Badge Overlay */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-              <span className="px-3 py-1 rounded-full bg-black/85 backdrop-blur-md text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-[10px] font-mono-luxury uppercase font-bold tracking-widest">
-                {product.garmentOriginType === 'handmade_designer' ? '● Bespoke Tailoring' : '● Ready-to-Wear'}
-              </span>
               <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md text-white text-[10px] font-mono-luxury uppercase font-bold">
                 {product.vendorName}
               </span>
@@ -118,43 +214,35 @@ export default function ProductDetailPage() {
             </button>
           </div>
 
-          {/* Guarantee Badges Row */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 rounded-2xl surface-card border border-[var(--border-subtle)] text-center space-y-1">
-              <ShieldCheck className="h-4 w-4 text-emerald-500 mx-auto" />
-              <span className="text-[9px] font-mono-luxury uppercase block text-[var(--text-muted)] font-bold">Verified Escrow</span>
-              <span className="text-[10px] text-[var(--text-primary)] font-bold block">100% Protected</span>
-            </div>
-
-            <div className="p-3 rounded-2xl surface-card border border-[var(--border-subtle)] text-center space-y-1">
-              <Truck className="h-4 w-4 text-[var(--gold-accent)] mx-auto" />
-              <span className="text-[9px] font-mono-luxury uppercase block text-[var(--text-muted)] font-bold">Lagos Hub</span>
-              <span className="text-[10px] text-[var(--text-primary)] font-bold block">24-48hr Delivery</span>
-            </div>
-
-            <div className="p-3 rounded-2xl surface-card border border-[var(--border-subtle)] text-center space-y-1">
-              <RotateCcw className="h-4 w-4 text-cyan-400 mx-auto" />
-              <span className="text-[9px] font-mono-luxury uppercase block text-[var(--text-muted)] font-bold">Fit Guarantee</span>
-              <span className="text-[10px] text-[var(--text-primary)] font-bold block">Free Alterations</span>
-            </div>
-          </div>
-
         </div>
 
         {/* ======================================================== */}
-        {/* RIGHT COLUMN: PRODUCT META, SIZING & CHECKOUT (6 COLS) */}
+        {/* RIGHT COLUMN: SPECS, SIZES, STOCK & ADD TO BAG (6 COLS) */}
         {/* ======================================================== */}
-        <div className="lg:col-span-6 space-y-8">
+        <div className="lg:col-span-6 space-y-6">
           
-          {/* Atelier Attribution & Product Title */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
-                {product.vendorName}
-              </span>
-              <span className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
-                · Victoria Island, Lagos
-              </span>
+          {/* Header & Vendor */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <Link
+                href={`/brand/${encodeURIComponent(product.vendorName)}`}
+                className="inline-flex items-center gap-1.5 text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold hover:underline"
+              >
+                <Store className="h-3.5 w-3.5" />
+                <span>{product.vendorName}</span>
+              </Link>
+
+              <button
+                onClick={() => toggleVaultItem(product)}
+                className={`p-2 rounded-full border transition-all ${
+                  isSaved
+                    ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
+                    : 'surface-card border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-rose-400'
+                }`}
+                title={isSaved ? 'In Vault' : 'Save to Vault'}
+              >
+                <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+              </button>
             </div>
 
             <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--text-primary)] leading-tight">
@@ -162,22 +250,20 @@ export default function ProductDetailPage() {
             </h1>
 
             {/* Price & Rating */}
-            <div className="flex items-center justify-between gap-4 pt-2">
+            <div className="flex items-center justify-between flex-wrap gap-3 pt-1">
               <div className="flex items-baseline gap-3">
-                <span className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-                  ₦{product.price.toLocaleString()}
+                <span className="font-editorial text-3xl sm:text-4xl font-bold text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm">
+                  ₦{Number(product.price).toLocaleString()}
                 </span>
-                {product.originalPrice && (
-                  <span className="text-base text-[var(--text-muted)] line-through font-mono-luxury">
-                    ₦{product.originalPrice.toLocaleString()}
-                  </span>
-                )}
+                <span className="text-xs font-mono-luxury text-emerald-500 font-bold">
+                  ● In Stock (Express Dispatch)
+                </span>
               </div>
 
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-[var(--text-primary)]">{product.rating}</span>
-                <span className="text-[var(--text-muted)]">({product.reviewCount} reviews)</span>
+                <span className="font-bold text-[var(--text-primary)]">5.0</span>
+                <span className="text-[var(--text-muted)]">(18 reviews)</span>
               </div>
             </div>
           </div>
@@ -188,49 +274,56 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[var(--gold-accent)]" />
                 <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--gold-accent)]">
-                  3D Body Twin Size Match
+                  3D Body Twin Size Analysis
                 </span>
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">
-                {fitResult.matchScore}% Match
+                {fitResult.matchScore}% Fit Match
               </span>
             </div>
 
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              Recommended Size: <strong className="text-[var(--text-primary)]">{fitResult.recommendedSize}</strong> tailored for your {bodyProfile.chestCm}cm chest and {bodyProfile.shoulderWidthCm}cm shoulder span with zero pull.
+              Recommended Size: <strong className="text-[var(--text-primary)]">{fitResult.recommendedSize}</strong> tailored for Nigerian silhouette proportions.
             </p>
 
-            {/* Size Selector Pills */}
+            {/* Size Selector Pills with Key Props */}
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between text-xs font-mono-luxury">
-                <span className="text-[var(--text-muted)] uppercase font-bold">Select Size:</span>
-                <button
-                  onClick={() => setShowSizeModal(true)}
-                  className="text-[var(--gold-accent)] hover:underline flex items-center gap-1 uppercase font-bold"
-                >
-                  <Ruler className="h-3 w-3" />
-                  <span>Size Chart</span>
-                </button>
+                <span className="text-[var(--text-muted)] uppercase font-bold">Choose Size:</span>
+                {isOutOfStock ? (
+                  <span className="text-rose-400 font-bold">❌ Out of Stock in Size {selectedSize}</span>
+                ) : currentSizeStock <= 5 ? (
+                  <span className="text-amber-500 font-bold animate-pulse">🔥 Only {currentSizeStock} left in Size {selectedSize}!</span>
+                ) : (
+                  <span className="text-emerald-500 font-bold">● In Stock ({currentSizeStock} available)</span>
+                )}
               </div>
 
-              <div className="grid grid-cols-5 gap-2 font-mono-luxury text-xs">
-                {product.sizes.map((size) => {
+              <div className="grid grid-cols-5 gap-2.5 font-mono-luxury text-xs pt-1">
+                {(product.sizes || ['S', 'M', 'L', 'XL', 'XXL']).map((size: string) => {
                   const isRec = size === fitResult.recommendedSize;
                   const isChosen = size === selectedSize;
+                  const szStock = product.sizeStock?.[size];
+                  const szOutOfStock = szStock === 0;
+
                   return (
                     <button
-                      key={size}
+                      key={`size-btn-${size}`}
+                      type="button"
+                      disabled={szOutOfStock}
                       onClick={() => setSelectedSize(size)}
-                      className={`py-3 rounded-2xl border transition-all text-center relative ${
-                        isChosen
-                          ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold shadow-md border-transparent'
+                      className={`py-3.5 rounded-2xl border transition-all text-center relative flex items-center justify-center font-bold ${
+                        szOutOfStock
+                          ? 'opacity-40 line-through cursor-not-allowed bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                          : isChosen
+                          ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md border-transparent ring-2 ring-emerald-500'
                           : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)]'
                       }`}
                     >
                       <span>{size}</span>
                       {isRec && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 bg-[var(--gold-accent)] text-black text-[8px] font-bold rounded-full uppercase">
-                          Fit
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500 text-white text-[8px] font-black tracking-widest rounded-full uppercase shadow-sm border border-emerald-400/40">
+                          FIT
                         </span>
                       )}
                     </button>
@@ -240,26 +333,31 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Color Selection */}
+          {/* Color Selection with Unique Key Props */}
           {product.colors && product.colors.length > 0 && (
             <div className="space-y-2">
               <span className="text-xs font-mono-luxury uppercase text-[var(--text-secondary)] font-bold block">
-                Color Palette: <strong className="text-[var(--text-primary)]">{selectedColor?.name}</strong>
+                Color Palette: <strong className="text-[var(--text-primary)]">{selectedColor?.name || 'Standard'}</strong>
               </span>
               <div className="flex items-center gap-3">
-                {product.colors.map((c) => (
-                  <button
-                    key={c.name}
-                    onClick={() => setSelectedColor(c)}
-                    className={`h-10 w-10 rounded-full border-2 transition-transform ${
-                      selectedColor?.name === c.name
-                        ? 'border-[var(--gold-accent)] scale-110 shadow-lg'
-                        : 'border-[var(--border-subtle)] hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: c.hex }}
-                    title={c.name}
-                  />
-                ))}
+                {product.colors.map((c: any, index: number) => {
+                  const colorKey = `color-swatch-${c.name || c.hex || index}`;
+                  const isSelected = selectedColor?.name === c.name || selectedColor?.hex === c.hex;
+                  return (
+                    <button
+                      key={colorKey}
+                      type="button"
+                      onClick={() => setSelectedColor(c)}
+                      className={`h-10 w-10 rounded-full border-2 transition-transform ${
+                        isSelected
+                          ? 'border-[var(--gold-accent)] scale-110 shadow-lg ring-2 ring-[var(--gold-accent)]/40'
+                          : 'border-[var(--border-subtle)] hover:scale-105'
+                      }`}
+                      style={{ background: c.hex }}
+                      title={c.name}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}
@@ -268,145 +366,42 @@ export default function ProductDetailPage() {
           <div className="space-y-3 pt-2">
             <button
               onClick={handleAddToCart}
-              className="w-full py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2"
+              disabled={isOutOfStock}
+              className="w-full py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-widest hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ShoppingBag className="h-4 w-4" />
-              <span>Add to Shopping Bag · ₦{product.price.toLocaleString()}</span>
-            </button>
-
-            <button
-              onClick={handleTryInStudio}
-              className="w-full py-3.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-primary)] font-mono-luxury uppercase tracking-wider font-bold text-xs transition-all flex items-center justify-center gap-2"
-            >
-              <Layers className="h-4 w-4 text-[var(--gold-accent)]" />
-              <span>Layer & Mix in Virtual Dressing Room</span>
+              <span>{isOutOfStock ? 'Out of Stock' : 'Add to Bag'}</span>
+              <span className="opacity-60">|</span>
+              <span>₦{Number(product.price).toLocaleString()}</span>
             </button>
           </div>
 
-          {/* Description & Tailoring Notes Tabs */}
-          <div className="pt-6 border-t border-[var(--border-subtle)] space-y-4">
-            <div className="flex items-center gap-4 border-b border-[var(--border-subtle)] pb-2 text-xs font-mono-luxury uppercase tracking-wider">
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`font-bold transition-colors pb-2 relative ${
-                  activeTab === 'details'
-                    ? 'text-[var(--text-primary)] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[var(--gold-accent)]'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                }`}
-              >
-                Fabric & Cut Notes
-              </button>
-              <button
-                onClick={() => setActiveTab('sizing')}
-                className={`font-bold transition-colors pb-2 relative ${
-                  activeTab === 'sizing'
-                    ? 'text-[var(--text-primary)] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[var(--gold-accent)]'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                }`}
-              >
-                Atelier Measurements
-              </button>
+          {/* Tags with Unique Key Props */}
+          {product.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2">
+              {product.tags.map((tag: string, index: number) => (
+                <span
+                  key={`product-tag-${tag}-${index}`}
+                  className="text-[10px] font-mono-luxury uppercase px-2.5 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[var(--text-muted)]"
+                >
+                  #{tag}
+                </span>
+              ))}
             </div>
+          )}
 
-            {activeTab === 'details' && (
-              <div className="space-y-3 text-xs text-[var(--text-secondary)] font-light leading-relaxed animate-fadeIn">
-                <p>{product.description}</p>
-                <div className="grid grid-cols-2 gap-3 pt-2 font-mono-luxury text-[11px]">
-                  <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-                    <span className="text-[var(--text-muted)] uppercase block text-[9px]">Fabric Composition</span>
-                    <strong className="text-[var(--text-primary)]">{product.fabricComposition}</strong>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-                    <span className="text-[var(--text-muted)] uppercase block text-[9px]">Tailor Cut Type</span>
-                    <strong className="text-[var(--text-primary)]">{product.fitNotes}</strong>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'sizing' && (
-              <div className="space-y-2 text-xs font-mono-luxury text-[var(--text-secondary)] animate-fadeIn">
-                <p>Every piece is individually cut and pressed in Lagos ateliers.</p>
-                <div className="overflow-x-auto pt-2">
-                  <table className="w-full text-left text-[11px] border border-[var(--border-subtle)] rounded-xl overflow-hidden">
-                    <thead className="bg-[var(--bg-secondary)] text-[var(--text-muted)] uppercase text-[9px]">
-                      <tr>
-                        <th className="p-2.5">Size</th>
-                        <th className="p-2.5">Chest (cm)</th>
-                        <th className="p-2.5">Shoulder (cm)</th>
-                        <th className="p-2.5">Waist (cm)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
-                      <tr><td className="p-2.5 font-bold">S</td><td className="p-2.5">92 - 96</td><td className="p-2.5">44 - 46</td><td className="p-2.5">76 - 80</td></tr>
-                      <tr className="bg-[var(--gold-subtle)]/20 font-bold text-[var(--gold-accent)]"><td className="p-2.5">M (Your Fit)</td><td className="p-2.5">98 - 104</td><td className="p-2.5">47 - 49</td><td className="p-2.5">82 - 86</td></tr>
-                      <tr><td className="p-2.5 font-bold">L</td><td className="p-2.5">106 - 112</td><td className="p-2.5">50 - 52</td><td className="p-2.5">88 - 94</td></tr>
-                      <tr><td className="p-2.5 font-bold">XL</td><td className="p-2.5">114 - 120</td><td className="p-2.5">53 - 55</td><td className="p-2.5">96 - 102</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ======================================================== */}
-      {/* COMPLETE THE LOOK / COMPLEMENTARY PIECES */}
-      {/* ======================================================== */}
-      <div className="pt-12 border-t border-[var(--border-subtle)] space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-              Complete the Look
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-0.5">
-              Styled together with complementary pieces from other Nigerian fashion houses.
+          {/* Description */}
+          <div className="p-5 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2">
+            <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold">
+              Product Description
+            </span>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light leading-relaxed">
+              {product.description}
             </p>
           </div>
 
-          <Link
-            href="/studio"
-            className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold hover:underline inline-flex items-center gap-1"
-          >
-            <span>Open Studio</span>
-            <ChevronRight className="h-4 w-4" />
-          </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {complementaryItems.map((comp) => (
-            <div
-              key={comp.id}
-              className="rounded-3xl surface-card border border-[var(--border-subtle)] p-4 flex items-center gap-4 group hover:border-[var(--gold-accent)]/50 transition-all shadow-md"
-            >
-              <div className="relative h-24 w-24 rounded-2xl overflow-hidden bg-[var(--bg-secondary)] shrink-0">
-                <Image src={comp.imageUrl} alt={comp.name} fill unoptimized className="object-cover group-hover:scale-105 transition-transform duration-500" />
-              </div>
-              <div className="truncate flex-1">
-                <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold uppercase block truncate">
-                  {comp.vendorName}
-                </span>
-                <h4 className="font-bold text-xs text-[var(--text-primary)] truncate mt-0.5">
-                  {comp.name}
-                </h4>
-                <div className="font-editorial text-base font-bold text-[var(--text-primary)] mt-1">
-                  ₦{comp.price.toLocaleString()}
-                </div>
-                <div className="flex items-center gap-2 pt-2">
-                  <Link
-                    href={`/shop/${comp.id}`}
-                    className="text-[10px] font-mono-luxury text-[var(--text-secondary)] hover:text-[var(--text-primary)] uppercase font-bold"
-                  >
-                    View Piece →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
 
     </div>

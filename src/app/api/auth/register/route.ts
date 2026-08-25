@@ -113,6 +113,19 @@ export async function POST(request: Request) {
 
     if (userType === 'vendor') {
       const vendorId = (brandName || 'atelier').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const initialBioObj = {
+        bio: '',
+        socialLinks: {
+          instagram: '',
+          tiktok: '',
+          snapchat: '',
+          whatsapp: cleanPhone || ''
+        },
+        isProfileSaved: false,
+        approvalStatus: 'pending',
+        rejectionReason: ''
+      };
+
       const { data: vendorData, error: vendorError } = await supabase.from('vendors').insert({
         id: vendorId,
         user_id: userId,
@@ -126,7 +139,8 @@ export async function POST(request: Request) {
         bank_name: bankName || 'Guaranty Trust Bank (GTBank)',
         account_number: accountNumber || '',
         account_name: accountName || '',
-        is_verified: true,
+        is_verified: false,
+        bio: JSON.stringify(initialBioObj)
       }).select().single();
 
       if (vendorError) {

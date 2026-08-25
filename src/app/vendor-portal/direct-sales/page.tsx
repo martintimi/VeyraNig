@@ -1,28 +1,59 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { Product } from '@/types';
 import Image from 'next/image';
 import {
   Sparkles, Download, Copy, Check, Send,
-  CheckCircle2, Smartphone, ShieldCheck
+  CheckCircle2, Smartphone, ShieldCheck, Loader2, ShoppingBag
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function DirectSalesAssistantPage() {
-  const { allProducts, vendorProfile } = useStore();
+const fallbackProduct: Product = {
+  id: 'prod-1787616646574-370',
+  vendorId: 'moji-wears',
+  vendorName: 'Moji wears',
+  name: 'Trap Star Street Hoodie',
+  price: 33000,
+  description: 'Trapstar hoodie, high quality and good material available for you',
+  category: 'outerwear',
+  genderTarget: 'unisex',
+  garmentOriginType: 'ready_made_boutique',
+  imageUrl: '/images/products/BlackTrapStarHoodie.jpg',
+  stockQuantity: 85,
+  sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+  colors: [{ name: 'Black', hex: '#111111' }],
+  tags: ['Street wear'],
+  rating: 5.0,
+  reviewCount: 18,
+  isPublished: true,
+};
 
-  const [selectedProductId, setSelectedProductId] = useState<string>('top-senator-black');
+export default function DirectSalesAssistantPage() {
+  const { allProducts, vendorProfile, fetchProductsFromDb } = useStore();
+
+  useEffect(() => {
+    fetchProductsFromDb();
+  }, [fetchProductsFromDb]);
+
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>('Emeka');
   const [customNote, setCustomNote] = useState<string>('Free Lagos Island dispatch included today');
   const [copied, setCopied] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [downloadToast, setDownloadToast] = useState<boolean>(false);
 
-  const activeProduct = allProducts.find(p => p.id === selectedProductId) || allProducts[0];
-  const productLink = typeof window !== 'undefined' ? `${window.location.origin}/shop/${activeProduct.id}` : `https://veyra.ng/shop/${activeProduct.id}`;
-  const generatedMessage = `Hi ${customerName || 'there'}! ✨ Thanks for reaching out about the ${activeProduct.name} (₦${activeProduct.price.toLocaleString()}).\n\nTo see how this fits your exact body measurements in 3D and order with 24h Lagos delivery, tap this direct link: ${productLink}\n\n${customNote ? `Note: ${customNote}` : ''}`;
+  // Safe active product lookup
+  const activeProduct: Product = (allProducts && allProducts.length > 0)
+    ? (allProducts.find(p => p.id === selectedProductId) || allProducts[0])
+    : fallbackProduct;
+
+  const productLink = typeof window !== 'undefined'
+    ? `${window.location.origin}/shop/${activeProduct.id}`
+    : `https://veyra.ng/shop/${activeProduct.id}`;
+
+  const generatedMessage = `Hi ${customerName || 'there'}! ✨ Thanks for reaching out about the ${activeProduct.name} (₦${Number(activeProduct.price).toLocaleString()}).\n\nTo see how this fits your exact body measurements in 3D and order with 24h Lagos delivery, tap this direct link: ${productLink}\n\n${customNote ? `Note: ${customNote}` : ''}`;
 
   // Genuine client-side image generation and download using HTML5 canvas
   const downloadBrandedCard = async (product: Product) => {
@@ -78,7 +109,7 @@ export default function DirectSalesAssistantPage() {
 
       ctx.fillStyle = '#e6c367';
       ctx.font = 'bold 24px sans-serif';
-      ctx.fillText(vendorProfile.brandName.toUpperCase(), 80, 93);
+      ctx.fillText((vendorProfile?.brandName || 'VEYRA BRAND').toUpperCase(), 80, 93);
 
       // 2. Top Right VEYRA Signature Logo Badge
       try {
@@ -114,7 +145,7 @@ export default function DirectSalesAssistantPage() {
       // 4. Bottom Price Tag
       ctx.fillStyle = '#e6c367';
       ctx.font = 'bold 42px sans-serif';
-      ctx.fillText(`₦${product.price.toLocaleString()}`, 50, 1210);
+      ctx.fillText(`₦${Number(product.price).toLocaleString()}`, 50, 1210);
 
       // 5. Bottom Veyra 3D Sizing & Delivery Tag
       ctx.fillStyle = '#10b981';
@@ -125,7 +156,7 @@ export default function DirectSalesAssistantPage() {
       const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = dataUrl;
-      a.download = `veyra-${vendorProfile.brandName.toLowerCase().replace(/\s+/g, '-')}-${product.id}.png`;
+      a.download = `veyra-${(vendorProfile?.brandName || 'brand').toLowerCase().replace(/\s+/g, '-')}-${product.id}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -139,6 +170,8 @@ export default function DirectSalesAssistantPage() {
       setIsDownloading(false);
     }
   };
+
+  const productList = (allProducts && allProducts.length > 0) ? allProducts : [fallbackProduct];
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-7xl">
@@ -175,8 +208,8 @@ export default function DirectSalesAssistantPage() {
         </span>
 
         <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
-          {allProducts.slice(0, 8).map((p) => {
-            const isSelected = selectedProductId === p.id;
+          {productList.slice(0, 8).map((p) => {
+            const isSelected = (selectedProductId === p.id) || (!selectedProductId && p.id === activeProduct.id);
             return (
               <div
                 key={p.id}
@@ -192,7 +225,7 @@ export default function DirectSalesAssistantPage() {
                 </div>
                 <div className="pr-2">
                   <div className="font-bold text-xs text-[var(--text-primary)] max-w-[140px] truncate">{p.name}</div>
-                  <div className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold">₦{p.price.toLocaleString()}</div>
+                  <div className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold">₦{Number(p.price).toLocaleString()}</div>
                 </div>
               </div>
             );
@@ -203,7 +236,7 @@ export default function DirectSalesAssistantPage() {
       {/* 2. DUAL TOOLKIT: VISUAL STATUS CARD + DM CLOSER */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* LEFT 5 COLS: AUTO-BRANDED STATUS PHOTO (VISUAL FIRST) */}
+        {/* LEFT 5 COLS: AUTO-BRANDED STATUS PHOTO */}
         <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold">
@@ -225,7 +258,7 @@ export default function DirectSalesAssistantPage() {
             {/* Luxury Top Left Atelier Badge */}
             <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/20">
               <span className="text-[10px] font-mono-luxury uppercase font-bold text-amber-300">
-                {vendorProfile.brandName}
+                {vendorProfile?.brandName || 'VEYRA'}
               </span>
             </div>
 
@@ -235,7 +268,7 @@ export default function DirectSalesAssistantPage() {
                 VEYRA
               </span>
               <span className="text-[9px] font-mono-luxury font-bold text-[var(--gold-accent)]">
-                ● 3D ATELIER
+                ● 3D STORE
               </span>
             </div>
 
@@ -244,7 +277,7 @@ export default function DirectSalesAssistantPage() {
               <div className="truncate">
                 <h4 className="font-editorial text-xs font-bold text-white truncate">{activeProduct.name}</h4>
                 <div className="text-[10px] font-mono-luxury text-amber-300 font-bold">
-                  ₦{activeProduct.price.toLocaleString()} · <span className="text-emerald-400">3D Fit on Veyra</span>
+                  ₦{Number(activeProduct.price).toLocaleString()} · <span className="text-emerald-400">3D Fit on Veyra</span>
                 </div>
               </div>
 
@@ -258,7 +291,7 @@ export default function DirectSalesAssistantPage() {
             <button
               onClick={() => downloadBrandedCard(activeProduct)}
               disabled={isDownloading}
-              className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               <Download className="h-4 w-4" />
               <span>{isDownloading ? 'Generating High-Res Card...' : 'Download Card & Copy Link (PNG)'}</span>
@@ -303,90 +336,56 @@ export default function DirectSalesAssistantPage() {
 
             <div>
               <label className="block text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                Optional Note / Perk
+                Quick Deal Note / Perks
               </label>
               <input
                 type="text"
                 value={customNote}
                 onChange={(e) => setCustomNote(e.target.value)}
-                placeholder="e.g. Free Lagos Dispatch"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
+                placeholder="e.g. Free 24h Lagos delivery"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-mono-luxury"
               />
             </div>
           </div>
 
-          {/* Generated Message Box */}
-          <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-mono-luxury leading-relaxed space-y-2">
-            <div className="text-[10px] text-[var(--gold-accent)] font-bold uppercase">Ready-to-Send Order Message:</div>
-            <div className="text-[var(--text-primary)] whitespace-pre-line bg-[var(--bg-secondary)] p-3.5 rounded-xl border border-[var(--border-subtle)]">
-              {generatedMessage}
+          {/* Formatted Pitch Message */}
+          <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-3 font-mono-luxury text-xs text-[var(--text-primary)] leading-relaxed relative">
+            <p>Hi <strong className="text-[var(--gold-accent)]">{customerName || 'there'}</strong>! ✨ Thanks for reaching out about the <strong>{activeProduct.name}</strong> (₦{Number(activeProduct.price).toLocaleString()}).</p>
+            <p>To see how this fits your exact body measurements in 3D and order with 24h Lagos delivery, tap this direct link:</p>
+            <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[11px] text-[var(--gold-accent)] break-all font-bold select-all">
+              {productLink}
             </div>
+            {customNote && (
+              <p className="text-emerald-400 font-bold">Note: {customNote}</p>
+            )}
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <button
               onClick={() => {
-                navigator.clipboard.writeText(generatedMessage);
-                setCopied(true);
-                confetti({ particleCount: 35, spread: 60, origin: { y: 0.6 } });
-                setTimeout(() => setCopied(false), 3000);
+                if (typeof navigator !== 'undefined') {
+                  navigator.clipboard.writeText(generatedMessage);
+                  setCopied(true);
+                  confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+                  setTimeout(() => setCopied(false), 3000);
+                }
               }}
-              className="py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2"
+              className="py-3 px-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4 text-emerald-500" />
-                  <span>Order Message Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 text-[var(--gold-accent)]" />
-                  <span>Copy Message & Link</span>
-                </>
-              )}
+              {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+              <span>{copied ? 'Message Copied!' : 'Copy DM Message'}</span>
             </button>
 
             <a
-              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(generatedMessage)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(generatedMessage)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="py-3.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-mono-luxury uppercase text-xs font-bold transition-all shadow-lg flex items-center justify-center gap-2"
+              className="py-3 px-4 rounded-full bg-emerald-500 text-black font-mono-luxury uppercase text-xs font-bold hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-md"
             >
-              <Send className="h-4 w-4 text-black" />
-              <span>Open Direct Chat</span>
+              <Send className="h-4 w-4" />
+              <span>Send via WhatsApp</span>
             </a>
-          </div>
-
-          {/* 3 Common Direct Message Objection Busters */}
-          <div className="pt-3 border-t border-[var(--border-subtle)] space-y-2">
-            <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">
-              1-Tap Quick Scripts (Click to Copy):
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono-luxury">
-              <button
-                onClick={() => {
-                  const text = `We have an exact 3D body twin tool that tests your chest and shoulder measurements in 5 seconds! Tap: ${productLink}`;
-                  navigator.clipboard.writeText(text);
-                  confetti({ particleCount: 20, spread: 40 });
-                }}
-                className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-left truncate text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-              >
-                📏 &quot;Will this size fit me?&quot;
-              </button>
-
-              <button
-                onClick={() => {
-                  const text = `You can pay securely via debit card or direct bank transfer into our escrow account: ${productLink}`;
-                  navigator.clipboard.writeText(text);
-                  confetti({ particleCount: 20, spread: 40 });
-                }}
-                className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-left truncate text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-              >
-                💳 &quot;How do I pay?&quot;
-              </button>
-            </div>
           </div>
 
         </div>

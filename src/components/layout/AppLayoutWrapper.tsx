@@ -17,23 +17,18 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
   const pathname = usePathname();
   const { theme } = useStore();
   
-  // Persist dark / light mode on reload
+  // Persist dark / light mode on reload & toggle
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      if (pathname.startsWith('/vendor-portal')) {
+      if (theme === 'dark') {
         document.documentElement.classList.add('dark');
         document.documentElement.classList.remove('light');
       } else {
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
-          document.documentElement.classList.remove('light');
-        } else {
-          document.documentElement.classList.add('light');
-          document.documentElement.classList.remove('dark');
-        }
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
       }
     }
-  }, [pathname, theme]);
+  }, [theme]);
 
   // Standalone portals (Auth, Vendor Portal, and Super Admin have their own dedicated standalone workspace)
   const isStandalonePage =

@@ -1,16 +1,29 @@
 import { BodyProfile, FitMatchResult, Product } from '@/types';
 
-export function calculateFitMatch(profile: BodyProfile, product: Product): FitMatchResult {
-  const sizeChart = product.sizeChart;
-  const availableSizes = Object.keys(sizeChart);
-
-  if (!availableSizes.length) {
+export function calculateFitMatch(profile?: BodyProfile, product?: Product): FitMatchResult {
+  if (!product) {
     return {
       recommendedSize: 'M',
       matchScore: 92,
       status: 'optimal',
       fitInsights: { chest: 'perfect', waist: 'perfect', hips: 'perfect', length: 'perfect' },
       narrativeReason: 'Standard fit compatible with your body silhouette.',
+      feedback: 'Tailored to drape naturally over standard Nigerian silhouette metrics.',
+    };
+  }
+
+  const sizeChart = product.sizeChart || {};
+  const availableSizes = Object.keys(sizeChart);
+
+  if (!availableSizes.length) {
+    const fallbackSize = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : 'M';
+    return {
+      recommendedSize: fallbackSize,
+      matchScore: 94,
+      status: 'optimal',
+      fitInsights: { chest: 'perfect', waist: 'perfect', hips: 'perfect', length: 'perfect' },
+      narrativeReason: 'Tailored true to size for standard Nigerian silhouette proportions.',
+      feedback: 'Tailored true to size for standard Nigerian silhouette proportions.',
     };
   }
 
@@ -23,10 +36,24 @@ export function calculateFitMatch(profile: BodyProfile, product: Product): FitMa
     length: 'perfect' as 'short' | 'perfect' | 'long',
   };
 
+  const safeProfile = profile || {
+    id: 'default',
+    gender: 'unisex',
+    heightCm: 178,
+    weightKg: 75,
+    chestCm: 100,
+    waistCm: 84,
+    hipsCm: 104,
+    shoulderWidthCm: 45,
+    armLengthCm: 62,
+    inseamCm: 81,
+    fitPreference: 'regular',
+  };
+
   // Preference multiplier
-  const prefMultiplier = profile.fitPreference === 'skinny' ? -2 
-    : profile.fitPreference === 'relaxed' ? 2 
-    : profile.fitPreference === 'oversized' ? 4 
+  const prefMultiplier = safeProfile.fitPreference === 'skinny' ? -2 
+    : safeProfile.fitPreference === 'relaxed' ? 2 
+    : safeProfile.fitPreference === 'oversized' ? 4 
     : 0;
 
   for (const size of availableSizes) {
@@ -36,7 +63,7 @@ export function calculateFitMatch(profile: BodyProfile, product: Product): FitMa
     // Chest check
     if (specs.chest) {
       const [min, max] = specs.chest;
-      const target = profile.chestCm - prefMultiplier;
+      const target = safeProfile.chestCm - prefMultiplier;
       if (target >= min && target <= max) {
         dimensionScores.push(100);
       } else if (target < min) {
@@ -53,7 +80,7 @@ export function calculateFitMatch(profile: BodyProfile, product: Product): FitMa
     // Waist check
     if (specs.waist) {
       const [min, max] = specs.waist;
-      const target = profile.waistCm - prefMultiplier;
+      const target = safeProfile.waistCm - prefMultiplier;
       if (target >= min && target <= max) {
         dimensionScores.push(100);
       } else if (target < min) {
@@ -70,7 +97,7 @@ export function calculateFitMatch(profile: BodyProfile, product: Product): FitMa
     // Hips check
     if (specs.hips) {
       const [min, max] = specs.hips;
-      const target = profile.hipsCm - prefMultiplier;
+      const target = safeProfile.hipsCm - prefMultiplier;
       if (target >= min && target <= max) {
         dimensionScores.push(100);
       } else if (target < min) {
@@ -87,7 +114,7 @@ export function calculateFitMatch(profile: BodyProfile, product: Product): FitMa
     // Shoulder / Inseam checks if applicable
     if (specs.shoulder) {
       const [min, max] = specs.shoulder;
-      if (profile.shoulderWidthCm >= min && profile.shoulderWidthCm <= max) {
+      if (safeProfile.shoulderWidthCm >= min && safeProfile.shoulderWidthCm <= max) {
         dimensionScores.push(100);
       } else {
         dimensionScores.push(85);
@@ -109,7 +136,7 @@ export function calculateFitMatch(profile: BodyProfile, product: Product): FitMa
   let status: 'optimal' | 'snug' | 'relaxed' = 'optimal';
   if (adjustedScore >= 93) {
     status = 'optimal';
-  } else if (profile.fitPreference === 'skinny' || bestInsights.waist === 'tight' || bestInsights.chest === 'tight') {
+  } else if (safeProfile.fitPreference === 'skinny' || bestInsights.waist === 'tight' || bestInsights.chest === 'tight') {
     status = 'snug';
   } else {
     status = 'relaxed';

@@ -4,7 +4,6 @@ import {
   ActiveOutfit, BodyProfile, CartItem, Product, GarmentCategory,
   GarmentOriginType, Order, NotificationItem, VendorProfile
 } from '@/types';
-import { products as initialProducts } from '@/lib/data/products';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
 
 export interface UserAuth {
@@ -52,6 +51,8 @@ interface VeyraState {
   // Catalog Products (Initial + Vendor Uploaded)
   allProducts: Product[];
   addCustomProduct: (product: Product) => void;
+  setAllProducts: (products: Product[]) => void;
+  fetchProductsFromDb: () => Promise<void>;
 
   // Active Outfit Canvas
   activeOutfit: ActiveOutfit;
@@ -253,13 +254,7 @@ const initialNotifications: NotificationItem[] = [
   }
 ];
 
-const initialOutfit: ActiveOutfit = {
-  tops: initialProducts.find(p => p.id === 'top-senator-black'),
-  bottoms: initialProducts.find(p => p.id === 'bottom-baggy-jean'),
-  outerwear: initialProducts.find(p => p.id === 'outer-agbada-black'),
-  footwear: initialProducts.find(p => p.id === 'shoes-unisex-slides'),
-  accessories: initialProducts.find(p => p.id === 'acc-cap-fila'),
-};
+const initialOutfit: ActiveOutfit = {};
 
 export const useStore = create<VeyraState>()(
   persist(
@@ -304,9 +299,6 @@ export const useStore = create<VeyraState>()(
           activeOutfit: {
             tops: tops[0] || undefined,
             bottoms: bottoms[0] || undefined,
-            outerwear: gender === 'male' ? initialProducts.find(p => p.id === 'outer-agbada-black') : undefined,
-            footwear: initialProducts.find(p => p.id === 'shoes-unisex-slides'),
-            accessories: initialProducts.find(p => p.id === 'acc-cap-fila'),
           }
         }));
       },
@@ -418,7 +410,45 @@ export const useStore = create<VeyraState>()(
       },
 
       // Products Catalog (with dynamic uploads)
-      allProducts: initialProducts,
+      allProducts: [],
+      setAllProducts: (products) => set({ allProducts: products }),
+      fetchProductsFromDb: async () => {
+        try {
+          const res = await fetch('/api/products');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+            const dbProducts: Product[] = data.products.map((p: any) => ({
+              id: p.id,
+              vendorId: p.vendor_id || 'boutique',
+              vendorName: p.vendor_name || (p.vendor_id ? p.vendor_id.replace('-', ' ') : 'Veyra Partner'),
+              name: p.name,
+              category: p.category || 'tops',
+              genderTarget: p.gender_target || 'unisex',
+              garmentOriginType: p.garment_origin_type || 'ready_made_boutique',
+              price: Number(p.price),
+              description: p.description || '',
+              tags: Array.isArray(p.tags) ? p.tags : ['Ready-to-Wear'],
+              colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : [{ name: 'Default', hex: '#111111' }],
+              sizes: p.sizes || ['S', 'M', 'L', 'XL', 'XXL'],
+              sizeChart: {},
+              imageUrl: p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
+              fabricComposition: 'Premium Nigerian Fabric',
+              fitNotes: 'Standard ready-to-wear sizing',
+              rating: 5.0,
+              reviewCount: 12,
+              layerZIndex: 2,
+              badge: p.garment_origin_type === 'ready_made_boutique' ? 'Fast 24-48h Drop' : 'Bespoke Handmade'
+            }));
+
+            // Set strictly to live PostgreSQL database products (no mock merging)
+            set({ allProducts: dbProducts });
+          } else if (data.success && Array.isArray(data.products) && data.products.length === 0) {
+            set({ allProducts: [] });
+          }
+        } catch (e) {
+          console.error('Error hydrating products from DB:', e);
+        }
+      },
       addCustomProduct: (newProduct) => {
         set((state) => ({
           allProducts: [newProduct, ...state.allProducts],
@@ -537,10 +567,7 @@ export const useStore = create<VeyraState>()(
       clearCart: () => set({ cart: [] }),
 
       // Wardrobe Vault (Curated Wishlist)
-      vault: [
-        initialProducts[0], // Pre-curate a featured piece for instant discovery
-        initialProducts[2],
-      ],
+      vault: [],
       isVaultOpen: false,
       setIsVaultOpen: (open) => set({ isVaultOpen: open }),
       isInVault: (productId) => get().vault.some(p => p.id === productId),

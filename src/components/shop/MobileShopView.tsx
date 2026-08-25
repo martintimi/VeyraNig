@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory, GarmentOriginType } from '@/types';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
@@ -26,7 +26,12 @@ export default function MobileShopView() {
     setSelectedOriginType,
     toggleVaultItem,
     isInVault,
+    fetchProductsFromDb,
   } = useStore();
+
+  useEffect(() => {
+    fetchProductsFromDb();
+  }, [fetchProductsFromDb]);
 
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<GarmentCategory | 'all'>('all');
@@ -43,13 +48,20 @@ export default function MobileShopView() {
     { id: 'accessories', label: 'Caps & Filas' },
   ];
 
-  const brandOptions = [
-    { id: 'all', name: 'All Ateliers' },
-    { id: 'sartorial-lagos', name: 'Sartorial Lagos' },
-    { id: 'street-souk', name: 'Street Souk Co.' },
-    { id: 'yaba-denim', name: 'Yaba Denim Works' },
-    { id: 'kano-leather', name: 'Kano Artisan' },
-  ];
+  const brandOptions = useMemo(() => {
+    const brandsMap = new Map<string, { id: string; name: string }>();
+    brandsMap.set('all', { id: 'all', name: 'All Brands' });
+    
+    allProducts.forEach(p => {
+      const vId = p.vendorId || 'boutique';
+      const vName = p.vendorName || (vId.charAt(0).toUpperCase() + vId.slice(1).replace(/-/g, ' '));
+      if (!brandsMap.has(vId)) {
+        brandsMap.set(vId, { id: vId, name: vName });
+      }
+    });
+
+    return Array.from(brandsMap.values());
+  }, [allProducts]);
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter((p) => {
@@ -148,13 +160,18 @@ export default function MobileShopView() {
 
       {/* 4. CLEAN 2-COLUMN MOBILE PRODUCT FEED */}
       {filteredProducts.length === 0 ? (
-        <div className="py-12 text-center space-y-4 p-6 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-          <p className="text-xs text-[var(--text-secondary)] font-mono-luxury">
-            No designs found matching your filters.
+        <div className="py-12 text-center space-y-3 p-6 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          <p className="font-editorial text-lg font-bold text-[var(--text-primary)]">
+            {allProducts.length === 0 ? 'New Season Drops Coming Soon' : 'No Designs Match Filter'}
+          </p>
+          <p className="text-xs text-[var(--text-secondary)] font-light max-w-xs mx-auto">
+            {allProducts.length === 0
+              ? 'Our partner boutiques and ateliers are currently preparing their upcoming collections. Check back shortly!'
+              : 'Try adjusting your search query or reset your filters.'}
           </p>
           <button
             onClick={handleResetFilters}
-            className="px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold"
+            className="px-5 py-2.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold mt-2"
           >
             Reset Filters
           </button>

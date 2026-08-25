@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from '@/types';
 import { useStore } from '@/lib/store/useStore';
@@ -31,11 +31,24 @@ export default function ProductQuickLookModal({ product, onClose }: ProductQuick
     isInVault,
   } = useStore();
 
+  const [selectedSize, setSelectedSize] = useState<string>('M');
+
+  useEffect(() => {
+    if (product) {
+      const fit = calculateFitMatch(bodyProfile, product);
+      setSelectedSize(fit.recommendedSize || product.sizes?.[0] || 'M');
+    }
+  }, [product, bodyProfile]);
+
   if (!product) return null;
 
   const fitResult = calculateFitMatch(bodyProfile, product);
   const isWorn = activeOutfit[product.category]?.id === product.id;
   const isSaved = isInVault(product.id);
+
+  const currentStock = product.sizeStock && selectedSize && product.sizeStock[selectedSize] !== undefined
+    ? product.sizeStock[selectedSize]
+    : (product.stockQuantity ?? 15);
 
   const handleTryOn = () => {
     if (isWorn) {
@@ -47,7 +60,7 @@ export default function ProductQuickLookModal({ product, onClose }: ProductQuick
   };
 
   const handleAddToCart = () => {
-    addToCart(product, fitResult.recommendedSize);
+    addToCart(product, selectedSize);
     confetti({ particleCount: 55, spread: 65, origin: { y: 0.6 } });
   };
 
@@ -150,11 +163,51 @@ export default function ProductQuickLookModal({ product, onClose }: ProductQuick
               {/* Price & Stock */}
               <div className="flex items-baseline gap-3 pt-1">
                 <span className="font-editorial text-2xl sm:text-3xl font-bold text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm">
-                  ₦{product.price.toLocaleString()}
+                  ₦{Number(product.price).toLocaleString()}
                 </span>
                 <span className="text-xs font-mono-luxury text-emerald-500 font-bold">
-                  ● In Stock (24h Lagos Dispatch)
+                  ● 24h Express Dispatch
                 </span>
+              </div>
+
+              {/* Sizing & Live Remaining Stock Status */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-xs font-mono-luxury">
+                  <span className="text-[var(--text-secondary)] uppercase font-bold">Choose Size:</span>
+                  {currentStock === 0 ? (
+                    <span className="text-rose-400 font-bold">❌ Out of Stock</span>
+                  ) : currentStock <= 5 ? (
+                    <span className="text-amber-500 font-bold animate-pulse">🔥 Only {currentStock} left in Size {selectedSize}!</span>
+                  ) : (
+                    <span className="text-emerald-500 font-bold">● {currentStock} in stock</span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {(product.sizes || ['S', 'M', 'L', 'XL', 'XXL']).map((sz) => {
+                    const isSelected = selectedSize === sz;
+                    const szStock = product.sizeStock?.[sz];
+                    const isOutOfStock = szStock === 0;
+
+                    return (
+                      <button
+                        key={sz}
+                        type="button"
+                        disabled={isOutOfStock}
+                        onClick={() => setSelectedSize(sz)}
+                        className={`h-9 min-w-10 px-3 rounded-xl font-mono-luxury text-xs font-bold transition-all border ${
+                          isOutOfStock
+                            ? 'opacity-40 line-through cursor-not-allowed bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                            : isSelected
+                            ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] text-[var(--gold-accent)] shadow-sm ring-1 ring-[var(--gold-accent)]/30'
+                            : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Description */}
@@ -214,10 +267,11 @@ export default function ProductQuickLookModal({ product, onClose }: ProductQuick
                 {/* Add to Bag */}
                 <button
                   onClick={handleAddToCart}
-                  className="flex items-center justify-center gap-2 py-3 px-3 rounded-full text-xs font-mono-luxury uppercase tracking-wider font-bold bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 transition-all shadow-md"
+                  disabled={currentStock === 0}
+                  className="flex items-center justify-center gap-2 py-3 px-3 rounded-full text-xs font-mono-luxury uppercase tracking-wider font-bold bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ShoppingBag className="h-4 w-4" />
-                  <span>Add to Bag</span>
+                  <span>{currentStock === 0 ? 'Out of Stock' : 'Add to Bag'}</span>
                 </button>
               </div>
 
