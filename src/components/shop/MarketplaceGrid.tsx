@@ -7,7 +7,7 @@ import { calculateFitMatch } from '@/lib/utils/sizingEngine';
 import {
   Sparkles, Check, ShoppingBag, Search, Scissors, ArrowRight,
   ChevronLeft, ChevronRight, RotateCcw, PackageSearch, Layers,
-  Bookmark, Eye, Plus
+  Bookmark, Eye, Plus, MapPin
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,13 +69,35 @@ export default function MarketplaceGrid() {
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter((p) => {
-      const matchesGender = p.genderTarget === selectedGender || p.genderTarget === 'unisex';
-      const matchesOrigin = selectedOriginType === 'all' || p.garmentOriginType === selectedOriginType;
+      const pGender = String(p.genderTarget || '').toLowerCase();
+      const sGender = String(selectedGender || '').toLowerCase();
+      const matchesGender = 
+        pGender === 'unisex' ||
+        pGender === sGender ||
+        (sGender === 'male' && (pGender === 'male' || pGender === 'men' || pGender === 'man')) ||
+        (sGender === 'female' && (pGender === 'female' || pGender === 'women' || pGender === 'woman'));
+
+      const pOrigin = String(p.garmentOriginType || '').toLowerCase();
+      const sOrigin = String(selectedOriginType || '').toLowerCase();
+      const matchesOrigin = 
+        sOrigin === 'all' || 
+        (sOrigin === 'handmade_designer' && (pOrigin === 'handmade_designer' || pOrigin === 'bespoke_atelier')) ||
+        (sOrigin === 'ready_made_boutique' && pOrigin === 'ready_made_boutique') ||
+        pOrigin === sOrigin;
+
       const matchesCat = selectedCategory === 'all' || p.category === selectedCategory;
-      const matchesBrand = selectedBrand === 'all' || p.vendorId === selectedBrand || p.vendorName.toLowerCase().includes(selectedBrand);
-      const matchesQuery = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           p.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      const pVendorName = String(p.vendorName || '').toLowerCase();
+      const pVendorId = String(p.vendorId || '').toLowerCase();
+      const sBrand = String(selectedBrand || '').toLowerCase();
+      const matchesBrand = sBrand === 'all' || pVendorId === sBrand || pVendorName.includes(sBrand);
+
+      const q = searchQuery.toLowerCase().trim();
+      const matchesQuery = !q ||
+                           String(p.name || '').toLowerCase().includes(q) ||
+                           String(p.description || '').toLowerCase().includes(q) ||
+                           (Array.isArray(p.tags) && p.tags.some(t => String(t).toLowerCase().includes(q)));
+
       return matchesGender && matchesOrigin && matchesCat && matchesBrand && matchesQuery;
     });
   }, [allProducts, selectedGender, selectedOriginType, selectedCategory, selectedBrand, searchQuery]);
@@ -415,8 +437,14 @@ export default function MarketplaceGrid() {
                         ₦{product.price.toLocaleString()}
                       </span>
                       <span className="text-[9px] sm:text-[11px] font-mono-luxury text-emerald-500 font-bold">
-                        ● In Stock
+                        In Stock
                       </span>
+                    </div>
+
+                    {/* Store Origin Location */}
+                    <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono-luxury text-[var(--text-secondary)] pt-1">
+                      <MapPin className="h-3 w-3 text-[var(--gold-accent)] shrink-0" />
+                      <span className="truncate">{product.vendorCity ? `Ships from ${product.vendorCity}${product.vendorState ? `, ${product.vendorState}` : ''}` : 'Ships from verified vendor'}</span>
                     </div>
                   </div>
 

@@ -67,6 +67,17 @@ export interface Product {
   id: string;
   vendorId: string;
   vendorName: string;
+  vendorCity?: string;
+  vendorState?: string;
+  vendorLocation?: string;
+  dispatchDays?: string;
+  shippingRates?: {
+    sameCity?: number;
+    closeHub?: number;
+    interstate?: number;
+    parkPickup?: number;
+    parkPickupEnabled?: boolean;
+  };
   name: string;
   category: GarmentCategory;
   genderTarget: GenderTarget;

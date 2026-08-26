@@ -556,7 +556,7 @@ function AuthPageContent() {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. David Elgard or Fatima Bello"
+                      placeholder="e.g. Full Name"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none"
                     />
                   </div>
@@ -594,7 +594,7 @@ function AuthPageContent() {
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="08167060460"
+                      placeholder="08012*****"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
                     />
                   </div>

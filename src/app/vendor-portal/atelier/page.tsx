@@ -1,14 +1,25 @@
 'use client';
 
+import { vendorFetch, getActiveVendorId } from '@/lib/services/apiClient';
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import {
   Building, User, Mail, Phone, MapPin, Check,
   ShieldCheck, ExternalLink, Sparkles, Store, Loader2,
-  Clock, AlertCircle, CheckCircle2
+  Clock, AlertCircle, CheckCircle2, Truck, Package, Navigation
 } from 'lucide-react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+
+const NIGERIAN_STATES = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT - Abuja', 'Gombe',
+  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
+  'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
+  'Taraba', 'Yobe', 'Zamfara'
+];
 
 // Vector App Logos
 const InstagramLogo = () => (
@@ -41,44 +52,60 @@ export default function VendorAtelierProfilePage() {
 
   const [form, setForm] = useState({
     id: vendorProfile.id || 'moji-wears',
-    brandName: vendorProfile.brandName || 'Moji wears',
+    brandName: vendorProfile.brandName || '',
     designerName: vendorProfile.designerName || '',
     email: vendorProfile.email || '',
     phone: vendorProfile.phone || '',
-    location: vendorProfile.location || 'Victoria Island, Lagos',
-    instagram: '@' + (vendorProfile.brandName || 'moji').toLowerCase().replace(/\s+/g, '_'),
+    city: '',
+    state: '',
+    location: '',
+    dispatchDays: '1-2 business days',
+    sameCityFee: 1000,
+    closeHubFee: 2500,
+    interstateFee: 4500,
+    parkPickupFee: 1500,
+    parkPickupEnabled: true,
+    instagram: '',
     tiktok: '',
     snapchat: '',
-    whatsapp: vendorProfile.phone || '',
-    bio: vendorProfile.bio || (isBoutique ? 'Curated contemporary streetwear & ready-to-wear boutique apparel.' : 'Bespoke Nigerian artisanal tailoring.'),
+    whatsapp: '',
+    bio: '',
     vendorType: vendorProfile.vendorType || 'boutique_merchant'
   });
 
   // Fetch live vendor profile from DB endpoint
   const fetchLiveProfile = useCallback(async () => {
     try {
-      const res = await fetch('/api/vendor/profile');
+      const res = await vendorFetch('/api/vendor/profile');
       const data = await res.json();
       if (res.ok && data.success && data.vendor) {
         const v = data.vendor;
+        const rates = v.shippingRates || {};
         setForm({
           id: v.id || 'moji-wears',
-          brandName: v.brandName || v.brand_name || 'Moji wears',
+          brandName: v.brandName || v.brand_name || '',
           designerName: v.designerName || v.designer_name || v.contact_person || '',
           email: v.email || '',
           phone: v.phone || '',
-          location: v.location || 'Victoria Island, Lagos',
-          instagram: v.instagram || v.socialLinks?.instagram || ('@' + (v.brandName || 'moji').toLowerCase().replace(/\s+/g, '_')),
+          city: v.city || '',
+          state: v.state || '',
+          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : v.city || v.state || ''),
+          dispatchDays: v.dispatchDays || '1-2 business days',
+          sameCityFee: rates.sameCity !== undefined ? Number(rates.sameCity) : 1000,
+          closeHubFee: rates.closeHub !== undefined ? Number(rates.closeHub) : 2500,
+          interstateFee: rates.interstate !== undefined ? Number(rates.interstate) : 4500,
+          parkPickupFee: rates.parkPickup !== undefined ? Number(rates.parkPickup) : 1500,
+          parkPickupEnabled: rates.parkPickupEnabled !== undefined ? !!rates.parkPickupEnabled : true,
+          instagram: v.instagram || v.socialLinks?.instagram || '',
           tiktok: v.tiktok || v.socialLinks?.tiktok || '',
           snapchat: v.snapchat || v.socialLinks?.snapchat || '',
           whatsapp: v.whatsapp || v.socialLinks?.whatsapp || v.phone || '',
-          bio: v.bio || (isBoutique ? 'Curated contemporary streetwear & ready-to-wear boutique apparel.' : 'Bespoke Nigerian artisanal tailoring.'),
+          bio: v.bio || '',
           vendorType: v.vendorType || v.vendor_type || (isBoutique ? 'boutique_merchant' : 'fashion_designer')
         });
 
-        // Set persistent saved state and approval
         setIsProfileSaved(!!v.isProfileSaved);
-        setApprovalStatus(v.approvalStatus || 'pending');
+        setApprovalStatus(v.approvalStatus || (v.isVerified ? 'approved' : 'pending'));
         setRejectionReason(v.rejectionReason || '');
       }
     } catch (err) {
@@ -97,21 +124,31 @@ export default function VendorAtelierProfilePage() {
     setIsSaving(true);
 
     try {
-      const res = await fetch('/api/vendor/profile', {
+      const cleanLoc = form.city && form.state ? `${form.city.trim()}, ${form.state.trim()}` : form.city || form.state || '';
+      const payload = {
+        ...form,
+        location: cleanLoc,
+        shippingRates: {
+          sameCity: Number(form.sameCityFee) || 0,
+          closeHub: Number(form.closeHubFee) || 2500,
+          interstate: Number(form.interstateFee) || 4500,
+          parkPickup: Number(form.parkPickupFee) || 1500,
+          parkPickupEnabled: !!form.parkPickupEnabled,
+        },
+        approvalStatus: 'pending'
+      };
+
+      const res = await vendorFetch('/api/vendor/profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          approvalStatus: 'pending'
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setVendorProfile(form);
+        setVendorProfile(payload as any);
         setIsProfileSaved(true);
         setApprovalStatus('pending');
-        await fetchLiveProfile(); // Re-fetch saved data directly from the endpoint!
+        await fetchLiveProfile();
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
       }
     } catch (err) {
@@ -121,7 +158,6 @@ export default function VendorAtelierProfilePage() {
     }
   };
 
-  // Fields are disabled whenever profile is saved and not rejected
   const isFieldsDisabled = isProfileSaved && approvalStatus !== 'rejected';
 
   if (isLoadingProfile) {
@@ -134,27 +170,25 @@ export default function VendorAtelierProfilePage() {
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl">
+    <div className="space-y-8 animate-fadeIn max-w-7xl pb-20">
       
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-            {isBoutique ? 'Boutique Store Profile & Branding' : 'Atelier Profile & Storefront'}
+            {isBoutique ? 'Boutique Store Profile & Logistics' : 'Atelier Profile & Storefront'}
           </h1>
           <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-            {isBoutique
-              ? 'Manage your boutique identity, contact details, and social media channels.'
-              : 'Configure your brand identity, lead tailor credentials, and social links visible across Veyra.'}
+            Configure your store location, turnaround time, and delivery zone rates.
           </p>
         </div>
 
         <Link
-          href={`/brand/${encodeURIComponent(form.brandName)}`}
+          href={`/brand/${encodeURIComponent(form.brandName || 'brand')}`}
           target="_blank"
           className="px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold hover:opacity-90 transition-all shadow-md flex items-center gap-2"
         >
-          <span>{isBoutique ? 'View Boutique Storefront' : 'View Public Storefront'}</span>
+          <span>View Public Storefront</span>
           <ExternalLink className="h-4 w-4" />
         </Link>
       </div>
@@ -162,7 +196,7 @@ export default function VendorAtelierProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left 7 Cols: Profile Form */}
-        <form onSubmit={handleSave} className="lg:col-span-7 p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6">
+        <form onSubmit={handleSave} className="lg:col-span-7 p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-md">
           
           {/* Approval & Lock Status Banner */}
           {isProfileSaved && approvalStatus === 'approved' && (
@@ -173,7 +207,7 @@ export default function VendorAtelierProfilePage() {
                   Store Profile Approved & Active
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">
-                  Your store profile is locked and live across Veyra storefront.
+                  Your store profile and delivery rates are live across the Veyra storefront.
                 </div>
               </div>
             </div>
@@ -184,10 +218,10 @@ export default function VendorAtelierProfilePage() {
               <Clock className="h-5 w-5 text-amber-400 shrink-0" />
               <div>
                 <div className="text-xs font-mono-luxury text-amber-400 font-bold uppercase">
-                  Store Profile Under Admin Review
+                  Store Profile Under Super Admin Review
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">
-                  Your store details have been submitted. Fields remain locked during verification.
+                  Your store details and delivery rates have been submitted for admin verification.
                 </div>
               </div>
             </div>
@@ -216,7 +250,7 @@ export default function VendorAtelierProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  {isBoutique ? 'Boutique / Store Name' : 'Atelier Brand Name'}
+                  {isBoutique ? 'Boutique / Brand Name' : 'Atelier Brand Name'}
                 </label>
                 <input
                   type="text"
@@ -224,13 +258,14 @@ export default function VendorAtelierProfilePage() {
                   disabled={isFieldsDisabled}
                   value={form.brandName}
                   onChange={(e) => setForm({ ...form, brandName: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  placeholder="e.g. Your Brand Name"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  {isBoutique ? 'Store Manager / Contact Person' : 'Lead Designer / Tailor'}
+                  Contact Person / Manager
                 </label>
                 <input
                   type="text"
@@ -238,7 +273,8 @@ export default function VendorAtelierProfilePage() {
                   disabled={isFieldsDisabled}
                   value={form.designerName}
                   onChange={(e) => setForm({ ...form, designerName: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  placeholder="e.g. Lead Tailor or Store Manager"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -254,39 +290,200 @@ export default function VendorAtelierProfilePage() {
                   disabled={isFieldsDisabled}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  placeholder="store@example.com"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  {isBoutique ? 'Store Location (Lagos / City)' : 'Studio Location'}
+                  Official Phone / WhatsApp
                 </label>
                 <input
-                  type="text"
+                  type="tel"
                   required
                   disabled={isFieldsDisabled}
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="+234 800 000 0000"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
           </div>
 
-          {/* 2. Social Media Channels */}
+          {/* 2. Store Location & Delivery Zone Rates */}
+          <div className="space-y-4 pt-2 border-t border-[var(--border-subtle)]">
+            <div>
+              <div className="flex items-center gap-2">
+                <Truck className="h-4 w-4 text-[var(--gold-accent)]" />
+                <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold">
+                  2. Store Location & Delivery Zone Rates
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--text-secondary)] font-mono-luxury mt-0.5">
+                Set where your boutique/workshop is located so checkout calculates accurate delivery fees for customers.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+                  Store City / Town
+                </label>
+                <input
+                  type="text"
+                  required
+                  disabled={isFieldsDisabled}
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  placeholder="e.g. Ikeja, Yaba, Ibadan, etc."
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+                  Store State
+                </label>
+                <select
+                  required
+                  disabled={isFieldsDisabled}
+                  value={form.state}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed font-bold"
+                >
+                  <option value="">-- Select State --</option>
+                  {NIGERIAN_STATES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+                  Dispatches In
+                </label>
+                <select
+                  disabled={isFieldsDisabled}
+                  value={form.dispatchDays}
+                  onChange={(e) => setForm({ ...form, dispatchDays: e.target.value })}
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <option value="Same-day / 1 day">Same-day / 1 business day</option>
+                  <option value="1-2 business days">1-2 business days</option>
+                  <option value="2-3 business days">2-3 business days</option>
+                  <option value="3-5 business days">3-5 business days</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Delivery Fees Configuration */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
+              <span className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
+                Delivery Charges for Your Dispatch
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                    Same City / Local
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
+                    <input
+                      type="number"
+                      disabled={isFieldsDisabled}
+                      value={form.sameCityFee}
+                      onChange={(e) => setForm({ ...form, sameCityFee: Number(e.target.value) })}
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                    />
+                  </div>
+                  <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Direct local rider</span>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                    Nearby / Intra-State
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
+                    <input
+                      type="number"
+                      disabled={isFieldsDisabled}
+                      value={form.closeHubFee}
+                      onChange={(e) => setForm({ ...form, closeHubFee: Number(e.target.value) })}
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                    />
+                  </div>
+                  <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Within state / nearby hub</span>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
+                    Nationwide (Interstate)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
+                    <input
+                      type="number"
+                      disabled={isFieldsDisabled}
+                      value={form.interstateFee}
+                      onChange={(e) => setForm({ ...form, interstateFee: Number(e.target.value) })}
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                    />
+                  </div>
+                  <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Other Nigerian states</span>
+                </div>
+              </div>
+
+              {/* Park Pickup Option */}
+              <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    disabled={isFieldsDisabled}
+                    checked={form.parkPickupEnabled}
+                    onChange={(e) => setForm({ ...form, parkPickupEnabled: e.target.checked })}
+                    className="rounded border-[var(--border-subtle)] text-[var(--gold-accent)]"
+                  />
+                  <span className="text-xs font-mono-luxury text-[var(--text-primary)]">
+                    Allow Park / Hub Waybill Pickup Option
+                  </span>
+                </label>
+
+                {form.parkPickupEnabled && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono-luxury text-[var(--text-secondary)]">Pickup Fee:</span>
+                    <div className="relative w-24">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
+                      <input
+                        type="number"
+                        disabled={isFieldsDisabled}
+                        value={form.parkPickupFee}
+                        onChange={(e) => setForm({ ...form, parkPickupFee: Number(e.target.value) })}
+                        className="w-full pl-6 pr-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+
+          {/* 3. Social Media Channels */}
           <div className="space-y-4 pt-2 border-t border-[var(--border-subtle)]">
             <div>
               <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold block">
-                2. Social Media Channels
+                3. Social Media Channels
               </span>
               <p className="text-[11px] text-[var(--text-secondary)] font-mono-luxury mt-0.5">
-                Add your brand handles so shoppers can discover and connect with your store.
+                Add your brand handles so shoppers can discover and connect with your boutique.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* Instagram */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                   <InstagramLogo />
@@ -297,12 +494,11 @@ export default function VendorAtelierProfilePage() {
                   disabled={isFieldsDisabled}
                   value={form.instagram}
                   onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-                  placeholder="@your_instagram"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-pink-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  placeholder="@your_brand"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-pink-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
-              {/* TikTok */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                   <TikTokLogo />
@@ -314,13 +510,10 @@ export default function VendorAtelierProfilePage() {
                   value={form.tiktok}
                   onChange={(e) => setForm({ ...form, tiktok: e.target.value })}
                   placeholder="@your_tiktok"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-cyan-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-cyan-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* Snapchat */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                   <SnapchatLogo />
@@ -332,14 +525,13 @@ export default function VendorAtelierProfilePage() {
                   value={form.snapchat}
                   onChange={(e) => setForm({ ...form, snapchat: e.target.value })}
                   placeholder="@your_snapchat"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-amber-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-amber-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
-              {/* WhatsApp */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  <Phone className="h-4 w-4 text-emerald-400" />
+                  <Phone className="h-3.5 w-3.5 text-emerald-400" />
                   <span>WhatsApp Concierge</span>
                 </label>
                 <input
@@ -348,110 +540,121 @@ export default function VendorAtelierProfilePage() {
                   value={form.whatsapp}
                   onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
                   placeholder="+234 800 000 0000"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-emerald-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-emerald-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
           </div>
 
-          {/* 3. Store Bio */}
-          <div className="pt-2 border-t border-[var(--border-subtle)] space-y-2">
-            <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold">
-              3. {isBoutique ? 'Store Bio & Brand Story' : 'Atelier Craftsmanship Bio'}
-            </label>
-            <textarea
-              rows={3}
-              disabled={isFieldsDisabled}
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              className="w-full p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] leading-relaxed focus:border-[var(--gold-accent)] focus:outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[var(--bg-surface)]"
-            />
+          {/* Submit / Update Button */}
+          <div className="pt-4 border-t border-[var(--border-subtle)]">
+            <button
+              type="submit"
+              disabled={isSaving || isFieldsDisabled}
+              className="w-full py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving Store Profile...</span>
+                </>
+              ) : isFieldsDisabled ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  <span>Profile Submitted & Locked</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  <span>Save Store Profile & Delivery Rates</span>
+                </>
+              )}
+            </button>
           </div>
-
-          {/* Save Button ONLY shown when fields are enabled / pending submission / rejected */}
-          {!isFieldsDisabled && (
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-8 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold tracking-wider hover:opacity-90 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Submitting Store Profile...</span>
-                  </>
-                ) : (
-                  <span>{approvalStatus === 'rejected' ? 'Resubmit Store Profile' : 'Save & Submit Store Profile'}</span>
-                )}
-              </button>
-            </div>
-          )}
 
         </form>
 
-        {/* Right 5 Cols: Live Public Preview Card */}
-        <div className="lg:col-span-5 space-y-4">
-          <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-muted)] font-bold block">
-            Public Storefront Preview
+        {/* Right 5 Cols: Live Storefront Card Preview */}
+        <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-md">
+          <span className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold block">
+            Customer Storefront Badge Preview
           </span>
 
-          <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-5 shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] font-editorial font-bold text-xl flex items-center justify-center">
-                {form.brandName ? form.brandName.charAt(0).toUpperCase() : 'V'}
+          <div className="p-6 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="h-12 w-12 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 flex items-center justify-center text-lg font-editorial font-bold text-[var(--gold-accent)]">
+                {(form.brandName || 'V').charAt(0)}
               </div>
-              <div>
-                <h3 className="font-editorial text-lg font-bold text-[var(--text-primary)]">
-                  {form.brandName || 'Brand Name'}
-                </h3>
-                <span className="text-[10px] font-mono-luxury text-emerald-500 font-bold flex items-center gap-1">
-                  ● {isBoutique ? 'Verified Nigerian Boutique' : 'Verified Nigerian Atelier'}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
-              {form.bio || 'Store description appears here...'}
-            </p>
-
-            {/* Social Channels Preview Bar */}
-            <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
-              <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">
-                Connected Brand Channels:
+              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">
+                Verified Boutique
               </span>
-              <div className="flex flex-wrap gap-2">
-                {form.instagram && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)]">
-                    <InstagramLogo />
-                    <span>{form.instagram}</span>
-                  </span>
-                )}
-                {form.tiktok && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)]">
-                    <TikTokLogo />
-                    <span>{form.tiktok}</span>
-                  </span>
-                )}
-                {form.snapchat && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)]">
-                    <SnapchatLogo />
-                    <span>{form.snapchat}</span>
-                  </span>
-                )}
-                {form.whatsapp && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)]">
-                    <Phone className="h-3 w-3 text-emerald-400" />
-                    <span>{form.whatsapp}</span>
-                  </span>
-                )}
+            </div>
+
+            <div>
+              <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                {form.brandName || 'Your Store Name'}
+              </h3>
+              {form.city ? (
+                <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+                  <MapPin className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
+                  <span>Ships from {form.city}{form.state ? `, ${form.state}` : ''}</span>
+                </div>
+              ) : (
+                <div className="text-xs text-[var(--text-muted)] font-mono-luxury mt-1">
+                  Location will appear here once saved
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1 text-xs font-mono-luxury">
+              <div className="flex items-center justify-between text-[var(--text-secondary)]">
+                <span>Dispatch Turnaround:</span>
+                <span className="font-bold text-[var(--text-primary)]">{form.dispatchDays}</span>
+              </div>
+              <div className="flex items-center justify-between text-[var(--text-secondary)]">
+                <span>Same City Shipping:</span>
+                <span className="font-bold text-[var(--gold-accent)]">₦{Number(form.sameCityFee).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-[var(--text-secondary)]">
+                <span>Intra-State Shipping:</span>
+                <span className="font-bold text-[var(--gold-accent)]">₦{Number(form.closeHubFee).toLocaleString()}</span>
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[var(--border-subtle)] text-[10px] font-mono-luxury text-[var(--text-muted)] flex items-center justify-between">
-              <span>{isBoutique ? 'Manager:' : 'Lead Tailor:'} <strong className="text-[var(--text-primary)]">{form.designerName || 'N/A'}</strong></span>
-              <span>{form.location}</span>
-            </div>
+            {/* Social Media Channels on Storefront Badge */}
+            {(form.instagram || form.tiktok || form.snapchat || form.whatsapp) && (
+              <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">
+                  Official Channels:
+                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {form.instagram && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-400 text-[10px] font-mono-luxury font-bold">
+                      <InstagramLogo />
+                      <span>{form.instagram}</span>
+                    </span>
+                  )}
+                  {form.tiktok && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono-luxury font-bold">
+                      <TikTokLogo />
+                      <span>{form.tiktok}</span>
+                    </span>
+                  )}
+                  {form.snapchat && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-mono-luxury font-bold">
+                      <SnapchatLogo />
+                      <span>{form.snapchat}</span>
+                    </span>
+                  )}
+                  {form.whatsapp && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono-luxury font-bold">
+                      <Phone className="h-3 w-3" />
+                      <span>WhatsApp</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

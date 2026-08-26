@@ -126,7 +126,14 @@ export default function VendorAuthPage() {
       }
 
       if (res.vendor) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('veyra_vendor_id', res.vendor.id);
+          if (res.token) localStorage.setItem('veyra_vendor_token', res.token);
+          document.cookie = `veyra_vendor_id=${res.vendor.id}; path=/; max-age=2592000`;
+        }
+
         setVendorProfile({
+          id: res.vendor.id,
           brandName: res.vendor.brand_name || 'My Atelier',
           designerName: res.vendor.designer_name || 'Lead Designer',
           contactPerson: res.vendor.contact_person || res.vendor.designer_name,
@@ -251,6 +258,7 @@ export default function VendorAuthPage() {
       }
 
       const activeVendor = res.vendor || {
+        id: res.vendor?.id,
         brandName: regForm.brandName,
         designerName: regForm.designerName,
         contactPerson: regForm.designerName,
@@ -264,6 +272,7 @@ export default function VendorAuthPage() {
       };
 
       setVendorProfile({
+        id: activeVendor.id || res.vendor?.id,
         brandName: activeVendor.brand_name || activeVendor.brandName || regForm.brandName,
         designerName: activeVendor.designer_name || activeVendor.designerName || regForm.designerName,
         contactPerson: activeVendor.contact_person || activeVendor.contactPerson || regForm.designerName,
@@ -578,7 +587,7 @@ export default function VendorAuthPage() {
                     required
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
-                    placeholder="contact@brand.ng or 08023456789"
+                    placeholder="contact@brand.ng or 08012*****"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:border-[var(--gold-accent)] focus:outline-none transition-colors"
                   />
                 </div>
@@ -673,7 +682,7 @@ export default function VendorAuthPage() {
                       required
                       value={regForm.designerName}
                       onChange={(e) => setRegForm({ ...regForm, designerName: e.target.value })}
-                      placeholder="e.g. Kolapo Babatunde"
+                      placeholder="e.g. Full Name"
                       className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                     />
                   </div>
@@ -709,7 +718,7 @@ export default function VendorAuthPage() {
                       required
                       value={regForm.phone}
                       onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
-                      placeholder="08023456789"
+                      placeholder="08012*****"
                       className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
                     />
                   </div>
@@ -837,7 +846,7 @@ export default function VendorAuthPage() {
                     type="text"
                     value={regForm.accountName}
                     onChange={(e) => setRegForm({ ...regForm, accountName: e.target.value.toUpperCase() })}
-                    placeholder="e.g. DEJI & KOLA ENTERPRISE"
+                    placeholder="e.g. Registered Business Name"
                     className="w-full px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none uppercase font-bold"
                   />
                 </div>

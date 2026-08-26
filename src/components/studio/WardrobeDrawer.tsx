@@ -33,8 +33,22 @@ export default function WardrobeDrawer() {
   ];
 
   const filteredProducts = allProducts.filter((item) => {
-    const matchesGender = item.genderTarget === selectedGender || item.genderTarget === 'unisex';
-    const matchesOrigin = selectedOriginType === 'all' || item.garmentOriginType === selectedOriginType;
+    const pGender = String(item.genderTarget || '').toLowerCase();
+    const sGender = String(selectedGender || '').toLowerCase();
+    const matchesGender = 
+      pGender === 'unisex' ||
+      pGender === sGender ||
+      (sGender === 'male' && (pGender === 'male' || pGender === 'men' || pGender === 'man')) ||
+      (sGender === 'female' && (pGender === 'female' || pGender === 'women' || pGender === 'woman'));
+
+    const pOrigin = String(item.garmentOriginType || '').toLowerCase();
+    const sOrigin = String(selectedOriginType || '').toLowerCase();
+    const matchesOrigin = 
+      sOrigin === 'all' || 
+      (sOrigin === 'handmade_designer' && (pOrigin === 'handmade_designer' || pOrigin === 'bespoke_atelier')) ||
+      (sOrigin === 'ready_made_boutique' && pOrigin === 'ready_made_boutique') ||
+      pOrigin === sOrigin;
+
     const matchesCat = activeCategory === 'all' || item.category === activeCategory;
     return matchesGender && matchesOrigin && matchesCat;
   });

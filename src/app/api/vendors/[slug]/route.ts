@@ -36,10 +36,13 @@ export async function GET(
     const vendorId = resolvedVendor?.id || decodedSlug.replace(/\s+/g, '-');
     const brandName = resolvedVendor?.brand_name || cleanBrandName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-    // Parse bio and multi-social links
+    // Parse bio, location, turnaround and multi-social links
     let bioText = resolvedVendor?.bio || '';
+    let city = '';
+    let state = '';
+    let dispatchDays = '1-2 business days';
     let socialLinks: any = {
-      instagram: '@' + (brandName.toLowerCase().replace(/\s+/g, '_')),
+      instagram: '',
       tiktok: '',
       snapchat: '',
       whatsapp: resolvedVendor?.phone || ''
@@ -49,6 +52,9 @@ export async function GET(
       try {
         const parsed = JSON.parse(bioText);
         bioText = parsed.bio || '';
+        city = parsed.city || '';
+        state = parsed.state || '';
+        dispatchDays = parsed.dispatchDays || '1-2 business days';
         if (parsed.socialLinks) {
           socialLinks = { ...socialLinks, ...parsed.socialLinks };
         }
@@ -60,6 +66,8 @@ export async function GET(
         ? 'Contemporary Nigerian ready-to-wear streetwear and boutique fashion drops.'
         : 'Master bespoke tailoring and luxury artisanal apparel.';
     }
+
+    const locationDisplay = resolvedVendor?.location || (city && state ? `${city}, ${state}` : city || state || 'Nigeria');
 
     // 2. Fetch Products strictly for this Brand from Database
     const { data: dbProducts } = await supabase
@@ -101,9 +109,11 @@ export async function GET(
     const vendorPayload = {
       id: vendorId,
       name: brandName,
-      designerName: resolvedVendor?.designer_name || 'Boutique Lead',
+      designerName: resolvedVendor?.designer_name || 'Boutique Manager',
       vendorType: resolvedVendor?.vendor_type || 'boutique_merchant',
-      origin: resolvedVendor?.location || 'Victoria Island, Lagos',
+      origin: locationDisplay,
+      city,
+      state,
       bio: bioText,
       socialLinks,
       instagram: socialLinks.instagram,
@@ -112,7 +122,7 @@ export async function GET(
       whatsapp: socialLinks.whatsapp || resolvedVendor?.phone,
       productCount: formattedProducts.length,
       satisfactionRate: 99.4,
-      deliveryDays: '24 - 48 Hours (Lagos Hub Dispatch)',
+      deliveryDays: dispatchDays,
       isVerified: true
     };
 

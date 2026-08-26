@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   User, Phone, Mail, MapPin, Package, Bell, Star, ShieldCheck,
   CheckCircle2, Clock, Sparkles, ArrowRight, Layers, LogOut,
-  Scissors, ChevronRight, Check, Heart, Edit3, MessageSquare, Loader2
+  Scissors, ChevronRight, Check, Heart, Edit3, MessageSquare, Loader2, Truck
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,6 +23,26 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'body_twin' | 'orders' | 'notifications'>('orders');
   const [isLoading, setIsLoading] = useState(false);
   const [liveOrders, setLiveOrders] = useState<any[]>([]);
+
+  // Fetch real orders from PostgreSQL on mount
+  useEffect(() => {
+    async function loadRealOrders() {
+      try {
+        const userEmail = userAuth?.email || bodyProfile?.email || '';
+        const url = userEmail ? `/api/orders?email=${encodeURIComponent(userEmail)}` : '/api/orders';
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders)) {
+          setLiveOrders(data.orders);
+        } else {
+          setLiveOrders([]);
+        }
+      } catch (e) {
+        setLiveOrders([]);
+      }
+    }
+    loadRealOrders();
+  }, [userAuth?.email, bodyProfile?.email]);
 
   // Profile Form state
   const [profileForm, setProfileForm] = useState({
@@ -112,7 +132,28 @@ export default function ProfilePage() {
     });
   };
 
-  const handleRatingSubmit = (orderId: string) => {
+  const handleRatingSubmit = async (orderId: string) => {
+    const matchedOrder = effectiveOrders.find(o => o.id === orderId || o.orderNumber === orderId);
+    const firstItem = matchedOrder?.items?.[0] || {};
+
+    try {
+      await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: matchedOrder?.id || orderId,
+          orderNumber: matchedOrder?.orderNumber,
+          productId: firstItem.productId || firstItem.id,
+          productName: firstItem.productName || firstItem.name || 'Garment Piece',
+          vendorId: firstItem.vendorId || 'moji-wears',
+          customerName: displayName,
+          rating: starRating,
+          fitRating: 'true_to_size',
+          comment: reviewComment.trim()
+        })
+      });
+    } catch (e) {}
+
     rateOrder(orderId, starRating, reviewComment);
     setRatingModalOrder(null);
     confetti({
@@ -243,7 +284,24 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-6">
-            {userOrders.map((order) => (
+            {liveOrders.length === 0 ? (
+              <div className="p-16 rounded-3xl surface-card text-center space-y-4 border border-[var(--border-subtle)]">
+                <Package className="h-10 w-10 text-[var(--gold-accent)] mx-auto opacity-70" />
+                <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                  No Orders Yet
+                </h3>
+                <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-sm mx-auto">
+                  You have not placed any orders yet. Discover custom tailoring & ready-to-wear drops on the catalog.
+                </p>
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold hover:opacity-90 transition-all shadow-md mt-2"
+                >
+                  <span>Explore Shop Catalog</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ) : liveOrders.map((order: any) => (
               <div
                 key={order.id}
                 className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-lg"
@@ -255,8 +313,8 @@ export default function ProfilePage() {
                       <span className="text-sm font-mono-luxury font-bold text-[var(--gold-accent)]">
                         {order.orderNumber}
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-xs font-mono-luxury font-bold capitalize">
-                        ● {order.status.replace('_', ' ')}
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono-luxury font-bold capitalize">
+                        {(order.status || 'Escrow Secured').replace(/_/g, ' ')}
                       </span>
                     </div>
                     <div className="text-xs text-[var(--text-muted)] font-mono-luxury mt-1">
@@ -264,13 +322,51 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="text-left sm:text-right">
-                    <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Total Amount</span>
-                    <span className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
-                      ₦{order.totalAmount.toLocaleString()}
-                    </span>
+                  <div className="flex items-center gap-4">
+                    <Link
+                      href={`/track-order?orderNumber=${encodeURIComponent(order.orderNumber)}`}
+                      className="px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury font-bold uppercase transition-all inline-flex items-center gap-1.5"
+                    >
+                      <Truck className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                      <span>Track Order</span>
+                    </Link>
+
+                    <div className="text-left sm:text-right">
+                      <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Total Amount</span>
+                      <span className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                        ₦{order.totalAmount.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Driver / Courier Contact (If Dispatched) */}
+                {order.trackingStage >= 3 && (order.trackingDetails?.driverPhone || order.trackingDetails?.waybillNumber) && (
+                  <div className="p-3.5 rounded-2xl bg-[var(--gold-subtle)]/40 border border-[var(--gold-accent)]/30 flex items-center justify-between text-xs font-mono-luxury text-[var(--text-primary)] flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <Truck className="h-4 w-4 text-[var(--gold-accent)] shrink-0" />
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-[var(--gold-accent)] block">Dispatched With Courier</span>
+                        {order.trackingDetails?.driverPhone && (
+                          <span className="font-bold">Driver: {order.trackingDetails.driverPhone}</span>
+                        )}
+                        {order.trackingDetails?.waybillNumber && (
+                          <span className="text-[11px] text-[var(--text-secondary)] ml-2">Waybill: {order.trackingDetails.waybillNumber}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {order.trackingDetails?.driverPhone && (
+                      <a
+                        href={`tel:${order.trackingDetails.driverPhone}`}
+                        className="px-3.5 py-1.5 rounded-full bg-[var(--gold-accent)] text-black font-bold uppercase text-[11px] hover:bg-[#d8b357] transition-all flex items-center gap-1.5"
+                      >
+                        <Phone className="h-3 w-3 text-black" />
+                        <span>Call Driver</span>
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 {/* Garments in this Order */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -303,8 +399,10 @@ export default function ProfilePage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-mono-luxury font-bold text-[var(--gold-accent)]">Your Verified Fit Review:</span>
-                        <div className="flex items-center text-amber-400 text-xs">
-                          {'★'.repeat(order.rating || 5)}
+                        <div className="flex items-center text-amber-400 gap-0.5">
+                          {Array.from({ length: order.rating || 5 }).map((_, i) => (
+                            <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          ))}
                         </div>
                       </div>
                       <p className="text-xs text-[var(--text-secondary)] italic font-light">
@@ -510,7 +608,7 @@ export default function ProfilePage() {
                     required
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    placeholder="+234 803 123 4567"
+                    placeholder="08012*****"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
                   />
                 </div>

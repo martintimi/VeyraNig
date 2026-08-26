@@ -55,6 +55,11 @@ export default function BrandStorefrontPage() {
   const [quickLookProduct, setQuickLookProduct] = useState<any>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [vendorReviews, setVendorReviews] = useState<{ averageRating: number; count: number; reviews: any[] }>({
+    averageRating: 5.0,
+    count: 0,
+    reviews: []
+  });
 
   // Fetch live Brand & Products by Slug on mount
   useEffect(() => {
@@ -70,6 +75,14 @@ export default function BrandStorefrontPage() {
         if (res.ok && data.success && data.vendor) {
           setVendor(data.vendor);
           setProducts(data.products || []);
+
+          try {
+            const revRes = await fetch(`/api/reviews?vendorId=${encodeURIComponent(data.vendor.id || '')}`);
+            const revJson = await revRes.json();
+            if (revJson.success) {
+              setVendorReviews(revJson);
+            }
+          } catch (e) {}
         } else {
           setErrorMsg(data.error || 'Brand storefront not found');
         }
@@ -219,7 +232,7 @@ export default function BrandStorefrontPage() {
                   {vendor.name}
                 </h1>
                 <span className="px-3 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">
-                  ● {isBoutique ? 'Verified Nigerian Boutique' : 'Verified Nigerian Atelier'}
+                  {isBoutique ? 'Verified Nigerian Boutique' : 'Verified Nigerian Atelier'}
                 </span>
               </div>
               
@@ -234,7 +247,7 @@ export default function BrandStorefrontPage() {
                 </span>
                 <span>•</span>
                 <span className="text-[var(--gold-accent)] font-bold">
-                  ★ {vendor.satisfactionRate}% Rating
+                  {vendor.satisfactionRate}% Rating
                 </span>
               </div>
 
@@ -443,6 +456,64 @@ export default function BrandStorefrontPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* Verified Client Reviews Section */}
+      <div className="pt-8 border-t border-[var(--border-subtle)] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[var(--gold-accent)]" />
+              <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
+                Verified Store Ledger
+              </span>
+            </div>
+            <h3 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-1">
+              Client Reviews & Satisfaction
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-xs font-mono-luxury font-bold text-[var(--gold-accent)]">
+            <Star className="h-4 w-4 fill-current text-[var(--gold-accent)]" />
+            <span>{vendorReviews.averageRating} / 5.0 Rating ({vendorReviews.count} Verified Reviews)</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {vendorReviews.reviews.map((rev, idx) => (
+            <div
+              key={idx}
+              className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm hover:border-[var(--gold-accent)]/40 transition-all"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 flex items-center justify-center font-bold text-xs text-[var(--gold-accent)] font-mono-luxury">
+                    {rev.customerName ? rev.customerName.charAt(0).toUpperCase() : 'V'}
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1.5">
+                      <span>{rev.customerName}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono-luxury font-bold">
+                        Verified Purchase
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono-luxury text-[var(--text-muted)]">{rev.productName || 'Garment Drop'} · {rev.createdAt}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 text-[var(--gold-accent)]">
+                  {Array.from({ length: rev.rating || 5 }).map((_, i) => (
+                    <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+                &quot;{rev.comment}&quot;
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Quick Look Modal */}

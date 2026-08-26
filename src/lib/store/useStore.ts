@@ -94,13 +94,14 @@ interface VeyraState {
 }
 
 export const defaultVendorProfile: VendorProfile = {
-  brandName: 'Klassic Wears',
-  designerName: 'Adeola Klassic',
-  contactPerson: 'Adeola Klassic',
-  email: 'contact@klassicwears.ng',
-  phone: '+234 802 345 6789',
-  location: 'Ijebu Ode, Ogun / Lagos',
-  vendorType: 'fashion_designer',
+  id: 'moji-wears',
+  brandName: 'Moji wears',
+  designerName: 'Moji Wears',
+  contactPerson: 'Moji Wears',
+  email: 'brewmarfle@gmail.com',
+  phone: '+234 812 345 6789',
+  location: 'Lagos, Nigeria',
+  vendorType: 'boutique_merchant',
   bankName: 'Guaranty Trust Bank (GTBank)',
   accountNumber: '0123456789',
   accountName: 'KLASSIC WEARS ENTERPRISE',
@@ -132,7 +133,9 @@ const defaultProfile: BodyProfile = {
   isLoggedIn: false,
 };
 
-const initialOrders: Order[] = [
+const initialOrders: Order[] = [];
+/*
+const oldInitialOrders: Order[] = [
   {
     id: 'ord-1',
     orderNumber: '#VY-ORD-9201',
@@ -222,6 +225,7 @@ const initialOrders: Order[] = [
     reviewComment: 'The chest embroidery on this Agbada is world-class. Fits my 49cm shoulder line with zero pull.'
   }
 ];
+*/
 
 const initialNotifications: NotificationItem[] = [
   {
@@ -362,16 +366,32 @@ export const useStore = create<VeyraState>()(
       },
 
       // Orders Management
-      userOrders: initialOrders,
+      userOrders: [],
       createNewOrder: (orderData) => {
-        const newOrder: Order = {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+        const newOrder: any = {
           ...orderData,
           id: `ord-${Date.now()}`,
+          date: `${dateStr}, ${timeStr}`,
+          status: 'escrow_secured',
+          trackingStage: 1, // 1: Escrow Secured, 2: Packing, 3: Dispatched, 4: Delivered
         };
         set((state) => ({
           userOrders: [newOrder, ...state.userOrders]
         }));
         return newOrder;
+      },
+      updateOrderStatus: (orderNumber: string, status: string, trackingStage: number) => {
+        set((state) => ({
+          userOrders: state.userOrders.map((ord) =>
+            ord.orderNumber === orderNumber || ord.id === orderNumber
+              ? { ...ord, status: status as any, trackingStage }
+              : ord
+          )
+        }));
       },
       rateOrder: (orderId, rating, comment) => {
         set((state) => ({
@@ -417,28 +437,54 @@ export const useStore = create<VeyraState>()(
           const res = await fetch('/api/products');
           const data = await res.json();
           if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-            const dbProducts: Product[] = data.products.map((p: any) => ({
-              id: p.id,
-              vendorId: p.vendor_id || 'boutique',
-              vendorName: p.vendor_name || (p.vendor_id ? p.vendor_id.replace('-', ' ') : 'Veyra Partner'),
-              name: p.name,
-              category: p.category || 'tops',
-              genderTarget: p.gender_target || 'unisex',
-              garmentOriginType: p.garment_origin_type || 'ready_made_boutique',
-              price: Number(p.price),
-              description: p.description || '',
-              tags: Array.isArray(p.tags) ? p.tags : ['Ready-to-Wear'],
-              colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : [{ name: 'Default', hex: '#111111' }],
-              sizes: p.sizes || ['S', 'M', 'L', 'XL', 'XXL'],
-              sizeChart: {},
-              imageUrl: p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
-              fabricComposition: 'Premium Nigerian Fabric',
-              fitNotes: 'Standard ready-to-wear sizing',
-              rating: 5.0,
-              reviewCount: 12,
-              layerZIndex: 2,
-              badge: p.garment_origin_type === 'ready_made_boutique' ? 'Fast 24-48h Drop' : 'Bespoke Handmade'
-            }));
+            const dbProducts: Product[] = data.products.map((p: any) => {
+              const rawGender = String(p.gender_target || p.genderTarget || 'unisex').toLowerCase();
+              let normalizedGender: GenderTarget = 'unisex';
+              if (rawGender === 'male' || rawGender === 'men' || rawGender === 'man') {
+                normalizedGender = 'male';
+              } else if (rawGender === 'female' || rawGender === 'women' || rawGender === 'woman') {
+                normalizedGender = 'female';
+              }
+
+              const rawOrigin = String(p.garment_origin_type || p.garmentOriginType || 'ready_made_boutique').toLowerCase();
+              const normalizedOrigin: GarmentOriginType = (rawOrigin === 'bespoke_atelier' || rawOrigin === 'handmade_designer') 
+                ? 'handmade_designer' 
+                : 'ready_made_boutique';
+
+              return {
+                id: p.id,
+                vendorId: p.vendorId || p.vendor_id || 'boutique',
+                vendorName: p.vendorName || p.vendor_name || (p.vendor_id ? p.vendor_id.replace(/-/g, ' ') : 'Veyra Partner'),
+                vendorCity: p.vendorCity || p.vendor_city || '',
+                vendorState: p.vendorState || p.vendor_state || '',
+                vendorLocation: p.vendorLocation || p.vendor_location || '',
+                dispatchDays: p.vendorDispatchDays || p.dispatch_days || '1-2 business days',
+                shippingRates: p.vendorShippingRates || p.shipping_rates || {
+                  sameCity: 1000,
+                  closeHub: 2500,
+                  interstate: 4500,
+                  parkPickup: 1500,
+                  parkPickupEnabled: true,
+                },
+                name: p.name,
+                category: (p.category || 'tops').toLowerCase() as GarmentCategory,
+                genderTarget: normalizedGender,
+                garmentOriginType: normalizedOrigin,
+                price: Number(p.price) || 0,
+                description: p.description || '',
+                tags: Array.isArray(p.tags) ? p.tags : ['Ready-to-Wear'],
+                colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : [{ name: 'Default', hex: '#111111' }],
+                sizes: p.sizes || ['S', 'M', 'L', 'XL', 'XXL'],
+                sizeChart: {},
+                imageUrl: p.imageUrl || p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
+                fabricComposition: 'Premium Nigerian Fabric',
+                fitNotes: 'Standard ready-to-wear sizing',
+                rating: 5.0,
+                reviewCount: 12,
+                layerZIndex: 2,
+                badge: normalizedOrigin === 'ready_made_boutique' ? 'Fast 24-48h Drop' : 'Bespoke Handmade'
+              };
+            });
 
             // Set strictly to live PostgreSQL database products (no mock merging)
             set({ allProducts: dbProducts });
@@ -608,7 +654,6 @@ export const useStore = create<VeyraState>()(
         isVendorLoggedIn: state.isVendorLoggedIn,
         vendorProfile: state.vendorProfile,
         cart: state.cart,
-        userOrders: state.userOrders,
         userNotifications: state.userNotifications,
       }),
     }

@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// 1. GET ALL PRODUCTS / FILTER PRODUCTS
+const NIGERIAN_STATES = [
+  'Lagos', 'Ogun', 'Oyo', 'Abuja', 'FCT - Abuja', 'Rivers', 'Anambra', 'Enugu', 'Delta',
+  'Edo', 'Kano', 'Kaduna', 'Ondo', 'Osun', 'Ekiti', 'Kwara', 'Abia', 'Akwa Ibom',
+  'Bayelsa', 'Benue', 'Cross River', 'Ebonyi', 'Gombe', 'Imo', 'Jigawa', 'Katsina',
+  'Kebbi', 'Kogi', 'Nasarawa', 'Niger', 'Plateau', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Bauchi', 'Borno', 'Adamawa'
+];
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const vendorId = searchParams.get('vendorId');
+    const vendorId = 
+      searchParams.get('vendorId') || 
+      searchParams.get('id') || 
+      request.headers.get('x-vendor-id');
     const category = searchParams.get('category');
     const gender = searchParams.get('gender');
     const origin = searchParams.get('origin');
@@ -34,139 +43,165 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const { data: vendorsList } = await supabase.from('vendors').select('id, brand_name, designer_name, location, bio');
+    const vendorMap = new Map<string, any>();
+
+    if (vendorsList && Array.isArray(vendorsList)) {
+      vendorsList.forEach((v) => {
+        let city = '';
+        let state = '';
+        let dispatchDays = '1-2 business days';
+        let shippingRates = {
+          sameCity: 1000,
+          closeHub: 2500,
+          interstate: 4500,
+          parkPickup: 1500,
+          parkPickupEnabled: true,
+        };
+
+        if (v.bio && v.bio.startsWith('{') && v.bio.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(v.bio);
+            city = parsed.city || '';
+            state = parsed.state || '';
+            dispatchDays = parsed.dispatchDays || '1-2 business days';
+            if (parsed.shippingRates) {
+              shippingRates = { ...shippingRates, ...parsed.shippingRates };
+            }
+          } catch (e) {}
+        }
+
+        if (!city && v.location) {
+          const matched = NIGERIAN_STATES.find(s => v.location.toLowerCase().includes(s.toLowerCase()));
+          if (matched) {
+            city = matched;
+            state = matched;
+          } else {
+            const parts = v.location.split(',').map((p: string) => p.trim());
+            city = parts[0] || 'Lagos';
+            state = parts[1] || parts[0] || 'Lagos';
+          }
+        }
+
+        vendorMap.set(v.id, {
+          brand_name: v.brand_name,
+          designer_name: v.designer_name,
+          location: v.location,
+          city: city || 'Lagos',
+          state: state || 'Lagos',
+          dispatchDays,
+          shippingRates,
+        });
+      });
+    }
+
+    const formatted = (products || []).map((p) => {
+      const vendorInfo = vendorMap.get(p.vendor_id);
+      return {
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        category: p.category,
+        genderTarget: p.gender_target,
+        garmentOriginType: p.garment_origin_type,
+        imageUrl: p.image_url,
+        description: p.description,
+        tags: p.tags || [],
+        colors: p.colors || [],
+        sizes: p.sizes || ['S', 'M', 'L', 'XL'],
+        sizeStock: p.size_stock || {},
+        stockQuantity: p.stock_quantity || 10,
+        isCustomizable: p.is_customizable,
+        tailoringSpecs: p.tailoring_specs,
+        vendorId: p.vendor_id,
+        vendorName: vendorInfo?.brand_name || p.vendor_id?.replace(/-/g, ' ').toUpperCase() || 'Veyra Partner',
+        vendorLocation: vendorInfo?.location || 'Lagos, Nigeria',
+        vendorCity: vendorInfo?.city || 'Lagos',
+        vendorState: vendorInfo?.state || 'Lagos',
+        vendorDispatchDays: vendorInfo?.dispatchDays || '1-2 business days',
+        vendorShippingRates: vendorInfo?.shippingRates || {
+          sameCity: 1000,
+          closeHub: 2500,
+          interstate: 4500,
+          parkPickup: 1500,
+          parkPickupEnabled: true,
+        }
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      count: products?.length || 0,
-      products: products || [],
+      count: formatted.length,
+      products: formatted,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// 2. CREATE / PUBLISH NEW PRODUCT
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const resolvedVendorId = 
+      body.vendorId || 
+      request.headers.get('x-vendor-id') || 
+      'moji-wears';
+
     const {
       name,
       price,
-      description,
       category,
-      genderTarget = 'unisex',
-      garmentOriginType = 'ready_made_boutique',
+      genderTarget,
+      garmentOriginType,
       imageUrl,
-      tags = [],
-      colors = [],
-      vendorId,
+      description,
+      tags,
+      colors,
+      sizes,
+      sizeStock,
+      stockQuantity,
+      tailoringSpecs,
       vendorName,
     } = body;
+    const vendorId = resolvedVendorId;
 
     if (!name || !price || !category) {
-      return NextResponse.json({ error: 'Product name, price, and category are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const supabase = await createClient();
 
-    // 1. Resolve active vendor
-    let resolvedVendorId = vendorId;
+    const productId = `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    // Try finding via Supabase session
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
-        .maybeSingle();
-      if (vendor) {
-        resolvedVendorId = vendor.id;
-      }
-    }
-
-    // If still no vendorId, search by vendorName or brandName in vendors table
-    if (!resolvedVendorId && vendorName) {
-      const cleanBrand = vendorName.trim();
-      const { data: matchedVendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .ilike('brand_name', `%${cleanBrand}%`)
-        .maybeSingle();
-      if (matchedVendor) {
-        resolvedVendorId = matchedVendor.id;
-      }
-    }
-
-    // If still not found, check if a default vendor exists, or auto-create a vendor profile
-    if (!resolvedVendorId) {
-      const { data: anyVendor } = await supabase.from('vendors').select('id').limit(1).maybeSingle();
-      resolvedVendorId = anyVendor?.id || 'street-souk';
-    }
-
-    const productId = `prod-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
-
-    // Format colors array
-    let formattedColors: any[] = [];
-    if (Array.isArray(colors)) {
-      formattedColors = colors.map((c: any) => typeof c === 'string' ? c : (c.hex || '#111111'));
-    }
-
-    const newProduct = {
+    const { data, error } = await supabase.from('products').insert({
       id: productId,
-      vendor_id: resolvedVendorId,
       name,
       price: Number(price),
-      description: description || '',
       category,
-      gender_target: genderTarget,
-      garment_origin_type: garmentOriginType,
-      image_url: imageUrl || '/images/products/BlackTrapStarHoodie.jpg',
-      tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? tags.split(',').map((t: string) => t.trim()) : []),
-      colors: formattedColors,
+      gender_target: genderTarget || 'unisex',
+      garment_origin_type: garmentOriginType || 'ready_made_boutique',
+      image_url: imageUrl,
+      description: description || name,
+      tags: tags || [],
+      colors: colors || [],
+      sizes: sizes || ['S', 'M', 'L', 'XL'],
+      size_stock: sizeStock || {},
+      stock_quantity: stockQuantity ? Number(stockQuantity) : 10,
+      is_customizable: garmentOriginType === 'bespoke_atelier',
+      tailoring_specs: tailoringSpecs || null,
+      vendor_id: vendorId,
       is_published: true,
-      created_at: new Date().toISOString(),
-    };
-
-    const { data: createdProduct, error } = await supabase
-      .from('products')
-      .insert(newProduct)
-      .select()
-      .single();
+    }).select().single();
 
     if (error) {
-      console.error('Error inserting product into PostgreSQL:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Product drop published successfully to live catalog',
-      product: createdProduct,
+      message: 'Product published to store catalog successfully',
+      product: data,
     });
-  } catch (error: any) {
-    console.error('API Publish error:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
-  }
-}
-
-// 3. DELETE / UNPUBLISH PRODUCT
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
-    }
-
-    const supabase = await createClient();
-    const { error } = await supabase.from('products').delete().eq('id', id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, message: 'Product removed from store' });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

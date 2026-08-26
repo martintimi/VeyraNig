@@ -28,6 +28,7 @@ export async function POST(request: Request) {
 
     const user = authData.user;
     const metadataType = user.user_metadata?.user_type; // 'shopper' | 'vendor'
+    const token = authData.session?.access_token || user.id;
 
     // 2. Query both tables to verify exact account existence
     const { data: vendorRecord } = await supabase
@@ -44,16 +45,16 @@ export async function POST(request: Request) {
 
     // 3. Strict Role Isolation Check
     if (expectedRole === 'shopper') {
-      // If user is a vendor trying to log in on shopper portal
       if (vendorRecord && !profileRecord && metadataType === 'vendor') {
         return NextResponse.json({
           error: 'This account is registered as a Merchant Atelier. Please sign in via the Partner Portal at /vendor-portal/auth.'
         }, { status: 403 });
       }
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user,
+        token,
         userType: 'shopper',
         profile: profileRecord || {
           id: user.id,
@@ -63,10 +64,12 @@ export async function POST(request: Request) {
           gender: user.user_metadata?.gender || 'male',
         },
       });
+
+      response.cookies.set('veyra_shopper_id', user.id, { path: '/', httpOnly: false });
+      return response;
     }
 
     if (expectedRole === 'vendor') {
-      // If user is a shopper trying to log in on vendor portal
       if (!vendorRecord && (profileRecord || metadataType === 'shopper')) {
         return NextResponse.json({
           error: 'This account is registered as a Customer Shopper. Please sign in via the Shopper Storefront at /auth.'
@@ -79,32 +82,45 @@ export async function POST(request: Request) {
         }, { status: 404 });
       }
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user,
+        token,
+        vendorId: vendorRecord.id,
         userType: 'vendor',
         vendor: vendorRecord,
       });
+
+      response.cookies.set('veyra_vendor_id', vendorRecord.id, { path: '/', httpOnly: false });
+      response.cookies.set('veyra_vendor_token', token, { path: '/', httpOnly: false });
+      return response;
     }
 
-    // Default fallback if expectedRole not specified
+    // Default fallback
     if (vendorRecord) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user,
+        token,
+        vendorId: vendorRecord.id,
         userType: 'vendor',
         vendor: vendorRecord,
       });
+      response.cookies.set('veyra_vendor_id', vendorRecord.id, { path: '/', httpOnly: false });
+      return response;
     } else {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user,
+        token,
         userType: 'shopper',
         profile: profileRecord,
       });
+      response.cookies.set('veyra_shopper_id', user.id, { path: '/', httpOnly: false });
+      return response;
     }
   } catch (error: any) {
-    console.error('API Login error:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+    console.error('API /api/auth/login error:', error);
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
 }

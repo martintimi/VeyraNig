@@ -1,5 +1,8 @@
 'use client';
 
+import { vendorFetch } from '@/lib/services/apiClient';
+
+
 import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -37,12 +40,13 @@ export default function VendorPortalLayout({
   useEffect(() => {
     async function checkVendorStatus() {
       try {
-        const res = await fetch('/api/vendor/profile');
+        const res = await vendorFetch('/api/vendor/profile');
         const data = await res.json();
         if (res.ok && data.success && data.vendor) {
+          const verified = !!data.vendor.is_verified || !!data.vendor.isVerified;
           setLiveStatus({
-            isVerified: !!data.vendor.isVerified,
-            approvalStatus: data.vendor.approvalStatus || (data.vendor.isVerified ? 'approved' : 'pending')
+            isVerified: verified,
+            approvalStatus: verified ? 'approved' : (data.vendor.approvalStatus || 'pending')
           });
         }
       } catch (e) {}

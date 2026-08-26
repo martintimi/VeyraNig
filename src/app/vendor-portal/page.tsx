@@ -1,5 +1,8 @@
 'use client';
 
+import { vendorFetch, getActiveVendorId } from '@/lib/services/apiClient';
+
+
 import React, { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import Link from 'next/link';
@@ -29,16 +32,13 @@ export default function VendorOverviewPage() {
     async function loadVendorData() {
       try {
         setLoadingData(true);
-        // 1. Fetch vendor products from live DB
-        const resProd = await fetch('/api/products');
-        const prodData = await resProd.json();
-        if (prodData.success && Array.isArray(prodData.products)) {
-          setDbProducts(prodData.products);
-        }
+        const currentVendorId = vendorProfile.id || 'moji-wears';
+        const currentBrandName = (vendorProfile.brandName || '').toLowerCase().trim();
 
-        // 2. Fetch live vendor profile status from DB
-        const resProf = await fetch('/api/vendor/profile');
+        // 1. Fetch live vendor profile status from DB for THIS specific vendor
+        const resProf = await fetch(`/api/vendor/profile?id=${encodeURIComponent(currentVendorId)}`);
         const profData = await resProf.json();
+
         if (resProf.ok && profData.success && profData.vendor) {
           setProfileStatus({
             isProfileSaved: !!profData.vendor.isProfileSaved,
@@ -47,6 +47,25 @@ export default function VendorOverviewPage() {
             rejectionReason: profData.vendor.rejectionReason || ''
           });
         }
+
+        // 2. Fetch only THIS vendor's own products from live DB
+        const resProd = await fetch(`/api/products?vendorId=${encodeURIComponent(currentVendorId)}`);
+        const prodData = await resProd.json();
+        if (prodData.success && Array.isArray(prodData.products)) {
+          // Strict safety filter: ensure product belongs to this vendor
+          const strictlyMyProducts = prodData.products.filter((p: any) => {
+            const pVendorId = (p.vendor_id || '').toLowerCase().trim();
+            const pVendorName = (p.vendor_name || '').toLowerCase().trim();
+            return (
+              pVendorId === currentVendorId.toLowerCase() ||
+              (currentBrandName && pVendorName.includes(currentBrandName)) ||
+              (currentBrandName && currentBrandName.includes(pVendorName))
+            );
+          });
+          setDbProducts(strictlyMyProducts);
+        } else {
+          setDbProducts([]);
+        }
       } catch (err) {
         console.error('Error fetching vendor dashboard data:', err);
       } finally {
@@ -54,7 +73,7 @@ export default function VendorOverviewPage() {
       }
     }
     loadVendorData();
-  }, []);
+  }, [vendorProfile.id]);
 
   const isVerified = profileStatus?.isVerified || profileStatus?.approvalStatus === 'approved';
   const isRejected = profileStatus?.approvalStatus === 'rejected';

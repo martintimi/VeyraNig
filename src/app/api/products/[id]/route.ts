@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+const NIGERIAN_STATES = [
+  'Lagos', 'Ogun', 'Oyo', 'Abuja', 'FCT - Abuja', 'Rivers', 'Anambra', 'Enugu', 'Delta',
+  'Edo', 'Kano', 'Kaduna', 'Ondo', 'Osun', 'Ekiti', 'Kwara', 'Abia', 'Akwa Ibom',
+  'Bayelsa', 'Benue', 'Cross River', 'Ebonyi', 'Gombe', 'Imo', 'Jigawa', 'Katsina',
+  'Kebbi', 'Kogi', 'Nasarawa', 'Niger', 'Plateau', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Bauchi', 'Borno', 'Adamawa'
+];
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -14,7 +21,6 @@ export async function GET(
 
     const supabase = await createClient();
 
-    // 1. Fetch product from database
     const { data: product, error } = await supabase
       .from('products')
       .select('*')
@@ -25,9 +31,18 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // 2. Fetch vendor info
-    let vendorName = 'Veyra Partner';
-    let vendorInfo: any = null;
+    let vendorName = 'Verified Vendor';
+    let vendorCity = '';
+    let vendorState = '';
+    let vendorLocation = '';
+    let dispatchDays = '1-2 business days';
+    let shippingRates = {
+      sameCity: 1000,
+      closeHub: 2500,
+      interstate: 4500,
+      parkPickup: 1500,
+      parkPickupEnabled: true,
+    };
 
     if (product.vendor_id) {
       const { data: vendor } = await supabase
@@ -37,14 +52,51 @@ export async function GET(
         .maybeSingle();
 
       if (vendor) {
-        vendorName = vendor.brand_name || vendor.designer_name || 'Veyra Partner';
-        vendorInfo = vendor;
+        vendorName = vendor.brand_name || vendor.designer_name || 'Verified Vendor';
+        if (vendor.bio && vendor.bio.startsWith('{') && vendor.bio.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(vendor.bio);
+            vendorCity = parsed.city || '';
+            vendorState = parsed.state || '';
+            dispatchDays = parsed.dispatchDays || '1-2 business days';
+            if (parsed.shippingRates) {
+              shippingRates = { ...shippingRates, ...parsed.shippingRates };
+            }
+          } catch (e) {}
+        }
+
+        if (!vendorCity && vendor.location) {
+          const rawLoc = vendor.location.trim();
+          const parts = rawLoc.split(',').map((s: string) => s.trim());
+          if (parts.length >= 2) {
+            vendorCity = parts[0];
+            const candidateState = parts[1].replace(/nigeria/gi, '').trim();
+            vendorState = candidateState || parts[0];
+          } else {
+            vendorCity = rawLoc;
+            vendorState = rawLoc;
+          }
+        }
+
+        // Clean up vendorState if it says "Nigeria"
+        if (!vendorState || vendorState.toLowerCase() === 'nigeria') {
+          if (vendorCity && NIGERIAN_STATES.some(st => st.toLowerCase() === vendorCity.toLowerCase())) {
+            vendorState = vendorCity;
+          } else {
+            vendorState = 'Lagos State';
+          }
+        }
+
+        if (vendorState && !vendorState.toLowerCase().includes('state') && !vendorState.toLowerCase().includes('fct') && !vendorState.toLowerCase().includes('abuja')) {
+          vendorState = `${vendorState} State`;
+        }
+
+        vendorLocation = vendor.location || (vendorCity && vendorState ? `${vendorCity}, ${vendorState}` : vendorCity || vendorState || '');
       } else {
         vendorName = product.vendor_id.charAt(0).toUpperCase() + product.vendor_id.slice(1).replace(/-/g, ' ');
       }
     }
 
-    // 3. Normalize colors
     let normalizedColors: { name: string; hex: string }[] = [];
     if (Array.isArray(product.colors)) {
       normalizedColors = product.colors.map((c: any, index: number) => {
@@ -60,12 +112,15 @@ export async function GET(
       normalizedColors = [{ name: 'As Pictured', hex: '#111111' }];
     }
 
-    // 4. Return full, rich product payload
     const formattedProduct = {
       id: product.id,
       vendorId: product.vendor_id,
       vendorName,
-      vendorInfo,
+      vendorCity,
+      vendorState,
+      vendorLocation,
+      dispatchDays,
+      shippingRates,
       name: product.name,
       price: Number(product.price),
       description: product.description || '',
@@ -81,7 +136,7 @@ export async function GET(
       rating: 5.0,
       reviewCount: 18,
       createdAt: product.created_at,
-      badge: product.garment_origin_type === 'ready_made_boutique' ? 'Fast 24-48h Drop' : 'Bespoke Atelier'
+      badge: 'Ready-to-Wear'
     };
 
     return NextResponse.json({
