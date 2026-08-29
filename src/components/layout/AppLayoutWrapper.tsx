@@ -17,7 +17,6 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
   const pathname = usePathname();
   const { theme } = useStore();
   
-  // Persist dark / light mode on reload & toggle
   useEffect(() => {
     if (typeof document !== 'undefined') {
       if (theme === 'dark') {
@@ -30,7 +29,7 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
     }
   }, [theme]);
 
-  // Standalone portals (Auth, Vendor Portal, and Super Admin have their own dedicated standalone workspace)
+  // Standalone portals (Auth, Vendor Portal, and Super Admin)
   const isStandalonePage =
     pathname.startsWith('/auth') ||
     pathname.startsWith('/vendor') ||
@@ -41,17 +40,27 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       <LuxuryLoader />
       {!isStandalonePage && (
         <>
-          <Navbar />
-          <MobileHeader />
+          {/* Desktop Top Navbar (Strictly Hidden on Mobile for pure native app feel) */}
+          <div className="hidden md:block">
+            <Navbar />
+          </div>
         </>
       )}
-      <main className={!isStandalonePage ? "min-h-[calc(100vh-4rem)] pb-20 md:pb-0" : "min-h-screen"}>
+      <main className={!isStandalonePage ? "min-h-screen pb-24 md:pb-0" : "min-h-screen"}>
         {children}
       </main>
-      {!isStandalonePage && <Footer />}
+      
+      {/* Footer strictly for Desktop / Tablets */}
+      {!isStandalonePage && (
+        <div className="hidden md:block">
+          <Footer />
+        </div>
+      )}
+
       <SplitCartDrawer />
       <WardrobeVaultDrawer />
       <BodyTwinWizard />
+      {/* Floating Glassmorphic Mobile Bottom Dock (Strictly Mobile) */}
       <MobileBottomNav />
     </SmoothScrollProvider>
   );

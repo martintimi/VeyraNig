@@ -1,224 +1,441 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useStore } from '@/lib/store/useStore';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles, ArrowRight, ShoppingBag, Check, Flame,
-  Scissors, ShieldCheck, ChevronRight, Star
+  Sparkles, ArrowRight, ArrowUpRight, Plus, Check,
+  ShieldCheck, Truck, Lock, Sun, Moon, Search,
+  Crown, Flame
 } from 'lucide-react';
-import { calculateFitMatch } from '@/lib/utils/sizingEngine';
+import MobileStoriesRow from '@/components/mobile/MobileStoriesRow';
+import MobileQuickBuyDrawer from '@/components/mobile/MobileQuickBuyDrawer';
+
+// Reusable animate-on-scroll wrapper
+function FadeUp({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 28 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
+      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function MobileHomeView() {
-  const { allProducts, activeOutfit, setOutfitItem, removeOutfitItem, addToCart, bodyProfile } = useStore();
+  const {
+    allProducts,
+    followedVendors,
+    toggleFollowVendor,
+    setOutfitItem,
+    theme,
+    toggleTheme,
+    fetchProductsFromDb,
+  } = useStore();
 
-  const ateliers = [
-    { id: 'sartorial-lagos', name: 'Sartorial', tag: 'Native', image: '/images/products/BlackSenator.jpg', color: 'from-amber-600 to-amber-400' },
-    { id: 'street-souk', name: 'Street Souk', tag: 'Street', image: '/images/products/BlackTrapStarHoodie.jpg', color: 'from-purple-600 to-indigo-400' },
-    { id: 'yaba-denim', name: 'Yaba Denim', tag: 'Denim', image: '/images/products/BaggyJean.jpg', color: 'from-blue-600 to-cyan-400' },
-    { id: 'kano-leather', name: 'Kano Artisan', tag: 'Leather', image: '/images/products/UnisexSlides.jpg', color: 'from-amber-700 to-yellow-500' },
+  useEffect(() => { fetchProductsFromDb(); }, [fetchProductsFromDb]);
+
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const [quickBuyProduct, setQuickBuyProduct] = useState<any>(null);
+
+  const heroSlides = [
+    {
+      title: 'Nigerian Craft.\nEscrow Secured.',
+      tagline: 'CURATED READY-TO-WEAR',
+      image: '/images/products/BlackAgbada.jpg',
+      badge: 'Lagos Couture Drop',
+      cta: '/shop',
+    },
+    {
+      title: 'Streetwear Sets\n480GSM Heavyweight',
+      tagline: 'URBAN LAGOS ATELIERS',
+      image: '/images/products/BlackTrapStarHoodie.jpg',
+      badge: 'New Drop',
+      cta: '/shop',
+    },
+    {
+      title: 'Handcrafted\nLeather Footwear',
+      tagline: 'ARTISANAL SLIDES & MULES',
+      image: '/images/products/BrownLeatherLoafers.jpg',
+      badge: 'Footwear Drop',
+      cta: '/shop',
+    },
   ];
 
-  const featuredDrops = allProducts.slice(0, 6);
+  useEffect(() => {
+    const t = setInterval(() => setActiveHeroIndex(p => (p + 1) % heroSlides.length), 5000);
+    return () => clearInterval(t);
+  }, [heroSlides.length]);
+
+  const safeFollowed = Array.isArray(followedVendors) ? followedVendors : [];
+  const editorsPicks = (allProducts || []).slice(0, 3);
+
+  const featuredAteliers = [
+    { id: 'moji-wears', name: 'Moji Wears', origin: 'Lagos', tagline: 'Heavyweight Urban Streetwear & Sets', image: '/images/products/BlackTrapStarHoodie.jpg', dispatch: '24–48h' },
+    { id: 'arike-brand', name: 'Arike Brand', origin: 'Kano & Lagos', tagline: 'Hand-Embroidered Royal Senator & Agbada', image: '/images/products/BlackAgbada.jpg', dispatch: 'Express' },
+    { id: 'sartorial-lagos', name: 'Sartorial Lagos', origin: 'Victoria Island', tagline: 'Bespoke Contemporary Tailoring', image: '/images/products/BrownLeatherLoafers.jpg', dispatch: 'Same-day' },
+  ];
+
+  const departments = [
+    { title: 'Native & Agbada', sub: 'Royal Senator Sets', cat: 'tops', image: '/images/products/BlackAgbada.jpg' },
+    { title: 'Streetwear Drops', sub: 'Hoodies & Urban Sets', cat: 'outerwear', image: '/images/products/BlackTrapStarHoodie.jpg' },
+    { title: 'Handcrafted Footwear', sub: 'Leather Slides & Mules', cat: 'footwear', image: '/images/products/BrownLeatherLoafers.jpg' },
+    { title: 'Trousers & Sets', sub: 'Bespoke Nigerian Bottoms', cat: 'bottoms', image: '/images/products/BlackAgbada.jpg' },
+  ];
+
+  const marqueeItems = [
+    '100% Escrow via Paystack',
+    '24–48h Interstate Dispatch',
+    'Verified Nigerian Designers',
+    '3D Body Twin Sizing',
+    'Same-day Lagos Delivery',
+    'Bespoke Handmade Pieces',
+  ];
 
   return (
-    <div className="space-y-6 md:hidden pb-12 animate-fadeIn">
-      
-      {/* 1. VISUAL EDITORIAL HERO CARD */}
-      <div className="relative h-[380px] rounded-3xl overflow-hidden border border-[var(--border-subtle)] shadow-xl bg-black">
-        <Image
-          src="/images/products/BlackAgbada.jpg"
-          alt="Veyra Nigerian Luxury"
-          fill
-          unoptimized
-          priority
-          className="object-cover opacity-80"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+    <div className="md:hidden pb-28 bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-x-hidden">
 
-        {/* Hero Content */}
-        <div className="absolute inset-0 p-5 flex flex-col justify-between z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[10px] font-mono-luxury uppercase tracking-widest font-bold self-start">
-            <Sparkles className="h-3 w-3 text-amber-300" />
-            <span>Lagos Cross-Brand Fitting</span>
+      {/* ── 1. STICKY BRAND APP BAR ─────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-xl sticky top-0 z-30"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="font-editorial text-xl font-bold tracking-[0.25em] text-[var(--text-primary)]">VEYRA</span>
+          <span className="text-[8px] font-mono-luxury uppercase tracking-[0.2em] text-[var(--gold-accent)] font-bold">Atelier</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/shop" className="p-2 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer">
+            <Search className="h-4 w-4" />
+          </Link>
+          <button type="button" onClick={toggleTheme} className="p-2 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer">
+            {theme === 'dark' ? <Sun className="h-4 w-4 text-[var(--gold-accent)]" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
+      </motion.div>
+
+      {/* ── 2. STORIES ──────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="pt-4 pb-3 border-b border-[var(--border-subtle)]"
+      >
+        <MobileStoriesRow onOpenQuickBuy={(p) => setQuickBuyProduct(p)} />
+      </motion.div>
+
+      {/* ── 3. CINEMATIC HERO ────────────────────────────────── */}
+      <div className="px-4 pt-5">
+        <div className="relative h-[440px] rounded-3xl overflow-hidden bg-black shadow-2xl">
+          {/* Slides */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeHeroIndex}
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={heroSlides[activeHeroIndex].image}
+                alt={heroSlides[activeHeroIndex].title}
+                fill unoptimized priority
+                className="object-cover opacity-80"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Badge top-left */}
+          <div className="absolute top-4 left-4 z-20">
+            <motion.span
+              key={`badge-${activeHeroIndex}`}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-[var(--gold-accent)]/40 text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold"
+            >
+              <Flame className="h-3 w-3 fill-current" />
+              {heroSlides[activeHeroIndex].badge}
+            </motion.span>
           </div>
 
-          <div className="space-y-3">
-            <h1 className="font-editorial text-2xl font-bold text-white leading-tight">
-              Mix Nigerian Brands.<br />
-              <span className="italic font-light text-amber-300">Try On Your Twin.</span>
-            </h1>
+          {/* Dots top-right */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 p-1 rounded-full bg-black/40 backdrop-blur-sm">
+            {heroSlides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActiveHeroIndex(i)}
+                className={`h-1.5 rounded-full transition-all duration-400 cursor-pointer ${i === activeHeroIndex ? 'w-5 bg-[var(--gold-accent)]' : 'w-1.5 bg-white/40'}`}
+              />
+            ))}
+          </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <Link
-                href="/studio"
-                className="flex-1 py-3 rounded-full bg-white text-black font-mono-luxury uppercase text-xs font-bold text-center shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+          {/* Hero text */}
+          <div className="absolute bottom-0 inset-x-0 p-5 z-20 space-y-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`text-${activeHeroIndex}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-1"
               >
-                <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                <span>Try On 3D</span>
-              </Link>
+                <span className="text-[10px] font-mono-luxury text-zinc-300 uppercase tracking-widest font-bold block">
+                  {heroSlides[activeHeroIndex].tagline}
+                </span>
+                <h2 className="font-editorial text-3xl font-bold text-white whitespace-pre-line leading-tight">
+                  {heroSlides[activeHeroIndex].title}
+                </h2>
+              </motion.div>
+            </AnimatePresence>
+            <div className="flex items-center gap-2.5 pt-1">
               <Link
                 href="/shop"
-                className="flex-1 py-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white font-mono-luxury uppercase text-xs font-bold text-center active:scale-95 transition-transform"
+                className="flex-1 py-3 rounded-full bg-white text-black font-mono-luxury uppercase text-xs font-bold text-center shadow-xl active:scale-95 transition-transform"
               >
                 Shop Drops
+              </Link>
+              <Link
+                href="/studio"
+                className="flex-1 py-3 rounded-full bg-black/60 backdrop-blur-md border border-[var(--gold-accent)]/50 text-[var(--gold-accent)] font-mono-luxury uppercase text-xs font-bold text-center active:scale-95 transition-transform"
+              >
+                3D Body Twin
               </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. ATELIER STORY CIRCLES */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between px-1 text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
-          <span>Curated Nigerian Ateliers</span>
-          <Link href="/shop" className="text-[10px] text-[var(--gold-accent)] flex items-center gap-0.5">
-            <span>View All</span>
-            <ChevronRight className="h-3 w-3" />
-          </Link>
-        </div>
+      {/* ── 4. MARQUEE TICKER ────────────────────────────────── */}
+      <div className="py-3 mt-5 bg-[var(--bg-secondary)] border-y border-[var(--border-subtle)] overflow-hidden">
+        <motion.div
+          animate={{ x: ['0%', '-50%'] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+          className="flex items-center gap-8 whitespace-nowrap"
+        >
+          {[...marqueeItems, ...marqueeItems].map((item, i) => (
+            <span key={i} className="flex items-center gap-2 text-[10px] font-mono-luxury uppercase font-bold text-[var(--text-secondary)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold-accent)] shrink-0" />
+              {item}
+            </span>
+          ))}
+        </motion.div>
+      </div>
 
-        <div className="flex items-center gap-3.5 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4">
-          {ateliers.map((atelier) => (
-            <Link
-              key={atelier.id}
-              href={`/shop`}
-              className="flex flex-col items-center gap-1.5 shrink-0 group"
-            >
-              <div className={`h-16 w-16 rounded-full p-0.5 bg-gradient-to-tr ${atelier.color} shadow-md group-active:scale-95 transition-transform`}>
-                <div className="relative h-full w-full rounded-full overflow-hidden border-2 border-[var(--bg-primary)]">
-                  <Image
-                    src={atelier.image}
-                    alt={atelier.name}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <span className="text-[10px] font-mono-luxury font-bold text-[var(--text-primary)] tracking-tight">
-                {atelier.name}
-              </span>
+      {/* ── 5. DEPARTMENTS GRID ──────────────────────────────── */}
+      <div className="px-4 pt-8 space-y-4">
+        <FadeUp>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">Shop by Category</h3>
+              <span className="text-xs text-[var(--text-secondary)]">Explore specialized departments</span>
+            </div>
+            <Link href="/shop" className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold flex items-center gap-1">
+              All <ArrowRight className="h-3.5 w-3.5" />
             </Link>
+          </div>
+        </FadeUp>
+
+        <div className="grid grid-cols-2 gap-3">
+          {departments.map((dept, idx) => (
+            <FadeUp key={idx} delay={idx * 0.07}>
+              <Link
+                href={`/shop?category=${dept.cat}`}
+                className="relative h-44 rounded-2xl overflow-hidden border border-[var(--border-subtle)] shadow-sm group block"
+              >
+                <Image
+                  src={dept.image} alt={dept.title} fill unoptimized
+                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                <div className="absolute bottom-3 inset-x-3">
+                  <span className="text-[9px] font-mono-luxury text-zinc-400 uppercase font-bold block">{dept.sub}</span>
+                  <span className="font-editorial text-sm font-bold text-white flex items-center justify-between">
+                    <span>{dept.title}</span>
+                    <ArrowUpRight className="h-3.5 w-3.5 opacity-70" />
+                  </span>
+                </div>
+              </Link>
+            </FadeUp>
           ))}
         </div>
       </div>
 
-      {/* 3. TRENDING DROPS REEL (HORIZONTAL SNAP CAROUSEL) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1 text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
-          <div className="flex items-center gap-1.5">
-            <Flame className="h-3.5 w-3.5 text-amber-500" />
-            <span>Trending Drops</span>
+      {/* ── 6. FEATURED ATELIERS ─────────────────────────────── */}
+      <div className="pt-10 space-y-4">
+        <FadeUp className="px-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">Featured Ateliers</h3>
+              <span className="text-xs text-[var(--text-secondary)]">Verified Nigerian fashion houses</span>
+            </div>
+            <span className="text-xs font-mono-luxury text-[var(--gold-accent)] font-bold">Verified (3)</span>
           </div>
-          <Link href="/shop" className="text-[10px] text-[var(--gold-accent)]">
-            See All →
-          </Link>
-        </div>
+        </FadeUp>
 
-        <div className="flex items-stretch gap-3 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 snap-x">
-          {featuredDrops.map((product) => {
-            const isWorn = activeOutfit[product.category]?.id === product.id;
-            const fitResult = calculateFitMatch(bodyProfile, product);
-
+        <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar px-4 pb-2">
+          {featuredAteliers.map((atelier, idx) => {
+            const isFollowed = safeFollowed.includes(atelier.id.toLowerCase());
             return (
-              <div
-                key={product.id}
-                className="w-44 shrink-0 snap-start rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] overflow-hidden flex flex-col justify-between shadow-sm"
+              <motion.div
+                key={atelier.id}
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                className="w-60 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] p-4 shrink-0 space-y-3"
               >
-                <Link href={`/shop/${product.id}`} className="relative h-44 w-full bg-[var(--bg-secondary)] block">
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
-                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[8px] font-mono-luxury font-bold text-[var(--gold-accent)]">
-                    {fitResult.matchScore}% Match
-                  </span>
-                </Link>
-
-                <div className="p-2.5 space-y-1.5">
-                  <span className="text-[8px] font-mono-luxury uppercase text-[var(--gold-accent)] block truncate font-bold">
-                    {product.vendorName}
-                  </span>
-                  <h4 className="font-editorial text-xs font-bold text-[var(--text-primary)] truncate">
-                    {product.name}
-                  </h4>
-                  <span className="font-editorial text-xs font-bold text-[var(--text-primary)] block">
-                    ₦{product.price.toLocaleString()}
-                  </span>
-
-                  <div className="grid grid-cols-2 gap-1 pt-1.5 border-t border-[var(--border-subtle)]">
-                    <button
-                      onClick={() => {
-                        if (isWorn) {
-                          removeOutfitItem(product.category);
-                        } else {
-                          setOutfitItem(product);
-                        }
-                      }}
-                      className={`py-1 rounded-full text-[8px] font-mono-luxury uppercase font-bold transition-all ${
-                        isWorn
-                          ? 'bg-[var(--text-primary)] text-[var(--bg-primary)]'
-                          : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)]'
-                      }`}
-                    >
-                      {isWorn ? 'Worn' : 'Fit'}
-                    </button>
-                    <button
-                      onClick={() => addToCart(product, fitResult.recommendedSize)}
-                      className="py-1 rounded-full text-[8px] font-mono-luxury uppercase font-bold bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
-                    >
-                      + Bag
-                    </button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-[var(--border-subtle)] bg-black">
+                      <Image src={atelier.image} alt={atelier.name} fill unoptimized className="object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1">
+                        {atelier.name}
+                        <ShieldCheck className="h-3 w-3 text-[var(--gold-accent)]" />
+                      </h4>
+                      <span className="text-[10px] text-[var(--text-secondary)]">{atelier.origin}</span>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleFollowVendor(atelier.id)}
+                    className={`p-1.5 rounded-full transition-all cursor-pointer border ${isFollowed ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'border-[var(--border-subtle)] text-[var(--text-primary)]'}`}
+                  >
+                    {isFollowed ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                  </button>
                 </div>
-              </div>
+                <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed">{atelier.tagline}</p>
+                <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-2 text-[10px] font-mono-luxury">
+                  <span className="text-emerald-500 font-bold">{atelier.dispatch}</span>
+                  <Link href={`/brand/${atelier.id}`} className="text-[var(--gold-accent)] font-bold uppercase flex items-center gap-0.5">
+                    Store <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </motion.div>
             );
           })}
         </div>
       </div>
 
-      {/* 4. 2-TILE COLLECTION SHORTCUTS */}
-      <div className="grid grid-cols-2 gap-3 pt-2">
-        <Link
-          href="/shop"
-          className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-2 group active:scale-98 transition-all"
-        >
-          <div className="h-8 w-8 rounded-xl bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center">
-            <Scissors className="h-4 w-4" />
-          </div>
-          <div>
-            <h4 className="font-editorial text-sm font-bold text-[var(--text-primary)]">
-              Bespoke Native
-            </h4>
-            <span className="text-[10px] font-mono-luxury text-[var(--text-secondary)]">
-              Senator & Agbada →
-            </span>
-          </div>
-        </Link>
+      {/* ── 7. EDITOR'S WEEKLY PICKS ─────────────────────────── */}
+      {editorsPicks.length > 0 && (
+        <div className="px-4 pt-10 space-y-4">
+          <FadeUp>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">Editor&apos;s Picks</h3>
+                <span className="text-xs text-[var(--text-secondary)]">Handpicked pieces in stock now</span>
+              </div>
+              <Link href="/shop" className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold flex items-center gap-1">
+                All <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </FadeUp>
 
-        <Link
-          href="/shop"
-          className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-2 group active:scale-98 transition-all"
-        >
-          <div className="h-8 w-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
-            <Flame className="h-4 w-4" />
+          <div className="space-y-3">
+            {editorsPicks.map((item, i) => (
+              <FadeUp key={item.id || i} delay={i * 0.08}>
+                <div className="p-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--border-subtle)]">
+                      <Image src={item.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'} alt={item.name} fill unoptimized className="object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-mono-luxury text-[var(--gold-accent)] uppercase font-bold block">{item.vendorName || 'Atelier'}</span>
+                      <h4 className="font-bold text-xs text-[var(--text-primary)] truncate">{item.name}</h4>
+                      <span className="font-mono-luxury text-xs font-bold text-[var(--text-primary)] block mt-0.5">
+                        ₦{Number(item.price || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setQuickBuyProduct(item)}
+                      className="px-3 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] text-[10px] font-mono-luxury uppercase font-bold active:scale-95 transition-transform cursor-pointer"
+                    >
+                      Quick Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOutfitItem(item)}
+                      className="text-[9px] font-mono-luxury text-[var(--gold-accent)] uppercase font-bold"
+                    >
+                      3D Fit
+                    </button>
+                  </div>
+                </div>
+              </FadeUp>
+            ))}
           </div>
-          <div>
-            <h4 className="font-editorial text-sm font-bold text-[var(--text-primary)]">
-              Streetwear Drops
-            </h4>
-            <span className="text-[10px] font-mono-luxury text-[var(--text-secondary)]">
-              Hoodies & Jeans →
-            </span>
-          </div>
-        </Link>
+        </div>
+      )}
+
+      {/* ── 8. TRUST PILLARS ─────────────────────────────────── */}
+      <div className="px-4 pt-10 space-y-3">
+        <FadeUp>
+          <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">The Veyra Standard</h3>
+        </FadeUp>
+        {[
+          { icon: Lock, label: 'Paystack Escrow Security', desc: 'Funds held safely. Released only after delivery confirmation.', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+          { icon: Sparkles, label: '3D Digital Body Twin', desc: 'Input measurements once. Eliminate size guesswork forever.', color: 'text-[var(--gold-accent)]', bg: 'bg-[var(--gold-subtle)] border-[var(--gold-accent)]/30' },
+          { icon: Truck, label: 'Lagos & Interstate Dispatch', desc: 'Same-day Lagos delivery & express interstate waybills.', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+        ].map((p, idx) => (
+          <FadeUp key={idx} delay={idx * 0.08}>
+            <div className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] flex items-start gap-3">
+              <div className={`p-2.5 rounded-xl shrink-0 border ${p.bg}`}>
+                <p.icon className={`h-4 w-4 ${p.color}`} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-[var(--text-primary)] mb-0.5">{p.label}</h4>
+                <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">{p.desc}</p>
+              </div>
+            </div>
+          </FadeUp>
+        ))}
       </div>
 
+      {/* ── 9. JOIN CTA ───────────────────────────────────────── */}
+      <FadeUp className="px-4 pt-10 pb-4">
+        <div className="p-6 rounded-3xl border border-[var(--gold-accent)]/30 bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-primary)] text-center space-y-3">
+          <div className="inline-flex p-2.5 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30">
+            <Crown className="h-5 w-5 text-[var(--gold-accent)]" />
+          </div>
+          <div>
+            <h4 className="font-editorial text-xl font-bold text-[var(--text-primary)]">Join the Veyra Collective</h4>
+            <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs mx-auto leading-relaxed">
+              Build your 3D twin, unlock private drops, track orders, and shop bespoke custom fits.
+            </p>
+          </div>
+          <Link
+            href="/studio"
+            className="inline-block px-6 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold shadow-lg active:scale-95 transition-transform"
+          >
+            Launch 3D Studio
+          </Link>
+        </div>
+      </FadeUp>
+
+      {/* QUICK BUY DRAWER */}
+      {quickBuyProduct && (
+        <MobileQuickBuyDrawer product={quickBuyProduct} onClose={() => setQuickBuyProduct(null)} />
+      )}
     </div>
   );
 }

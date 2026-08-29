@@ -300,8 +300,8 @@ function AuthPageContent() {
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row bg-[var(--bg-primary)]">
       
-      {/* LEFT COLUMN: Fixed full-height non-scrollable slideshow */}
-      <div className="relative w-full lg:w-1/2 h-[340px] lg:h-screen lg:sticky lg:top-0 shrink-0 overflow-hidden flex flex-col justify-between p-6 lg:p-12 bg-black select-none z-10">
+      {/* LEFT COLUMN: Fixed full-height non-scrollable slideshow — desktop only */}
+      <div className="hidden lg:flex relative w-full lg:w-1/2 h-[340px] lg:h-screen lg:sticky lg:top-0 shrink-0 overflow-hidden flex-col justify-between p-6 lg:p-12 bg-black select-none z-10">
         
         {/* Background Image Carousel with Fade */}
         {editorialSlides.map((slide, idx) => (
@@ -376,8 +376,19 @@ function AuthPageContent() {
       </div>
 
       {/* RIGHT COLUMN: Independently scrollable form */}
-      <div className="w-full lg:w-1/2 min-h-screen p-6 sm:p-10 lg:p-14 flex flex-col justify-start">
-        <div className="w-full max-w-md mx-auto space-y-6 pt-4 pb-24">
+      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-start bg-[var(--bg-primary)]">
+        
+        {/* Mobile-only top bar with logo + back */}
+        <div className="lg:hidden flex items-center justify-between px-5 pt-10 pb-6 border-b border-[var(--border-subtle)]">
+          <Link href="/shop" className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back</span>
+          </Link>
+          <span className="font-editorial text-xl font-bold tracking-[0.25em] text-[var(--text-primary)]">VEYRA</span>
+          <span className="w-10" />
+        </div>
+
+        <div className="w-full max-w-md mx-auto space-y-6 px-5 lg:px-14 pt-8 pb-24">
           
           {/* Header */}
           <div className="space-y-1.5">
@@ -409,37 +420,32 @@ function AuthPageContent() {
             </p>
           </div>
 
-          {/* Mode Tabs: Login on Left, Sign Up on Right (Hidden in OTP mode) */}
+          {/* Mode Tabs — underline style (Hidden in OTP mode) */}
           {mode !== 'verify_otp' && (
-            <div className="grid grid-cols-2 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase tracking-wider">
+            <div className="flex border-b border-[var(--border-subtle)]">
               <button
-                onClick={() => {
-                  setMode('login');
-                  setErrorMessage('');
-                }}
-                className={`py-2.5 rounded-xl transition-all font-semibold ${
+                onClick={() => { setMode('login'); setErrorMessage(''); }}
+                className={`flex-1 pb-3 text-sm font-semibold transition-all border-b-2 -mb-[1px] ${
                   mode === 'login'
-                    ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                    ? 'border-[var(--text-primary)] text-[var(--text-primary)]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 Sign In
               </button>
               <button
-                onClick={() => {
-                  setMode('signup');
-                  setErrorMessage('');
-                }}
-                className={`py-2.5 rounded-xl transition-all font-semibold ${
+                onClick={() => { setMode('signup'); setErrorMessage(''); }}
+                className={`flex-1 pb-3 text-sm font-semibold transition-all border-b-2 -mb-[1px] ${
                   mode === 'signup'
-                    ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                    ? 'border-[var(--text-primary)] text-[var(--text-primary)]'
+                    : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                Create Account
+                I&apos;m New Here
               </button>
             </div>
           )}
+
 
           {/* Error Message Alert with Auto-Dismiss */}
           {errorMessage && (

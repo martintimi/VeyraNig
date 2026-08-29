@@ -11,6 +11,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
+import MobileProfileView from '@/components/profile/MobileProfileView';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -171,7 +172,14 @@ export default function ProfilePage() {
   const effectiveOrders = liveOrders.length > 0 ? liveOrders : userOrders;
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
+    <>
+      {/* 1. DEDICATED MOBILE PROFILE VIEW */}
+      <div className="block md:hidden">
+        <MobileProfileView />
+      </div>
+
+      {/* 2. DESKTOP LUXURY PROFILE VIEW */}
+      <div className="hidden md:block min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
       
       {/* Top Profile Banner Header */}
       <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
@@ -675,11 +683,47 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Ready-to-Wear Size Preference Card */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-3 pt-3">
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold">
+                  Your Ready-to-Wear Preferred Size
+                </label>
+                <p className="text-[11px] text-[var(--text-muted)] font-mono-luxury mt-0.5">
+                  Your chosen size is automatically pre-selected when viewing clothes for fast 1-click checkout.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-5 gap-2 font-mono-luxury text-xs">
+                {(['S', 'M', 'L', 'XL', 'XXL'] as const).map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => {
+                      setBodyProfile({ ...bodyProfile, preferredSize: sz });
+                    }}
+                    className={`py-2.5 rounded-xl border text-center font-bold transition-all cursor-pointer ${
+                      (bodyProfile?.preferredSize || 'M') === sz
+                        ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md'
+                        : 'surface-card border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {sz}
+                  </button>
+                ))}
+              </div>
+
+              <div className="pt-2 flex items-center justify-between text-[11px] font-mono-luxury text-[var(--text-secondary)]">
+                <span>Fit Mode: <strong>Standard Ready-to-Wear</strong></span>
+                <span className="text-emerald-400 font-bold">✓ Active in Store</span>
+              </div>
+            </div>
+
             <button
               type="submit"
-              className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md mt-2"
+              className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md mt-2 cursor-pointer"
             >
-              Save Account Information
+              {isLoading ? 'Saving Changes...' : 'Save Account & Sizing'}
             </button>
           </form>
         </div>
@@ -749,6 +793,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

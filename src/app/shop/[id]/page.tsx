@@ -11,6 +11,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import MobileProductDetailView from '@/components/shop/MobileProductDetailView';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function ProductDetailPage() {
   const productId = params?.id as string;
 
   const {
+    bodyProfile,
     addToCart,
     fetchProductsFromDb,
     toggleVaultItem,
@@ -53,7 +55,9 @@ export default function ProductDetailPage() {
         if (res.ok && data.success && data.product) {
           const p = data.product;
           setProduct(p);
-          setSelectedSize(p.sizes?.[0] || 'M');
+          const pref = bodyProfile?.preferredSize || 'M';
+          const defaultSz = p.sizes?.includes(pref) ? pref : (p.sizes?.[0] || 'M');
+          setSelectedSize(defaultSz);
           setSelectedColor(p.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
 
           // Fetch reviews for this product
@@ -111,7 +115,7 @@ export default function ProductDetailPage() {
           <RotateCcw className="h-8 w-8" />
         </div>
         <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-          Garment Not Found
+          Product Not Found
         </h2>
         <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
           {errorMsg || 'The requested product is no longer active in the storefront catalog.'}
@@ -169,7 +173,14 @@ export default function ProductDetailPage() {
   );
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 animate-fadeIn pb-20">
+    <>
+      {/* 1. DEDICATED MOBILE PRODUCT DETAIL VIEW */}
+      <div className="block md:hidden">
+        <MobileProductDetailView product={product} reviewsData={reviewsData} />
+      </div>
+
+      {/* 2. DESKTOP LUXURY PRODUCT DETAIL VIEW */}
+      <div className="hidden md:block min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 animate-fadeIn pb-20">
       
       {/* Top Breadcrumbs & Back Navigation */}
       <div className="flex items-center justify-between text-xs font-mono-luxury text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-4">
@@ -524,7 +535,7 @@ export default function ProductDetailPage() {
           ))}
         </div>
       </div>
-
-    </div>
+      </div>
+    </>
   );
 }

@@ -175,36 +175,47 @@ export default function Navbar() {
                     )}
                   </div>
 
-                  <div className="max-h-72 overflow-y-auto space-y-2">
-                    {userNotifications.slice(0, 4).map((notif) => (
-                      <div
-                        key={notif.id}
-                        onClick={() => {
-                          markNotificationAsRead(notif.id);
-                          setIsNotifOpen(false);
-                        }}
-                        className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
-                          notif.read
-                            ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)] opacity-70'
-                            : 'bg-[var(--bg-surface)] border-[var(--gold-accent)]/30'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-[10px] font-mono-luxury text-[var(--text-muted)]">
-                          <span className="font-bold text-[var(--text-primary)]">{notif.title}</span>
-                          <span>{notif.timestamp}</span>
-                        </div>
-                        <p className="text-xs text-[var(--text-secondary)] font-light mt-0.5 leading-relaxed line-clamp-2">
-                          {notif.message}
-                        </p>
+                  <div
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    className="max-h-64 overflow-y-auto pr-1.5 space-y-2 overscroll-contain touch-pan-y"
+                    style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}
+                  >
+                    {userNotifications.length === 0 ? (
+                      <div className="p-6 text-center text-xs font-mono-luxury text-[var(--text-muted)]">
+                        No notifications yet.
                       </div>
-                    ))}
+                    ) : (
+                      userNotifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          onClick={() => {
+                            markNotificationAsRead(notif.id);
+                            setIsNotifOpen(false);
+                          }}
+                          className={`p-3 rounded-xl border text-left transition-colors cursor-pointer hover:border-[var(--gold-accent)]/50 ${
+                            notif.read
+                              ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)] opacity-70'
+                              : 'bg-[var(--bg-surface)] border-[var(--gold-accent)]/30'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                            <span className="font-bold text-[var(--text-primary)]">{notif.title}</span>
+                            <span>{notif.timestamp}</span>
+                          </div>
+                          <p className="text-xs text-[var(--text-secondary)] font-light mt-0.5 leading-relaxed">
+                            {notif.message}
+                          </p>
+                        </div>
+                      ))
+                    )}
                   </div>
 
                   <div className="pt-2 border-t border-[var(--border-subtle)] text-center">
                     <Link
                       href="/profile"
                       onClick={() => setIsNotifOpen(false)}
-                      className="text-xs font-mono-luxury text-[var(--gold-accent)] uppercase font-bold hover:underline inline-flex items-center gap-1"
+                      className="text-xs font-mono-luxury text-[var(--gold-accent)] uppercase font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
                     >
                       <span>View All Orders & Reviews</span>
                       <ChevronRight className="h-3.5 w-3.5" />

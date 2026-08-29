@@ -8,8 +8,8 @@ import MobileHomeView from '@/components/landing/MobileHomeView';
 export default function Home() {
   return (
     <>
-      {/* 1. DEDICATED MOBILE HOME VIEW (Sleek, visual-first, app feel) */}
-      <div className="block md:hidden px-4 py-4">
+      {/* 1. DEDICATED MOBILE HOME VIEW (Option A: High Fashion Editorial Lookbook) */}
+      <div className="block md:hidden">
         <MobileHomeView />
       </div>
 

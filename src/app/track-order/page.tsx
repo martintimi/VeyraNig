@@ -1,38 +1,39 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store/useStore';
 import {
-  Search, ShieldCheck, CheckCircle2, Truck, Scissors, PackageCheck,
-  Building, Phone, MapPin, Clock, ArrowRight, ArrowLeft, RefreshCw,
-  ExternalLink, Check, AlertCircle, Loader2, Star, Send
+  Search, ShieldCheck, CheckCircle2, Truck, PackageCheck,
+  Phone, Clock, ArrowLeft, RefreshCw, AlertCircle, Loader2, Star, Send,
+  Package, ChevronRight
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import MobileTrackOrderView from '@/components/tracking/MobileTrackOrderView';
 
 export default function TrackOrderPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialOrderNo = searchParams.get('orderNumber') || '';
 
-  const { userOrders, getOrderById } = useStore();
+  const { userOrders } = useStore();
 
   const [searchQuery, setSearchQuery] = useState(initialOrderNo);
   const [searchedOrder, setSearchedOrder] = useState<any | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isReleasingEscrow, setIsReleasingEscrow] = useState(false);
-  const [escrowReleasedToast, setEscrowReleasedToast] = useState(false);
+  const [releasingPackageId, setReleasingPackageId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Rating & Review State
-  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [activeReviewVendor, setActiveReviewVendor] = useState<{ vendorId: string; vendorName: string; productId: string; productName: string } | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewFit, setReviewFit] = useState('true_to_size');
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [ratedVendors, setRatedVendors] = useState<Record<string, boolean>>({});
 
   // Fetch live order directly from PostgreSQL backend API
   const fetchOrderFromDb = async (queryNum: string) => {
@@ -49,7 +50,12 @@ export default function TrackOrderPage() {
       if (res.ok && data.success && data.orders && data.orders.length > 0) {
         setSearchedOrder(data.orders[0]);
         if (data.orders[0].customer_measurements?.isRated) {
-          setReviewSubmitted(true);
+          const revs = data.orders[0].customer_measurements?.reviews || [];
+          const ratedMap: Record<string, boolean> = {};
+          revs.forEach((r: any) => {
+            if (r.vendorId) ratedMap[r.vendorId] = true;
+          });
+          setRatedVendors(ratedMap);
         }
       } else {
         const storeMatch = userOrders.find(
@@ -81,9 +87,66 @@ export default function TrackOrderPage() {
     fetchOrderFromDb(searchQuery);
   };
 
-  const handleConfirmReceived = async () => {
+  // Group items by vendor into dedicated package shipments
+  const vendorPackages = useMemo(() => {
+    if (!searchedOrder) return [];
+    const items = searchedOrder.items || [];
+    const vMap = new Map<string, {
+      vendorId: string;
+      vendorName: string;
+      items: any[];
+      packageStage: number;
+      packageStatus: string;
+      driverPhone: string;
+      waybillNumber: string;
+      lastUpdated: string;
+      subtotal: number;
+    }>();
+
+    const orderVendorPackages = searchedOrder.vendorPackages || searchedOrder.customer_measurements?.vendorPackages || {};
+
+    items.forEach((item: any) => {
+      const vId = item.vendorId || 'moji-wears';
+      const vName = item.vendorName || (vId.replace(/-/g, ' ').toUpperCase());
+      const pkgInfo = orderVendorPackages[vId] || {};
+
+      const itemQty = Number(item.quantity || 1);
+      const itemPrice = Number(item.price || 0);
+
+      if (!vMap.has(vId)) {
+        // Stage precedence: vendorPackages[vId] -> item.status -> master status
+        const pkgStage = Number(pkgInfo.trackingStage || (
+          pkgInfo.status === 'delivered' ? 4 :
+          pkgInfo.status === 'dispatched' ? 3 :
+          pkgInfo.status === 'packing' ? 2 :
+          (item.status === 'delivered' ? 4 : item.status === 'dispatched' ? 3 : item.status === 'packing' ? 2 : searchedOrder.trackingStage || 1)
+        ));
+
+        vMap.set(vId, {
+          vendorId: vId,
+          vendorName: vName,
+          items: [],
+          packageStage: pkgStage,
+          packageStatus: pkgInfo.status || item.status || searchedOrder.status || 'escrow_secured',
+          driverPhone: pkgInfo.driverPhone || searchedOrder.trackingDetails?.driverPhone || '',
+          waybillNumber: pkgInfo.waybillNumber || searchedOrder.trackingDetails?.waybillNumber || '',
+          lastUpdated: pkgInfo.lastUpdated || '',
+          subtotal: 0,
+        });
+      }
+
+      const entry = vMap.get(vId)!;
+      entry.items.push(item);
+      entry.subtotal += itemPrice * itemQty;
+    });
+
+    return Array.from(vMap.values());
+  }, [searchedOrder]);
+
+  // Release Escrow for a specific vendor's package
+  const handleConfirmReceivedPackage = async (vendorId: string, vendorName: string) => {
     if (!searchedOrder) return;
-    setIsReleasingEscrow(true);
+    setReleasingPackageId(vendorId);
 
     try {
       const res = await fetch('/api/orders', {
@@ -91,48 +154,65 @@ export default function TrackOrderPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderNumber: searchedOrder.orderNumber,
+          vendorId: vendorId,
           status: 'delivered',
           trackingStage: 4,
         })
       });
 
       if (res.ok) {
-        setSearchedOrder((prev: any) => ({
-          ...prev,
-          status: 'delivered',
-          trackingStage: 4,
-        }));
-        setEscrowReleasedToast(true);
+        // Update local package state
+        setSearchedOrder((prev: any) => {
+          if (!prev) return prev;
+          const updatedPackages = { ...(prev.vendorPackages || {}) };
+          updatedPackages[vendorId] = {
+            ...(updatedPackages[vendorId] || {}),
+            status: 'delivered',
+            trackingStage: 4,
+          };
+          return {
+            ...prev,
+            vendorPackages: updatedPackages
+          };
+        });
+
+        setToastMessage(`Package from ${vendorName} confirmed! Escrow released.`);
         confetti({
-          particleCount: 100,
+          particleCount: 90,
           spread: 70,
           origin: { y: 0.6 },
           colors: ['#e6c367', '#10b981', '#ffffff']
         });
-        setTimeout(() => setEscrowReleasedToast(false), 5000);
-        // Automatically open review dialog
-        setShowReviewModal(true);
+        setTimeout(() => setToastMessage(''), 5000);
+
+        // Open rating modal for this specific vendor
+        const firstItem = vendorPackages.find(p => p.vendorId === vendorId)?.items[0] || {};
+        setActiveReviewVendor({
+          vendorId,
+          vendorName,
+          productId: firstItem.productId || firstItem.id || '',
+          productName: firstItem.productName || firstItem.name || 'Garment Drop',
+        });
       }
     } catch (e) {
-      console.error('Error confirming receipt:', e);
+      console.error('Error confirming package receipt:', e);
     } finally {
-      setIsReleasingEscrow(false);
+      setReleasingPackageId(null);
     }
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchedOrder || !reviewComment.trim()) return;
+    if (!searchedOrder || !activeReviewVendor || !reviewComment.trim()) return;
     setIsSubmittingReview(true);
 
     try {
-      const firstItem = searchedOrder.items?.[0] || {};
       const payload = {
         orderNumber: searchedOrder.orderNumber,
         orderId: searchedOrder.id,
-        productId: firstItem.productId || firstItem.id,
-        productName: firstItem.productName || firstItem.name || 'Garment Piece',
-        vendorId: firstItem.vendorId || 'moji-wears',
+        productId: activeReviewVendor.productId,
+        productName: activeReviewVendor.productName,
+        vendorId: activeReviewVendor.vendorId,
         customerName: searchedOrder.customerName || 'Valued Client',
         rating: reviewRating,
         fitRating: reviewFit,
@@ -146,8 +226,9 @@ export default function TrackOrderPage() {
       });
 
       if (res.ok) {
-        setReviewSubmitted(true);
-        setShowReviewModal(false);
+        setRatedVendors(prev => ({ ...prev, [activeReviewVendor.vendorId]: true }));
+        setActiveReviewVendor(null);
+        setReviewComment('');
         confetti({
           particleCount: 80,
           spread: 60,
@@ -162,37 +243,22 @@ export default function TrackOrderPage() {
     }
   };
 
-  const currentStage = searchedOrder?.trackingStage || 1;
-
-  const stages = [
-    {
-      num: 1,
-      title: 'Escrow Secured & Confirmed',
-      desc: 'Customer payment is secured in Veyra escrow. Order sent to merchant atelier.',
-      time: 'Completed',
-    },
-    {
-      num: 2,
-      title: 'Packed & Ready at Store',
-      desc: 'Vendor has verified inventory and sealed package for logistics handoff.',
-      time: currentStage >= 2 ? 'Completed' : 'In Progress',
-    },
-    {
-      num: 3,
-      title: 'Dispatched with Courier',
-      desc: 'Package is in transit with dispatch rider or interstate motor park driver.',
-      time: currentStage >= 3 ? 'In Transit' : 'Pending',
-    },
-    {
-      num: 4,
-      title: 'Delivered & Escrow Released',
-      desc: 'Customer receives clothes and approves release of escrow funds to vendors.',
-      time: currentStage >= 4 ? 'Completed' : 'Pending',
-    },
+  const stageLabels = [
+    { num: 1, title: 'Order Confirmed', short: 'Awaiting Pack' },
+    { num: 2, title: 'Packed at Store', short: 'Ready' },
+    { num: 3, title: 'In Transit with Courier', short: 'On the Way' },
+    { num: 4, title: 'Delivered', short: 'Completed' },
   ];
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-10 animate-fadeIn pb-24">
+    <>
+      {/* 1. DEDICATED MOBILE TRACK ORDER VIEW */}
+      <div className="block md:hidden">
+        <MobileTrackOrderView />
+      </div>
+
+      {/* 2. DESKTOP LUXURY TRACK ORDER VIEW */}
+      <div className="hidden md:block min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8 animate-fadeIn pb-24">
       
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-5">
@@ -200,7 +266,7 @@ export default function TrackOrderPage() {
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
-              Live Logistics Tracking
+              Multi-Vendor Logistics Ledger
             </span>
           </div>
           <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mt-1">
@@ -217,7 +283,7 @@ export default function TrackOrderPage() {
               className="flex items-center gap-1.5 text-xs font-mono-luxury uppercase text-[var(--gold-accent)] hover:underline font-bold cursor-pointer"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh Status</span>
+              <span>Refresh Tracking</span>
             </button>
           )}
 
@@ -243,7 +309,7 @@ export default function TrackOrderPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="e.g. #VY-ORD-7564"
+              placeholder="e.g. #VY-ORD-6965"
               className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-mono-luxury font-bold focus:border-[var(--gold-accent)] focus:outline-none"
             />
           </div>
@@ -257,114 +323,54 @@ export default function TrackOrderPage() {
         </div>
       </form>
 
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-mono-luxury font-bold flex items-center gap-2 animate-fadeIn">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Order Tracking Dashboard */}
       {searchedOrder ? (
-        <div className="space-y-8 animate-fadeIn">
+        <div className="space-y-6 animate-fadeIn">
           
-          {/* Top Status Card */}
-          <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] shadow-md space-y-6">
+          {/* Master Order Meta Banner */}
+          <div className="p-6 sm:p-7 rounded-3xl surface-card border border-[var(--border-subtle)] shadow-md space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-4">
               <div>
-                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase tracking-wider block">
-                  Order Number
-                </span>
-                <span className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--gold-accent)]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase tracking-wider">
+                    Master Reference
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-[10px] font-mono-luxury font-bold">
+                    {vendorPackages.length} {vendorPackages.length === 1 ? 'Package Shipment' : 'Vendor Shipments'}
+                  </span>
+                </div>
+                <span className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--gold-accent)] mt-0.5 block">
                   {searchedOrder.orderNumber}
                 </span>
-                <div className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+                <div className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-0.5">
                   Placed on: {searchedOrder.date || 'Today'}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="px-3.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono-luxury font-bold uppercase">
-                  {searchedOrder.status.replace(/_/g, ' ')}
+              <div className="text-left sm:text-right">
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase tracking-wider block">
+                  Total Escrow Paid
                 </span>
-              </div>
-            </div>
-
-            {/* 4-Stage Visual Progress Tracker */}
-            <div className="space-y-6 pt-2">
-              <span className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold block">
-                Fulfillment Timeline
-              </span>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
-                {stages.map((st) => {
-                  const isCompleted = currentStage >= st.num;
-                  const isCurrent = currentStage === st.num;
-
-                  return (
-                    <div
-                      key={st.num}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        isCompleted
-                          ? 'bg-[var(--bg-primary)] border-[var(--gold-accent)]/50 shadow-sm'
-                          : 'bg-[var(--bg-secondary)]/50 border-[var(--border-subtle)] opacity-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold font-mono-luxury ${
-                          isCompleted
-                            ? 'bg-[var(--gold-accent)] text-white'
-                            : 'bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border-subtle)]'
-                        }`}>
-                          {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : st.num}
-                        </div>
-                        <span className={`text-[10px] font-mono-luxury font-bold ${isCurrent ? 'text-emerald-400' : 'text-[var(--text-muted)]'}`}>
-                          {st.time}
-                        </span>
-                      </div>
-
-                      <h4 className="font-bold text-xs text-[var(--text-primary)] leading-tight">
-                        {st.title}
-                      </h4>
-                      <p className="text-[11px] text-[var(--text-secondary)] font-mono-luxury mt-1 leading-relaxed">
-                        {st.desc}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Courier & Driver Information (if Dispatched) */}
-            {currentStage >= 3 && (searchedOrder.trackingDetails?.driverPhone || searchedOrder.trackingDetails?.waybillNumber) && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-[var(--gold-subtle)]/40 border border-[var(--gold-accent)]/30 flex items-center justify-between text-xs font-mono-luxury text-[var(--text-primary)] flex-wrap gap-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-[var(--gold-accent)]/20 border border-[var(--gold-accent)]/40 flex items-center justify-center shrink-0">
-                    <Truck className="h-5 w-5 text-[var(--gold-accent)]" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase font-bold text-[var(--gold-accent)]">Package In Transit With Rider</div>
-                    {searchedOrder.trackingDetails?.driverPhone && (
-                      <div className="font-bold text-sm text-[var(--text-primary)] mt-0.5 flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-                        <span>Driver: {searchedOrder.trackingDetails.driverPhone}</span>
-                      </div>
-                    )}
-                    {searchedOrder.trackingDetails?.waybillNumber && (
-                      <div className="text-[11px] text-[var(--text-secondary)] mt-0.5">
-                        Waybill / Park Code: <strong>{searchedOrder.trackingDetails.waybillNumber}</strong>
-                      </div>
-                    )}
-                  </div>
+                <div className="font-editorial text-xl sm:text-2xl font-bold text-emerald-400">
+                  ₦{Number(searchedOrder.totalAmount || 0).toLocaleString()}
                 </div>
-
-                {searchedOrder.trackingDetails?.driverPhone && (
-                  <a
-                    href={`tel:${searchedOrder.trackingDetails.driverPhone}`}
-                    className="px-4 py-2.5 rounded-full bg-[var(--gold-accent)] text-black font-bold uppercase text-xs hover:bg-[#d8b357] transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Phone className="h-3.5 w-3.5 text-black" />
-                    <span>Call Driver Directly</span>
-                  </a>
-                )}
+                <div className="text-[10px] text-emerald-400 font-mono-luxury flex items-center gap-1 sm:justify-end">
+                  <ShieldCheck className="h-3 w-3" />
+                  <span>100% Escrow Protected</span>
+                </div>
               </div>
-            )}
+            </div>
 
-            {/* Customer Delivery Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-[var(--border-subtle)] text-xs font-mono-luxury">
+            {/* Recipient & Address */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono-luxury">
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
                 <div className="text-[var(--text-muted)] uppercase text-[10px]">Recipient:</div>
                 <div className="font-bold text-[var(--text-primary)] mt-0.5">{searchedOrder.customerName}</div>
@@ -372,101 +378,248 @@ export default function TrackOrderPage() {
               </div>
 
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-                <div className="text-[var(--text-muted)] uppercase text-[10px]">Delivery Address:</div>
+                <div className="text-[var(--text-muted)] uppercase text-[10px]">Delivery Destination:</div>
                 <div className="font-bold text-[var(--text-primary)] mt-0.5">{searchedOrder.deliveryAddress}</div>
               </div>
-
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-                <div className="text-[var(--text-muted)] uppercase text-[10px]">Total Escrow Paid:</div>
-                <div className="font-bold text-[var(--gold-accent)] text-sm mt-0.5">₦{Number(searchedOrder.totalAmount || 0).toLocaleString()}</div>
-                <div className="text-[10px] text-emerald-400">Protected by Veyra Escrow</div>
-              </div>
             </div>
-
-            {/* Release Escrow Action if Delivered */}
-            {currentStage < 4 ? (
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-xs font-mono-luxury text-amber-400 font-bold uppercase">
-                      Escrow Active & Protected
-                    </div>
-                    <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury mt-0.5">
-                      Your money is held safely. Once your clothes arrive and you inspect them, click below to confirm receipt.
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleConfirmReceived}
-                  disabled={isReleasingEscrow}
-                  className="px-6 py-2.5 rounded-full bg-emerald-500 text-white text-xs font-mono-luxury uppercase font-bold hover:bg-emerald-400 transition-all shadow-md shrink-0 cursor-pointer disabled:opacity-50"
-                >
-                  {isReleasingEscrow ? 'Releasing Funds...' : 'Confirm Delivery Received'}
-                </button>
-              </div>
-            ) : (
-              <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-400 shrink-0" />
-                  <div>
-                    <div className="text-xs font-mono-luxury text-emerald-400 font-bold uppercase">
-                      Order Completed & Escrow Released
-                    </div>
-                    <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">
-                      {reviewSubmitted ? 'Thank you! Your verified rating and review has been published.' : 'Your package has been delivered! Leave a rating for the vendor.'}
-                    </div>
-                  </div>
-                </div>
-
-                {!reviewSubmitted && (
-                  <button
-                    type="button"
-                    onClick={() => setShowReviewModal(true)}
-                    className="px-5 py-2 rounded-full bg-[var(--gold-accent)] text-black font-mono-luxury uppercase text-xs font-bold hover:bg-[#d8b357] transition-all shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
-                  >
-                    <Star className="h-4 w-4 fill-current text-black" />
-                    <span>Rate & Review Vendor</span>
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Garments in this Order */}
-          <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] shadow-md space-y-4">
-            <span className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold block">
-              Items in Package
-            </span>
+          {/* Individual Vendor Package Cards */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono-luxury uppercase text-[var(--gold-accent)] font-bold tracking-wider">
+                Shipment Packages ({vendorPackages.length})
+              </span>
+              <span className="text-[11px] font-mono-luxury text-[var(--text-muted)]">
+                Each vendor fulfills and dispatches independently
+              </span>
+            </div>
 
-            <div className="space-y-3">
-              {(searchedOrder.items || []).map((item: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex-wrap">
-                  <div className="flex items-center gap-4">
-                    <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-[var(--bg-secondary)] shrink-0 border border-[var(--border-subtle)]">
-                      <Image src={item.imageUrl} alt={item.productName || item.name} fill unoptimized className="object-cover" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-[var(--text-primary)]">{item.productName || item.name}</h4>
-                      <div className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-                        Brand: <strong className="text-[var(--gold-accent)]">{item.vendorName || 'Atelier'}</strong> · Size: <strong className="text-[var(--text-primary)]">{item.size || 'M'}</strong>
+            {vendorPackages.map((pkg, idx) => {
+              const isRated = ratedVendors[pkg.vendorId];
+              const isDispatched = pkg.packageStage >= 3;
+              const isDelivered = pkg.packageStage >= 4;
+              const isPacking = pkg.packageStage === 2;
+
+              return (
+                <div
+                  key={pkg.vendorId}
+                  className={`p-6 sm:p-7 rounded-3xl surface-card border transition-all space-y-6 shadow-md ${
+                    isDelivered
+                      ? 'border-emerald-500/40 bg-emerald-500/[0.02]'
+                      : isDispatched
+                      ? 'border-[var(--gold-accent)]/50 bg-[var(--gold-accent)]/[0.02]'
+                      : 'border-[var(--border-subtle)]'
+                  }`}
+                >
+                  {/* Package Top Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-11 w-11 rounded-2xl flex items-center justify-center font-bold text-xs font-mono-luxury ${
+                        isDelivered
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                          : isDispatched
+                          ? 'bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/40'
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
+                      }`}>
+                        <Package className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold">
+                          Package {idx + 1} of {vendorPackages.length}
+                        </div>
+                        <h3 className="font-editorial text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+                          {pkg.vendorName}
+                        </h3>
+                        <span className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
+                          {pkg.items.length} item(s) in this package · ₦{pkg.subtotal.toLocaleString()}
+                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="text-right">
-                    <div className="text-sm font-mono-luxury text-[var(--gold-accent)] font-bold">
-                      ₦{Number(item.price || 0).toLocaleString()}
-                    </div>
-                    <span className="text-[10px] font-mono-luxury text-emerald-400 font-bold uppercase">
-                      Ready-to-Wear
+                    {/* Status Pill */}
+                    <span className={`px-3.5 py-1.5 rounded-full text-xs font-mono-luxury font-bold uppercase self-start sm:self-center ${
+                      isDelivered
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                        : isDispatched
+                        ? 'bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 animate-pulse'
+                        : isPacking
+                        ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                        : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    }`}>
+                      {isDelivered
+                        ? 'Delivered'
+                        : isDispatched
+                        ? 'In Transit with Courier'
+                        : isPacking
+                        ? 'Packed & Ready at Store'
+                        : 'Order Received · Packing'}
                     </span>
                   </div>
+
+                  {/* 4-Step Progress for THIS Specific Package */}
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-4 gap-2">
+                      {stageLabels.map((st) => {
+                        const isDone = pkg.packageStage >= st.num;
+                        const isCurr = pkg.packageStage === st.num;
+                        return (
+                          <div key={st.num} className="space-y-1 text-center">
+                            <div className={`h-1.5 w-full rounded-full transition-all ${
+                              isDone ? 'bg-[var(--gold-accent)]' : 'bg-[var(--bg-secondary)]'
+                            }`} />
+                            <div className={`text-[10px] font-mono-luxury ${
+                              isCurr ? 'text-[var(--gold-accent)] font-bold' : isDone ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'
+                            }`}>
+                              {st.short}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Courier / Driver Info (Only if this specific vendor dispatched) */}
+                  {isDispatched && !isDelivered && (pkg.driverPhone || pkg.waybillNumber) && (
+                    <div className="p-4 rounded-2xl bg-[var(--gold-subtle)]/30 border border-[var(--gold-accent)]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono-luxury">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-xl bg-[var(--gold-accent)]/20 text-[var(--gold-accent)] flex items-center justify-center shrink-0">
+                          <Truck className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase font-bold text-[var(--gold-accent)]">
+                            Dispatched by {pkg.vendorName}
+                          </div>
+                          {pkg.driverPhone && (
+                            <div className="font-bold text-sm text-[var(--text-primary)] mt-0.5 flex items-center gap-1.5">
+                              <Phone className="h-3 w-3 text-[var(--gold-accent)]" />
+                              <span>Driver: {pkg.driverPhone}</span>
+                            </div>
+                          )}
+                          {pkg.waybillNumber && (
+                            <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                              Waybill Code: <strong>{pkg.waybillNumber}</strong>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {pkg.driverPhone && (
+                        <a
+                          href={`tel:${pkg.driverPhone}`}
+                          className="px-4 py-2 rounded-full bg-[var(--gold-accent)] text-black font-bold uppercase text-xs hover:bg-[#d8b357] transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                        >
+                          <Phone className="h-3.5 w-3.5 text-black" />
+                          <span>Call Driver Directly</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Items inside this specific vendor package */}
+                  <div className="space-y-2.5 pt-1">
+                    <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">
+                      Clothes in this Shipment ({pkg.items.length}):
+                    </span>
+
+                    <div className="space-y-2">
+                      {pkg.items.map((item: any, iIdx: number) => {
+                        const qty = Number(item.quantity || 1);
+                        const unitPrice = Number(item.price || 0);
+                        const lineTotal = unitPrice * qty;
+
+                        return (
+                          <div key={iIdx} className="flex items-center justify-between gap-4 p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex-wrap">
+                            <div className="flex items-center gap-3.5">
+                              <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-[var(--bg-secondary)] shrink-0 border border-[var(--border-subtle)]">
+                                <Image src={item.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'} alt={item.productName || item.name} fill unoptimized className="object-cover" />
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-xs sm:text-sm text-[var(--text-primary)]">{item.productName || item.name}</h4>
+                                <div className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
+                                  Size: <strong className="text-[var(--gold-accent)]">{item.size || 'M'}</strong> · Qty: <strong className="text-[var(--text-primary)]">{qty}</strong>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-right">
+                              <div className="text-sm font-mono-luxury text-[var(--gold-accent)] font-bold">
+                                ₦{lineTotal.toLocaleString()}
+                              </div>
+                              {qty > 1 && (
+                                <div className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                                  ₦{unitPrice.toLocaleString()} × {qty}
+                                </div>
+                              )}
+                              <span className="text-[9px] font-mono-luxury text-emerald-400 font-bold uppercase">
+                                Ready-to-Wear
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Delivery & Escrow Action for THIS Package */}
+                  <div className="pt-2 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {isDelivered ? (
+                      <div className="flex items-center gap-2 text-xs font-mono-luxury text-emerald-400 font-bold">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>Package Delivered · Escrow Released to {pkg.vendorName}</span>
+                      </div>
+                    ) : isDispatched ? (
+                      <div className="text-xs font-mono-luxury text-amber-400">
+                        Package is with the driver. When it arrives, click confirm to release escrow to this vendor.
+                      </div>
+                    ) : (
+                      <div className="text-xs font-mono-luxury text-[var(--text-muted)]">
+                        {isPacking ? `${pkg.vendorName} has packed your clothes and is handing over to courier.` : `${pkg.vendorName} has received order and is preparing package.`}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      {isDispatched && !isDelivered && (
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmReceivedPackage(pkg.vendorId, pkg.vendorName)}
+                          disabled={releasingPackageId === pkg.vendorId}
+                          className="px-5 py-2 rounded-full bg-emerald-500 text-black text-xs font-mono-luxury uppercase font-bold hover:bg-emerald-400 transition-all shadow-md shrink-0 cursor-pointer disabled:opacity-50"
+                        >
+                          {releasingPackageId === pkg.vendorId ? 'Releasing...' : 'Confirm Received (Release Escrow)'}
+                        </button>
+                      )}
+
+                      {isDelivered && !isRated && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const firstItem = pkg.items[0] || {};
+                            setActiveReviewVendor({
+                              vendorId: pkg.vendorId,
+                              vendorName: pkg.vendorName,
+                              productId: firstItem.productId || firstItem.id || '',
+                              productName: firstItem.productName || firstItem.name || 'Garment Drop',
+                            });
+                          }}
+                          className="px-4 py-2 rounded-full bg-[var(--gold-accent)] text-black text-xs font-mono-luxury uppercase font-bold hover:bg-[#d8b357] transition-all shadow-md flex items-center gap-1 cursor-pointer shrink-0"
+                        >
+                          <Star className="h-3.5 w-3.5 fill-current text-black" />
+                          <span>Rate {pkg.vendorName}</span>
+                        </button>
+                      )}
+
+                      {isDelivered && isRated && (
+                        <span className="text-[11px] font-mono-luxury text-[var(--gold-accent)] font-bold">
+                          ✓ Review Submitted
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
         </div>
@@ -486,8 +639,8 @@ export default function TrackOrderPage() {
         </div>
       ) : null}
 
-      {/* Interactive Rating & Review Modal */}
-      {showReviewModal && (
+      {/* Per-Vendor Interactive Rating & Review Modal */}
+      {activeReviewVendor && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="surface-card rounded-3xl p-6 sm:p-8 max-w-md w-full border border-[var(--border-subtle)] space-y-5 animate-fadeIn shadow-2xl">
             <div className="flex items-center justify-between">
@@ -497,16 +650,16 @@ export default function TrackOrderPage() {
                 </div>
                 <div>
                   <h3 className="font-editorial text-lg font-bold text-[var(--text-primary)]">
-                    Rate Your Order & Vendor
+                    Rate {activeReviewVendor.vendorName}
                   </h3>
                   <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
-                    Your feedback is published on the product and store storefront.
+                    Feedback is published on the {activeReviewVendor.productName} and brand store.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setShowReviewModal(false)}
+                onClick={() => setActiveReviewVendor(null)}
                 className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
               >
                 ✕
@@ -574,8 +727,8 @@ export default function TrackOrderPage() {
               <div className="pt-2 flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowReviewModal(false)}
-                  className="flex-1 py-3 rounded-full surface-card border border-[var(--border-subtle)] uppercase font-bold text-[var(--text-primary)] cursor-pointer"
+                  onClick={() => setActiveReviewVendor(null)}
+                    className="flex-1 py-3 rounded-full surface-card border border-[var(--border-subtle)] uppercase font-bold text-[var(--text-primary)] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -593,6 +746,7 @@ export default function TrackOrderPage() {
         </div>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

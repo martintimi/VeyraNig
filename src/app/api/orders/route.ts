@@ -1,3 +1,4 @@
+import { sendOrderConfirmationEmail, sendVendorNewOrderEmail, sendDispatchNotificationEmail, sendDeliverySettledEmail } from '@/lib/services/emailService';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -61,22 +62,59 @@ export async function GET(request: Request) {
       const dateStr = dateObj.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
       const timeStr = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
-      const stage = o.status === 'delivered' ? 4 : o.status === 'dispatched' ? 3 : (o.status === 'packing' || o.status === 'ready') ? 2 : 1;
-
-      // Extract vendor packages metadata if stored
       const vendorPackages = o.customer_measurements?.vendorPackages || {};
       const trackingDetails = o.customer_measurements?.trackingDetails || {};
 
+      // Resilient items lookup: use order_items from DB or fallback to customer_measurements.items
+      let sourceItems = (o.order_items && o.order_items.length > 0)
+        ? o.order_items
+        : (o.customer_measurements?.items || []);
+
       // Filter items strictly for this vendor if vendorId is requested
-      let relevantItems = o.order_items || [];
+      let relevantItems = sourceItems;
       if (vendorIdParam && vendorIdParam !== 'all') {
         const cleanVendorId = vendorIdParam.toLowerCase().trim();
-        const vendorSpecificItems = (o.order_items || []).filter((item: any) => {
-          const itemVId = (item.vendor_id || '').toLowerCase().trim();
+        const vendorSpecificItems = sourceItems.filter((item: any) => {
+          const itemVId = (item.vendor_id || item.vendorId || '').toLowerCase().trim();
           return itemVId === cleanVendorId || itemVId.includes(cleanVendorId) || cleanVendorId.includes(itemVId);
         });
-        if (vendorSpecificItems.length > 0) {
-          relevantItems = vendorSpecificItems;
+        relevantItems = vendorSpecificItems;
+      }
+
+      // Per-vendor scoping: when a vendor calls this API, use THEIR package status & stage!
+      let resolvedStatus = o.status || 'escrow_secured';
+      let resolvedStage = o.status === 'delivered' ? 4 : o.status === 'dispatched' ? 3 : (o.status === 'packing' || o.status === 'ready') ? 2 : 1;
+      let resolvedTrackingDetails = trackingDetails;
+
+      if (vendorIdParam && vendorIdParam !== 'all') {
+        const cleanVId = vendorIdParam.toLowerCase().trim();
+        const thisVendorPkg = vendorPackages[cleanVId];
+
+        if (thisVendorPkg) {
+          resolvedStage = Number(thisVendorPkg.trackingStage || 1);
+          resolvedStatus = thisVendorPkg.status || (resolvedStage === 4 ? 'delivered' : resolvedStage === 3 ? 'dispatched' : resolvedStage === 2 ? 'packing' : 'escrow_secured');
+          resolvedTrackingDetails = {
+            status: resolvedStatus,
+            trackingStage: resolvedStage,
+            waybillNumber: thisVendorPkg.waybillNumber || '',
+            driverPhone: thisVendorPkg.driverPhone || '',
+            driverName: thisVendorPkg.driverName || '',
+            lastUpdated: thisVendorPkg.lastUpdated || ''
+          };
+        } else {
+          // If vendor has no package record yet in vendorPackages, look at their items' status
+          const firstItem = relevantItems[0];
+          const itmStatus = firstItem?.status || 'escrow_secured';
+          resolvedStage = itmStatus === 'delivered' ? 4 : itmStatus === 'dispatched' ? 3 : itmStatus === 'packing' ? 2 : 1;
+          resolvedStatus = itmStatus;
+          resolvedTrackingDetails = {
+            status: resolvedStatus,
+            trackingStage: resolvedStage,
+            waybillNumber: '',
+            driverPhone: '',
+            driverName: '',
+            lastUpdated: ''
+          };
         }
       }
 
@@ -91,22 +129,25 @@ export async function GET(request: Request) {
         subtotal: Number(o.subtotal || 0),
         shippingFee: Number(o.shipping_fee || 0),
         totalAmount: Number(o.total_amount || 0),
-        status: o.status || 'escrow_secured',
-        trackingStage: stage,
+        status: resolvedStatus,
+        trackingStage: resolvedStage,
         date: `${dateStr}, ${timeStr}`,
         createdAt: o.created_at,
         vendorPackages,
-        trackingDetails,
+        trackingDetails: resolvedTrackingDetails,
         items: relevantItems.map((item: any) => {
-          const matchedImage = item.image_url || productImageMap.get(item.product_id) || '/images/products/BlackTrapStarHoodie.jpg';
+          const pId = item.product_id || item.productId;
+          const vId = item.vendor_id || item.vendorId || 'moji-wears';
+          const pName = item.product_name || item.productName || 'Garment';
+          const matchedImage = item.image_url || item.imageUrl || productImageMap.get(pId) || '/images/products/BlackTrapStarHoodie.jpg';
           return {
-            id: item.id,
-            productId: item.product_id,
-            vendorId: item.vendor_id,
-            vendorName: item.vendor_id ? item.vendor_id.replace(/-/g, ' ').toUpperCase() : 'MOJI WEARS',
-            productName: item.product_name || 'Garment',
+            id: item.id || `item-${pId}`,
+            productId: pId,
+            vendorId: vId,
+            vendorName: item.vendorName || (vId ? vId.replace(/-/g, ' ').toUpperCase() : 'MOJI WEARS'),
+            productName: pName,
             price: Number(item.price || 0),
-            size: item.size || 'M',
+            size: item.size || item.selectedSize || 'M',
             color: item.color || '#111111',
             quantity: Number(item.quantity || 1),
             imageUrl: matchedImage,
@@ -138,6 +179,7 @@ export async function POST(request: Request) {
     // Package metadata with per-vendor delivery fee allocations
     const measurementsData = {
       ...(body.customerMeasurements || {}),
+      items: body.items || [],
       vendorPackages: body.vendorPackages || {},
       trackingDetails: {}
     };
@@ -165,27 +207,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: orderError.message }, { status: 400 });
     }
 
-    // 2. Insert order items into order_items table with explicit image_url
+    // 2. Insert order items into order_items table without invalid image_url column
     if (body.items && Array.isArray(body.items) && body.items.length > 0) {
-      const itemsToInsert = body.items.map((item: any) => ({
-        order_id: orderId,
-        product_id: item.productId || item.id || `item-${Date.now()}`,
-        vendor_id: item.vendorId || 'moji-wears',
-        product_name: item.productName || item.name || 'Garment',
-        price: Number(item.price || 0),
-        size: item.size || item.selectedSize || 'M',
-        color: typeof item.color === 'string' ? item.color : (item.color?.hex || '#111111'),
-        quantity: Number(item.quantity || 1),
-        vendor_payout_amount: Number(item.price || 0) * 0.9,
-        platform_commission_amount: Number(item.price || 0) * 0.1,
-        status: 'escrow_secured',
-        image_url: item.imageUrl || item.image_url || '',
-      }));
+      const itemsToInsert = body.items.map((item: any) => {
+        const qty = Number(item.quantity || 1);
+        const itemPrice = Number(item.price || 0);
+        return {
+          order_id: orderId,
+          product_id: item.productId || item.id || `item-${Date.now()}`,
+          vendor_id: item.vendorId || 'moji-wears',
+          product_name: item.productName || item.name || 'Garment',
+          price: itemPrice,
+          size: item.size || item.selectedSize || 'M',
+          color: typeof item.color === 'string' ? item.color : (item.color?.hex || '#111111'),
+          quantity: qty,
+          vendor_payout_amount: itemPrice * qty * 0.9,
+          platform_commission_amount: itemPrice * qty * 0.1,
+          status: 'escrow_secured',
+        };
+      });
 
       const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
       if (itemsError) {
         console.error('Error inserting into order_items table:', itemsError);
       }
+    }
+
+    // Dispatch automated background email alerts
+    try {
+      sendOrderConfirmationEmail({
+        orderNumber,
+        customerName: body.customerName,
+        customerEmail: body.customerEmail || 'buyer@veyra.ng',
+        deliveryAddress: body.deliveryAddress,
+        items: body.items || [],
+        totalAmount: Number(body.totalAmount || 0),
+        shippingFee: Number(body.shippingFee || 0)
+      }).catch(e => console.error('Email error:', e));
+
+      // Notify each unique vendor
+      const uniqueVendorIds = Array.from(new Set((body.items || []).map((i: any) => i.vendorId || 'moji-wears')));
+      uniqueVendorIds.forEach(vId => {
+        sendVendorNewOrderEmail(`${vId}@merchants.veyra.ng`, {
+          orderNumber,
+          customerName: body.customerName,
+          customerEmail: body.customerEmail || 'buyer@veyra.ng',
+          deliveryAddress: body.deliveryAddress,
+          items: (body.items || []).filter((i: any) => (i.vendorId || 'moji-wears') === vId),
+          totalAmount: Number(body.totalAmount || 0),
+          shippingFee: Number(body.shippingFee || 0)
+        }).catch(e => console.error('Vendor email error:', e));
+      });
+    } catch (e) {
+      console.error('Email dispatch wrapper error:', e);
     }
 
     return NextResponse.json({
@@ -206,11 +280,14 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { orderNumber, orderId, status, trackingStage, waybillNumber, driverPhone, driverName } = body;
+    const { orderNumber, orderId, status, trackingStage, waybillNumber, driverPhone, driverName, vendorId } = body;
 
     if (!orderNumber && !orderId) {
       return NextResponse.json({ error: 'Missing orderNumber or orderId' }, { status: 400 });
     }
+
+    const headerVendorId = request.headers.get('x-vendor-id');
+    const targetVendorId = (vendorId || headerVendorId || '').toLowerCase().trim();
 
     const supabase = await createClient();
 
@@ -226,15 +303,76 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const updatedMeasurements = {
-      ...(existingOrder.customer_measurements || {}),
-      trackingDetails: {
-        ...(existingOrder.customer_measurements?.trackingDetails || {}),
+    const existingMeasurements = existingOrder.customer_measurements || {};
+    const existingVendorPackages = { ...(existingMeasurements.vendorPackages || {}) };
+
+    if (targetVendorId && targetVendorId !== 'all') {
+      // 1. Update specifically this vendor's package
+      existingVendorPackages[targetVendorId] = {
         status,
-        trackingStage,
-        waybillNumber: waybillNumber || existingOrder.customer_measurements?.trackingDetails?.waybillNumber || '',
-        driverPhone: driverPhone || existingOrder.customer_measurements?.trackingDetails?.driverPhone || '',
-        driverName: driverName || existingOrder.customer_measurements?.trackingDetails?.driverName || '',
+        trackingStage: Number(trackingStage || 1),
+        waybillNumber: waybillNumber !== undefined ? waybillNumber : (existingVendorPackages[targetVendorId]?.waybillNumber || ''),
+        driverPhone: driverPhone !== undefined ? driverPhone : (existingVendorPackages[targetVendorId]?.driverPhone || ''),
+        driverName: driverName !== undefined ? driverName : (existingVendorPackages[targetVendorId]?.driverName || ''),
+        lastUpdated: new Date().toISOString()
+      };
+
+      // Update order_items strictly for this vendor
+      await supabase.from('order_items')
+        .update({ status })
+        .eq('order_id', existingOrder.id)
+        .eq('vendor_id', targetVendorId);
+    } else {
+      // Global update (e.g. buyer confirms whole order)
+      await supabase.from('order_items')
+        .update({ status })
+        .eq('order_id', existingOrder.id);
+
+      Object.keys(existingVendorPackages).forEach(vKey => {
+        existingVendorPackages[vKey] = {
+          ...existingVendorPackages[vKey],
+          status,
+          trackingStage: Number(trackingStage || 1),
+          lastUpdated: new Date().toISOString()
+        };
+      });
+    }
+
+    // Determine smart overall order status
+    const allPkgs = Object.values(existingVendorPackages) as any[];
+    let masterStatus = status;
+    let masterStage = Number(trackingStage || 1);
+
+    if (allPkgs.length > 0) {
+      const allDelivered = allPkgs.every(p => p.trackingStage >= 4);
+      const anyDispatched = allPkgs.some(p => p.trackingStage >= 3);
+      const anyPacking = allPkgs.some(p => p.trackingStage >= 2);
+
+      if (allDelivered) {
+        masterStatus = 'delivered';
+        masterStage = 4;
+      } else if (anyDispatched) {
+        masterStatus = 'dispatched';
+        masterStage = 3;
+      } else if (anyPacking) {
+        masterStatus = 'packing';
+        masterStage = 2;
+      } else {
+        masterStatus = 'escrow_secured';
+        masterStage = 1;
+      }
+    }
+
+    const updatedMeasurements = {
+      ...existingMeasurements,
+      vendorPackages: existingVendorPackages,
+      trackingDetails: {
+        ...(existingMeasurements.trackingDetails || {}),
+        status: masterStatus,
+        trackingStage: masterStage,
+        waybillNumber: waybillNumber || existingMeasurements.trackingDetails?.waybillNumber || '',
+        driverPhone: driverPhone || existingMeasurements.trackingDetails?.driverPhone || '',
+        driverName: driverName || existingMeasurements.trackingDetails?.driverName || '',
         lastUpdated: new Date().toISOString()
       }
     };
@@ -242,7 +380,7 @@ export async function PATCH(request: Request) {
     const { data: updatedOrder, error: updateErr } = await supabase
       .from('orders')
       .update({
-        status: status,
+        status: masterStatus,
         customer_measurements: updatedMeasurements
       })
       .eq('id', existingOrder.id)
@@ -254,11 +392,40 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: updateErr.message }, { status: 500 });
     }
 
-    await supabase.from('order_items').update({ status: status }).eq('order_id', existingOrder.id);
+    // Dispatch automated dispatch or settlement email alerts
+    try {
+      if (status === 'dispatched') {
+        sendDispatchNotificationEmail({
+          orderNumber: existingOrder.order_number,
+          customerName: existingOrder.customer_name,
+          customerEmail: existingOrder.customer_email || 'buyer@veyra.ng',
+          deliveryAddress: existingOrder.delivery_address,
+          items: existingOrder.order_items || [],
+          totalAmount: Number(existingOrder.total_amount || 0),
+          shippingFee: Number(existingOrder.shipping_fee || 0),
+          driverPhone: driverPhone || '',
+          waybillNumber: waybillNumber || '',
+          vendorName: targetVendorId || 'Store Merchant'
+        }).catch(e => console.error('Dispatch email error:', e));
+      } else if (status === 'delivered') {
+        sendDeliverySettledEmail(`${targetVendorId || 'merchant'}@merchants.veyra.ng`, {
+          orderNumber: existingOrder.order_number,
+          customerName: existingOrder.customer_name,
+          customerEmail: existingOrder.customer_email || 'buyer@veyra.ng',
+          deliveryAddress: existingOrder.delivery_address,
+          items: existingOrder.order_items || [],
+          totalAmount: Number(existingOrder.total_amount || 0),
+          shippingFee: Number(existingOrder.shipping_fee || 0),
+          vendorName: targetVendorId || 'Store Merchant'
+        }).catch(e => console.error('Settled email error:', e));
+      }
+    } catch (e) {
+      console.error('Patch email dispatch error:', e);
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Order status updated to ${status}`,
+      message: `Order status updated successfully`,
       order: updatedOrder
     });
   } catch (error: any) {

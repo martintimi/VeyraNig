@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { useStore } from '@/lib/store/useStore';
-import { Trash2, Plus, Minus, Store, Truck, ArrowRight, Sparkles, Check, MapPin, Clock } from 'lucide-react';
+import { Trash2, Plus, Minus, Store, Truck, ArrowRight, Sparkles, Check, MapPin, Clock, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import MobileCartView from '@/components/cart/MobileCartView';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateCartQuantity, clearCart } = useStore();
@@ -43,7 +44,14 @@ export default function CartPage() {
   const distinctVendorsCount = Object.keys(groupedItems).length;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 space-y-10 pb-20 animate-fadeIn">
+    <>
+      {/* 1. DEDICATED MOBILE CART VIEW */}
+      <div className="block md:hidden">
+        <MobileCartView />
+      </div>
+
+      {/* 2. DESKTOP LUXURY CART VIEW */}
+      <div className="hidden md:block mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 space-y-10 pb-20 animate-fadeIn">
       
       <div className="pb-6 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -129,7 +137,7 @@ export default function CartPage() {
                         <div className="flex items-center rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] p-1">
                           <button
                             type="button"
-                            onClick={() => updateCartQuantity(item.product.id, item.selectedSize, item.quantity - 1)}
+                            onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
                             className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                           >
                             <Minus className="h-3 w-3" />
@@ -139,7 +147,7 @@ export default function CartPage() {
                           </span>
                           <button
                             type="button"
-                            onClick={() => updateCartQuantity(item.product.id, item.selectedSize, item.quantity + 1)}
+                            onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
                             className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
                           >
                             <Plus className="h-3 w-3" />
@@ -149,7 +157,7 @@ export default function CartPage() {
                         {/* Remove */}
                         <button
                           type="button"
-                          onClick={() => removeFromCart(item.product.id, item.selectedSize)}
+                          onClick={() => removeFromCart(item.product.id)}
                           className="p-2 rounded-xl text-[var(--text-muted)] hover:text-rose-400 transition-colors"
                           title="Remove item"
                         >
@@ -208,14 +216,16 @@ export default function CartPage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
 
-            <p className="text-[10px] font-mono-luxury text-[var(--text-muted)] text-center">
-              🔒 100% Escrow Protected Payment via Paystack
+            <p className="text-[10px] font-mono-luxury text-[var(--text-muted)] text-center flex items-center justify-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <span>100% Escrow Protected Payment via Paystack</span>
             </p>
           </div>
 
         </div>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

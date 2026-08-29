@@ -73,6 +73,15 @@ interface VeyraState {
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
 
+  // Followed Brands / Vendors
+  followedVendors: string[];
+  toggleFollowVendor: (vendorId: string) => void;
+  isFollowingVendor: (vendorId: string) => boolean;
+
+  // Boutique Stories
+  vendorStories: VendorStory[];
+  addVendorStory: (story: VendorStory) => void;
+
   // Vendor Portal State
   isVendorLoggedIn: boolean;
   setIsVendorLoggedIn: (loggedIn: boolean) => void;
@@ -131,6 +140,8 @@ const defaultProfile: BodyProfile = {
   twinId: 'VY-TWIN-STD',
   isInitialized: false,
   isLoggedIn: false,
+  preferredSize: 'M',
+  preferredFit: 'regular',
 };
 
 const initialOrders: Order[] = [];
@@ -231,30 +242,81 @@ const initialNotifications: NotificationItem[] = [
   {
     id: 'notif-1',
     type: 'review_request',
-    title: 'How did your outfit fit?',
-    message: 'Your order #VY-ORD-9201 from Sartorial Lagos & Yaba Denim was delivered. Rate the fit & tailoring fidelity!',
-    timestamp: '10 mins ago',
+    title: 'How did your clothes fit?',
+    message: 'Your ready-to-wear order #VY-ORD-6965 was delivered! Rate your boutique experience and sizing.',
+    timestamp: 'Just now',
     read: false,
-    orderId: 'ord-1',
-    actionUrl: '/profile'
+    orderId: 'ord-1787800513067',
+    actionUrl: '/track-order?orderNumber=%23VY-ORD-6965'
   },
   {
     id: 'notif-2',
     type: 'order_status',
-    title: 'Package Delivered by Lagos Express',
-    message: 'Unified Box #VY-ORD-9201 containing 3 items was delivered to Victoria Island, Lagos.',
-    timestamp: '2 hours ago',
+    title: 'Package Dispatched with Rider',
+    message: 'Your clothes from Moji Wears are on the way! Rider: 09043*****. Call driver directly for updates.',
+    timestamp: '15 mins ago',
     read: false,
-    orderId: 'ord-1'
+    orderId: 'ord-1787800513067'
   },
   {
     id: 'notif-3',
-    type: 'tailoring_update',
-    title: 'Tailoring Inspection Completed',
-    message: 'Sartorial Lagos verified your 104cm chest measurement for the Onyx Senator Kaftan.',
-    timestamp: '1 day ago',
+    type: 'order_status',
+    title: 'Payment Secured via Veyra Escrow',
+    message: 'Your payment was locked safely in escrow. Funds are held until you receive and inspect your clothes.',
+    timestamp: '1 hour ago',
     read: true,
-    orderId: 'ord-1'
+    orderId: 'ord-1787800513067'
+  },
+  {
+    id: 'notif-4',
+    type: 'order_status',
+    title: 'Order Confirmed at Store',
+    message: 'Boutique received your order and is packaging your ready-to-wear pieces for courier handoff.',
+    timestamp: '2 hours ago',
+    read: true,
+    orderId: 'ord-1787800513067'
+  }
+];
+
+const initialStories: VendorStory[] = [
+  {
+    id: 'story-moji-1',
+    vendorId: 'moji-wears',
+    vendorName: 'Moji Wears',
+    vendorAvatar: '/images/products/BlackTrapStarHoodie.jpg',
+    mediaUrl: '/images/products/BlackTrapStarHoodie.jpg',
+    caption: 'Midnight Heavyweight TrapStar Drop ⚡ 480GSM Cotton in Stock now.',
+    taggedProductId: 'prod-1787616646574-370',
+    taggedProductName: 'Trap Star Street Hoodie',
+    taggedProductPrice: 33000,
+    taggedProductImage: '/images/products/BlackTrapStarHoodie.jpg',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'story-arike-1',
+    vendorId: 'arike-brand',
+    vendorName: 'Arike Brand',
+    vendorAvatar: '/images/products/BlackAgbada.jpg',
+    mediaUrl: '/images/products/BlackAgbada.jpg',
+    caption: 'Handcrafted Heritage Agbada with Obsidian Embroidery ✨ Limited drop.',
+    taggedProductId: 'prod-1787684395100-506',
+    taggedProductName: 'Black Agbada For Men',
+    taggedProductPrice: 67,
+    taggedProductImage: '/images/products/BlackAgbada.jpg',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'story-sartorial-1',
+    vendorId: 'sartorial-lagos',
+    vendorName: 'Sartorial Lagos',
+    vendorAvatar: '/images/products/BlackSenator.jpg',
+    mediaUrl: '/images/products/BlackSenator.jpg',
+    caption: 'Super 160s Wool Senator Kaftan with Geometric Placket. Ready to wear.',
+    taggedProductId: 'prod-1787718457711-343',
+    taggedProductName: 'Onyx Wool Senator Kaftan',
+    taggedProductPrice: 68000,
+    taggedProductImage: '/images/products/BlackSenator.jpg',
+    createdAt: new Date().toISOString()
   }
 ];
 
@@ -313,6 +375,8 @@ export const useStore = create<VeyraState>()(
       // User Auth
       userAuth: {
         isLoggedIn: false,
+  preferredSize: 'M',
+  preferredFit: 'regular',
         name: '',
         email: '',
         phone: '',
@@ -340,6 +404,8 @@ export const useStore = create<VeyraState>()(
         set({
           userAuth: {
             isLoggedIn: false,
+  preferredSize: 'M',
+  preferredFit: 'regular',
             name: '',
             email: '',
             phone: '',
@@ -627,6 +693,30 @@ export const useStore = create<VeyraState>()(
         }
       },
       clearVault: () => set({ vault: [] }),
+
+      // Followed Brands / Vendors
+      followedVendors: ['moji-wears', 'arike-brand'],
+      toggleFollowVendor: (vendorId) => {
+        const lower = (vendorId || '').toLowerCase();
+        const current = get().followedVendors || [];
+        if (current.includes(lower)) {
+          set({ followedVendors: current.filter(id => id !== lower) });
+        } else {
+          set({ followedVendors: [...current, lower] });
+        }
+      },
+      isFollowingVendor: (vendorId) => {
+        const lower = (vendorId || '').toLowerCase();
+        return (get().followedVendors || []).includes(lower);
+      },
+
+      // Boutique Stories
+      vendorStories: initialStories,
+      addVendorStory: (story) => {
+        set((state) => ({
+          vendorStories: [story, ...(state.vendorStories || [])]
+        }));
+      },
 
       // Vendor Portal State
       isVendorLoggedIn: true,

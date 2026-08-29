@@ -238,6 +238,12 @@ export default function VendorOrdersPage() {
             >
               Dispatched ({vendorOrders.filter((o: any) => o.trackingStage === 3).length})
             </button>
+            <button
+              onClick={() => setActiveTab('delivered')}
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${activeTab === 'delivered' ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm' : 'text-[var(--text-secondary)]'}`}
+            >
+              Delivered & Settled ({vendorOrders.filter((o: any) => o.trackingStage >= 4).length})
+            </button>
           </div>
         </div>
       </div>
@@ -304,10 +310,15 @@ export default function VendorOrdersPage() {
                       <div className="min-w-0 flex-1">
                         <h4 className="font-bold text-xs text-[var(--text-primary)] truncate">{item.productName}</h4>
                         <div className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
-                          Size: <strong className="text-[var(--gold-accent)]">{item.size || 'M'}</strong> · Qty: {item.quantity || 1}
+                          Size: <strong className="text-[var(--gold-accent)]">{item.size || 'M'}</strong> · Qty: <strong className="text-[var(--gold-accent)]">{item.quantity || 1}</strong>
                         </div>
                         <div className="text-xs font-mono-luxury text-[var(--gold-accent)] font-bold mt-0.5">
-                          ₦{Number(item.price || 0).toLocaleString()}
+                          ₦{(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString()}
+                          {Number(item.quantity || 1) > 1 && (
+                            <span className="text-[10px] text-[var(--text-muted)] font-normal ml-1.5">
+                              (₦{Number(item.price || 0).toLocaleString()} × {item.quantity})
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -348,6 +359,27 @@ export default function VendorOrdersPage() {
                       <span>Driver: {ord.trackingDetails.driverPhone}</span>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Customer Rating & Review Box if Delivered & Rated */}
+              {ord.trackingStage >= 4 && ord.customer_measurements?.reviews && ord.customer_measurements.reviews.length > 0 && (
+                <div className="p-4 rounded-2xl bg-[var(--gold-accent)]/[0.04] border border-[var(--gold-accent)]/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-mono-luxury text-[var(--gold-accent)] font-bold">
+                      <Star className="h-4 w-4 fill-current text-[var(--gold-accent)]" />
+                      <span>Verified Client Review from {ord.customerName}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury font-bold">
+                      {ord.customer_measurements.reviews[0].fitRating === 'true_to_size' ? 'True to Size' : ord.customer_measurements.reviews[0].fitRating?.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-primary)] italic font-mono-luxury">
+                    "{ord.customer_measurements.reviews[0].comment}"
+                  </p>
+                  <div className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                    Rating: {ord.customer_measurements.reviews[0].rating}.0 / 5.0 ★ · Published on product lookbook & brand storefront
+                  </div>
                 </div>
               )}
 

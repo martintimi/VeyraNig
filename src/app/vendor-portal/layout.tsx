@@ -10,9 +10,9 @@ import { useStore } from '@/lib/store/useStore';
 import {
   LayoutDashboard, UploadCloud, PackageCheck, BarChart3,
   Building, MessageSquare, DollarSign, LogOut, Sun, Moon,
-  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle
+  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle, Star
 } from 'lucide-react';
-
+import VendorNotificationBell from '@/components/vendor/VendorNotificationBell';
 import Image from 'next/image';
 
 export default function VendorPortalLayout({
@@ -75,6 +75,12 @@ export default function VendorPortalLayout({
       active: pathname === '/vendor-portal/publish'
     },
     {
+      label: 'Post Drop Story ✨',
+      href: '/vendor-portal/stories',
+      icon: Sparkles,
+      active: pathname === '/vendor-portal/stories'
+    },
+    {
       label: isBoutique ? 'Orders to Pack & Dispatch' : 'Tailoring Orders to Cut',
       href: '/vendor-portal/orders',
       icon: PackageCheck,
@@ -103,6 +109,12 @@ export default function VendorPortalLayout({
       href: '/vendor-portal/settlements',
       icon: DollarSign,
       active: pathname === '/vendor-portal/settlements'
+    },
+    {
+      label: 'Client Reviews & Ratings',
+      href: '/vendor-portal/reviews',
+      icon: Star,
+      active: pathname === '/vendor-portal/reviews'
     },
   ];
 
@@ -144,6 +156,9 @@ export default function VendorPortalLayout({
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
           
+          {/* In-App Live Notification Bell */}
+          <VendorNotificationBell />
+
           <Link
             href={`/brand/${encodeURIComponent(vendorProfile.brandName)}`}
             target="_blank"
@@ -155,7 +170,7 @@ export default function VendorPortalLayout({
 
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+            className="p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
             title="Toggle theme"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -163,7 +178,7 @@ export default function VendorPortalLayout({
 
           <button
             onClick={handleLogout}
-            className="p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-rose-500/10 text-[var(--text-secondary)] hover:text-rose-500 transition-all"
+            className="p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-rose-500/10 text-[var(--text-secondary)] hover:text-rose-500 transition-all cursor-pointer"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />

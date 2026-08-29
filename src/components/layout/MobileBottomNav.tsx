@@ -1,114 +1,183 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStore } from '@/lib/store/useStore';
-import {
-  Home, Grid, Sparkles, ShoppingBag, User
-} from 'lucide-react';
+import { Home, Tag, Scan, ShoppingBag, CircleUserRound, LogIn } from 'lucide-react';
 import MobileTwinDrawer from '@/components/studio/MobileTwinDrawer';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { cart, setIsCartOpen, userAuth, activeOutfit } = useStore();
   const [isTwinDrawerOpen, setIsTwinDrawerOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
-  // Hide mobile bottom nav on standalone portals (Vendor Portal, Super Admin, Auth page)
+  const lastScrollY = useRef(0);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const isStandalonePage =
     pathname.startsWith('/auth') ||
     pathname.startsWith('/vendor') ||
-    pathname.startsWith('/admin');
+    pathname.startsWith('/admin') ||
+    // Hide on individual product pages — too much overlap with buy buttons
+    (pathname.startsWith('/shop/') && pathname.split('/').length >= 3 && pathname.split('/')[2] !== '');
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isStandalonePage) return;
+
+    const resetInactivityTimer = () => {
+      setIsVisible(true);
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(() => {
+        if (window.scrollY > 80) setIsVisible(false);
+      }, 3500);
+    };
+
+    const handleScroll = () => {
+      const y = window.scrollY;
+      if (y <= 20) { setIsVisible(true); resetInactivityTimer(); lastScrollY.current = y; return; }
+      if (y > lastScrollY.current + 8) setIsVisible(false);
+      else if (y < lastScrollY.current - 8) { setIsVisible(true); resetInactivityTimer(); }
+      lastScrollY.current = y;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('touchstart', resetInactivityTimer, { passive: true });
+    window.addEventListener('click', resetInactivityTimer, { passive: true });
+    resetInactivityTimer();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('touchstart', resetInactivityTimer);
+      window.removeEventListener('click', resetInactivityTimer);
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    };
+  }, [isStandalonePage, pathname]);
 
   if (isStandalonePage) return null;
 
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const activeOutfitItemsCount = Object.values(activeOutfit).filter(Boolean).length;
+  const activeOutfitCount = Object.values(activeOutfit).filter(Boolean).length;
+  const isLoggedIn = userAuth.isLoggedIn;
+
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
     <>
-      {/* 3D Mobile Twin Bottom Sheet Drawer */}
-      <MobileTwinDrawer
-        isOpen={isTwinDrawerOpen}
-        onClose={() => setIsTwinDrawerOpen(false)}
-      />
+      <MobileTwinDrawer isOpen={isTwinDrawerOpen} onClose={() => setIsTwinDrawerOpen(false)} />
 
-      {/* Clean Luxury Floating Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#121216]/95 backdrop-blur-xl border-t border-black/10 dark:border-white/10 transition-all shadow-[0_-4px_20px_rgba(0,0,0,0.05)] select-none">
-        <div className="h-16 flex items-center justify-around px-2 max-w-md mx-auto">
-          
-          {/* 1. Explore / Home */}
-          <Link
-            href="/"
-            className={`flex flex-col items-center justify-center gap-1 w-14 transition-colors ${
-              pathname === '/'
-                ? 'text-amber-700 dark:text-[var(--gold-accent)] font-bold'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Home className="h-5 w-5" />
-            <span className="text-[10px] font-mono-luxury uppercase tracking-wider">Home</span>
-          </Link>
+      <nav
+        className={`fixed bottom-0 inset-x-0 z-40 md:hidden transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isVisible ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <div className="relative bg-[var(--bg-primary)] border-t border-[var(--border-subtle)] shadow-[0_-1px_12px_rgba(0,0,0,0.08)]">
 
-          {/* 2. Shop Catalog */}
-          <Link
-            href="/shop"
-            className={`flex flex-col items-center justify-center gap-1 w-14 transition-colors ${
-              pathname === '/shop'
-                ? 'text-amber-700 dark:text-[var(--gold-accent)] font-bold'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <Grid className="h-5 w-5" />
-            <span className="text-[10px] font-mono-luxury uppercase tracking-wider">Shop</span>
-          </Link>
+          {/* Thin gold shimmer line across top */}
+          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--gold-accent)]/30 to-transparent" />
 
-          {/* 3. Center Elevated 3D Twin Fit Action */}
-          <button
-            onClick={() => setIsTwinDrawerOpen(true)}
-            className="relative -top-3 flex flex-col items-center justify-center group"
-            aria-label="Open 3D Virtual Fitting Room"
-          >
-            <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-400 dark:from-[var(--gold-accent)] dark:to-amber-200 text-white dark:text-black flex items-center justify-center shadow-lg group-active:scale-95 transition-transform ring-4 ring-white dark:ring-[#121216]">
-              <Sparkles className="h-5 w-5 stroke-[2.5]" />
-            </div>
-            <span className="text-[9px] font-mono-luxury uppercase font-bold text-amber-700 dark:text-[var(--gold-accent)] tracking-wider mt-0.5">
-              3D Fit {activeOutfitItemsCount > 0 && `(${activeOutfitItemsCount})`}
-            </span>
-          </button>
+          <div className="flex items-end justify-around h-[62px] px-1 max-w-md mx-auto pb-1">
 
-          {/* 4. Bag / Cart */}
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="relative flex flex-col items-center justify-center gap-1 w-14 text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
-            aria-label="Open Shopping Bag"
-          >
-            <div className="relative">
-              <ShoppingBag className="h-5 w-5" />
-              {totalCartCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 dark:bg-[var(--gold-accent)] text-[9px] font-bold text-white dark:text-black shadow-md">
-                  {totalCartCount}
-                </span>
+            {/* Home */}
+            <Link href="/" className="flex flex-col items-center justify-center gap-[3px] w-14 pt-2 relative group">
+              {isActive('/') && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-6 rounded-full bg-[var(--gold-accent)]" />
               )}
-            </div>
-            <span className="text-[10px] font-mono-luxury uppercase tracking-wider">Bag</span>
-          </button>
+              <Home
+                strokeWidth={isActive('/') ? 2 : 1.5}
+                className={`h-[21px] w-[21px] transition-all ${isActive('/') ? 'text-[var(--gold-accent)]' : 'text-[var(--text-secondary)]'}`}
+              />
+              <span className={`text-[9px] uppercase tracking-wider font-medium transition-colors ${isActive('/') ? 'text-[var(--gold-accent)]' : 'text-[var(--text-secondary)]'}`}>
+                Home
+              </span>
+            </Link>
 
-          {/* 5. Profile / Twin */}
-          <Link
-            href={userAuth.isLoggedIn ? '/profile' : '/auth'}
-            className={`flex flex-col items-center justify-center gap-1 w-14 transition-colors ${
-              pathname === '/profile'
-                ? 'text-amber-700 dark:text-[var(--gold-accent)] font-bold'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            <User className="h-5 w-5" />
-            <span className="text-[10px] font-mono-luxury uppercase tracking-wider">
-              {userAuth.isLoggedIn ? 'Twin' : 'Account'}
-            </span>
-          </Link>
+            {/* Shop */}
+            <Link href="/shop" className="flex flex-col items-center justify-center gap-[3px] w-14 pt-2 relative">
+              {isActive('/shop') && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-6 rounded-full bg-[var(--gold-accent)]" />
+              )}
+              <Tag
+                strokeWidth={isActive('/shop') ? 2 : 1.5}
+                className={`h-[21px] w-[21px] transition-all ${isActive('/shop') ? 'text-[var(--gold-accent)]' : 'text-[var(--text-secondary)]'}`}
+              />
+              <span className={`text-[9px] uppercase tracking-wider font-medium transition-colors ${isActive('/shop') ? 'text-[var(--gold-accent)]' : 'text-[var(--text-secondary)]'}`}>
+                Shop
+              </span>
+            </Link>
 
+            {/* 3D Fit — elevated center CTA */}
+            <button
+              type="button"
+              onClick={() => setIsTwinDrawerOpen(true)}
+              className="flex flex-col items-center justify-center gap-[3px] w-16 relative -mt-5"
+              aria-label="3D Fit Studio"
+            >
+              <div className="relative h-[52px] w-[52px] rounded-2xl bg-gradient-to-br from-[var(--gold-accent)] to-amber-700 shadow-[0_6px_24px_rgba(196,151,46,0.5)] flex items-center justify-center active:scale-95 transition-transform">
+                <Scan className="h-[22px] w-[22px] text-black" strokeWidth={2} />
+                {activeOutfitCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-white text-black text-[8px] font-bold flex items-center justify-center shadow-sm border border-[var(--gold-accent)]/30">
+                    {activeOutfitCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--gold-accent)]">
+                3D Fit
+              </span>
+            </button>
+
+            {/* Bag */}
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="flex flex-col items-center justify-center gap-[3px] w-14 pt-2 relative"
+            >
+              <div className="relative">
+                <ShoppingBag
+                  strokeWidth={1.5}
+                  className="h-[21px] w-[21px] text-[var(--text-secondary)]"
+                />
+                {totalCartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-[14px] min-w-[14px] px-0.5 rounded-full bg-[var(--gold-accent)] text-black text-[8px] font-bold flex items-center justify-center">
+                    {totalCartCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[9px] uppercase tracking-wider font-medium text-[var(--text-secondary)]">Bag</span>
+            </button>
+
+            {/* Account / Login */}
+            <Link
+              href={isLoggedIn ? '/profile' : '/auth'}
+              className="flex flex-col items-center justify-center gap-[3px] w-14 pt-2 relative"
+            >
+              {(isActive('/profile') || isActive('/auth')) && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-6 rounded-full bg-[var(--gold-accent)]" />
+              )}
+              {isLoggedIn ? (
+                <>
+                  <div className="h-[21px] w-[21px] rounded-full bg-[var(--gold-accent)] flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-black leading-none">
+                      {(userAuth.name || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className={`text-[9px] uppercase tracking-wider font-medium transition-colors ${isActive('/profile') ? 'text-[var(--gold-accent)]' : 'text-[var(--text-secondary)]'}`}>
+                    Profile
+                  </span>
+                </>
+              ) : (
+                <>
+                  <LogIn strokeWidth={1.5} className="h-[21px] w-[21px] text-[var(--text-secondary)]" />
+                  <span className="text-[9px] uppercase tracking-wider font-medium text-[var(--text-secondary)]">Login</span>
+                </>
+              )}
+            </Link>
+
+          </div>
+          {/* iOS safe area */}
+          <div className="h-safe-area-bottom" />
         </div>
       </nav>
     </>

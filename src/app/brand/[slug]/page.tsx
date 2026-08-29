@@ -14,6 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import ProductQuickLookModal from '@/components/shop/ProductQuickLookModal';
+import MobileBrandView from '@/components/brand/MobileBrandView';
 
 // Vector App Logos
 const InstagramLogo = () => (
@@ -182,7 +183,19 @@ export default function BrandStorefrontPage() {
   const waUrl = vendor.whatsapp ? `https://wa.me/${vendor.whatsapp.replace(/[^0-9]/g, '')}` : null;
 
   return (
-    <div className="min-h-screen pb-16 space-y-8 animate-fadeIn max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <>
+      {/* 1. DEDICATED MOBILE BRAND VIEW */}
+      <div className="block md:hidden">
+        <MobileBrandView
+          brandName={vendor.name}
+          brandSlug={rawSlug}
+          vendorProducts={products}
+          vendorProfile={vendor}
+        />
+      </div>
+
+      {/* 2. DESKTOP LUXURY BRAND VIEW */}
+      <div className="hidden md:block min-h-screen pb-16 space-y-8 animate-fadeIn max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
       
       {/* Top Breadcrumb & Share Actions */}
       <div className="flex items-center justify-between text-xs font-mono-luxury text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-4">
@@ -520,11 +533,11 @@ export default function BrandStorefrontPage() {
       {quickLookProduct && (
         <ProductQuickLookModal
           product={quickLookProduct}
-          isOpen={!!quickLookProduct}
           onClose={() => setQuickLookProduct(null)}
         />
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

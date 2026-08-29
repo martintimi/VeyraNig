@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import { signInCustomer, signUpCustomer } from '@/lib/services/auth';
+import MobileCheckoutView from '@/components/checkout/MobileCheckoutView';
 
 const NIGERIAN_STATES = [
   'Lagos', 'Ogun', 'Oyo', 'FCT - Abuja', 'Rivers', 'Anambra', 'Enugu', 'Delta',
@@ -257,7 +258,7 @@ export default function CheckoutPage() {
       const orderNum = `#VY-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
       const paymentRef = `vy_escrow_${Date.now()}`;
 
-      const orderPayload = {
+      const orderPayload: any = {
         orderNumber: orderNum,
         customerName: formData.name,
         customerPhone: formData.phone,
@@ -280,6 +281,7 @@ export default function CheckoutPage() {
           vendorId: item.product.vendorId,
           vendorName: item.product.vendorName,
           price: item.product.price,
+          quantity: Number(item.quantity || 1),
           size: item.selectedSize,
           imageUrl: item.product.imageUrl,
           category: item.product.category,
@@ -392,7 +394,14 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 animate-fadeIn pb-24">
+    <>
+      {/* 1. DEDICATED MOBILE CHECKOUT VIEW */}
+      <div className="block md:hidden">
+        <MobileCheckoutView />
+      </div>
+
+      {/* 2. DESKTOP LUXURY CHECKOUT VIEW */}
+      <div className="hidden md:block min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10 animate-fadeIn pb-24">
       
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-5">
@@ -843,11 +852,11 @@ export default function CheckoutPage() {
                 Cancel & Return
               </button>
             </div>
-
           </div>
         </div>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

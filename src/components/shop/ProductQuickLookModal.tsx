@@ -175,9 +175,12 @@ export default function ProductQuickLookModal({ product, onClose }: ProductQuick
                 <div className="flex items-center justify-between text-xs font-mono-luxury">
                   <span className="text-[var(--text-secondary)] uppercase font-bold">Choose Size:</span>
                   {currentStock === 0 ? (
-                    <span className="text-rose-400 font-bold">❌ Out of Stock</span>
+                    <span className="text-rose-400 font-bold">Out of Stock</span>
                   ) : currentStock <= 5 ? (
-                    <span className="text-amber-500 font-bold animate-pulse">🔥 Only {currentStock} left in Size {selectedSize}!</span>
+                    <span className="text-amber-500 font-bold animate-pulse inline-flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      <span>Only {currentStock} left in Size {selectedSize}!</span>
+                    </span>
                   ) : (
                     <span className="text-emerald-500 font-bold">● {currentStock} in stock</span>
                   )}

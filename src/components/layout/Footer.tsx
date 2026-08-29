@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, ShieldCheck, Truck, RotateCcw, Heart, Lock } from 'lucide-react';
+import { Sparkles, ShieldCheck, Truck, RotateCcw, Heart } from 'lucide-react';
 
 import Image from 'next/image';
 
@@ -103,21 +103,22 @@ export default function Footer() {
 
           <div>
             <h5 className="text-[11px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold mb-3">
-              Partner Hubs
+              Sell & Support
             </h5>
             <ul className="space-y-2 text-xs text-[var(--text-secondary)]">
               <li>
-                <Link href="/vendor-portal" target="_blank" className="hover:text-[var(--text-primary)] transition-colors font-bold text-[var(--gold-accent)]">
-                  Designer Portal →
+                <Link href="/vendor-portal/auth" className="hover:text-[var(--text-primary)] transition-colors font-bold text-[var(--gold-accent)]">
+                  Sell on Veyra →
                 </Link>
               </li>
               <li>
-                <Link href="/admin" target="_blank" className="text-[11px] text-[var(--text-muted)] hover:text-rose-400 transition-colors flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  <span>Super Admin Panel</span>
+                <Link href="/track-order" className="hover:text-[var(--text-primary)] transition-colors">
+                  Track Your Delivery
                 </Link>
               </li>
-              <li><span className="text-[11px] text-[var(--text-muted)]">Victoria Island, Lagos</span></li>
+              <li>
+                <span className="text-[11px] text-[var(--text-muted)]">Lagos · Abuja · Nationwide</span>
+              </li>
             </ul>
           </div>
 

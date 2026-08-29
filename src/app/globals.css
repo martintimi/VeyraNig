@@ -20,17 +20,17 @@
 }
 
 html.light {
-  --bg-primary: #fbfbfb;
-  --bg-secondary: #f4f4f5;
+  --bg-primary: #fafafa;
+  --bg-secondary: #f4f4f6;
   --bg-surface: #ffffff;
   --text-primary: #09090b;
   --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(0, 0, 0, 0.16);
-  --gold-accent: #b45309;
-  --gold-subtle: rgba(180, 83, 9, 0.08);
-  --gold-glow: rgba(180, 83, 9, 0.15);
+  --text-muted: #71717a;
+  --border-subtle: rgba(0, 0, 0, 0.09);
+  --border-hover: rgba(0, 0, 0, 0.18);
+  --gold-accent: #c4972e;
+  --gold-subtle: rgba(196, 151, 46, 0.12);
+  --gold-glow: rgba(196, 151, 46, 0.25);
   --badge-bg: rgba(0, 0, 0, 0.04);
 }
 
@@ -121,4 +121,28 @@ button:active, a:active {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* Mobile App Luxury Polish */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glassmorphism Luxury Glow */
+.gold-glass {
+  background: rgba(18, 18, 22, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(230, 195, 103, 0.2);
+}
+
+.dark-glass {
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }

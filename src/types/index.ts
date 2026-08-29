@@ -42,6 +42,8 @@ export interface BodyProfile {
   twinId: string;
   isInitialized: boolean;
   isLoggedIn?: boolean;
+  preferredSize?: 'S' | 'M' | 'L' | 'XL' | 'XXL';
+  preferredFit?: 'slim' | 'regular' | 'oversized';
 }
 
 export type GarmentCategory = 'tops' | 'bottoms' | 'outerwear' | 'footwear' | 'accessories';
