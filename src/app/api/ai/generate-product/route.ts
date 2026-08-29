@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     const { title, category, vendorType } = await request.json();
 
     const cleanTitle = (title || '').trim();
-    const isBoutique = vendorType === 'boutique_merchant' || vendorType === 'boutique_seller';
+    const isBoutique = vendorType === 'boutique_seller';
 
     // 1. Streetwear / Ready-to-Wear Boutique AI Generator
     if (isBoutique || cleanTitle.toLowerCase().includes('hoodie') || cleanTitle.toLowerCase().includes('jean') || cleanTitle.toLowerCase().includes('tee') || cleanTitle.toLowerCase().includes('shirt') || cleanTitle.toLowerCase().includes('slide') || cleanTitle.toLowerCase().includes('cap')) {

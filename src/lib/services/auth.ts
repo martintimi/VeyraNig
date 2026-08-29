@@ -19,7 +19,7 @@ export interface VendorSignUpData {
   designerName?: string;
   phone: string;
   location: string;
-  vendorType: 'fashion_designer' | 'boutique_merchant';
+  vendorType: 'fashion_designer' | 'boutique_seller';
   bankName?: string;
   accountNumber?: string;
   accountName?: string;

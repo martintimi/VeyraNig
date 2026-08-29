@@ -72,7 +72,7 @@ export default function VendorAuthPage() {
     password: '',
     confirmPassword: '',
     location: 'Victoria Island, Lagos',
-    vendorType: 'fashion_designer' as 'fashion_designer' | 'boutique_merchant',
+    vendorType: 'fashion_designer' as 'fashion_designer' | 'boutique_seller',
     bankName: 'Guaranty Trust Bank (GTBank)',
     accountNumber: '',
     accountName: '',
@@ -128,12 +128,10 @@ export default function VendorAuthPage() {
       if (res.vendor) {
         if (typeof window !== 'undefined') {
           localStorage.setItem('veyra_vendor_id', res.vendor.id);
-          if (res.token) localStorage.setItem('veyra_vendor_token', res.token);
           document.cookie = `veyra_vendor_id=${res.vendor.id}; path=/; max-age=2592000`;
         }
 
         setVendorProfile({
-          id: res.vendor.id,
           brandName: res.vendor.brand_name || 'My Atelier',
           designerName: res.vendor.designer_name || 'Lead Designer',
           contactPerson: res.vendor.contact_person || res.vendor.designer_name,
@@ -144,6 +142,8 @@ export default function VendorAuthPage() {
           bankName: res.vendor.bank_name || 'Guaranty Trust Bank (GTBank)',
           accountNumber: res.vendor.account_number || '',
           accountName: res.vendor.account_name || '',
+          instagram: res.vendor.instagram || '',
+          bio: res.vendor.bio || '',
         });
       }
 
@@ -257,32 +257,21 @@ export default function VendorAuthPage() {
         return;
       }
 
-      const activeVendor = res.vendor || {
-        id: res.vendor?.id,
-        brandName: regForm.brandName,
-        designerName: regForm.designerName,
-        contactPerson: regForm.designerName,
-        email: pendingEmail || regForm.email,
-        phone: regForm.phone,
-        location: regForm.location,
-        vendorType: regForm.vendorType,
-        bankName: regForm.bankName,
-        accountNumber: regForm.accountNumber,
-        accountName: regForm.accountName,
-      };
+      const activeProfile = res.profile || {};
 
       setVendorProfile({
-        id: activeVendor.id || res.vendor?.id,
-        brandName: activeVendor.brand_name || activeVendor.brandName || regForm.brandName,
-        designerName: activeVendor.designer_name || activeVendor.designerName || regForm.designerName,
-        contactPerson: activeVendor.contact_person || activeVendor.contactPerson || regForm.designerName,
-        email: activeVendor.email || pendingEmail || regForm.email,
-        phone: activeVendor.phone || regForm.phone,
-        location: activeVendor.location || regForm.location,
-        vendorType: activeVendor.vendor_type || activeVendor.vendorType || regForm.vendorType,
-        bankName: activeVendor.bank_name || activeVendor.bankName || regForm.bankName,
-        accountNumber: activeVendor.account_number || activeVendor.accountNumber || regForm.accountNumber,
-        accountName: activeVendor.account_name || activeVendor.accountName || regForm.accountName,
+        brandName: activeProfile.brand_name || activeProfile.brandName || regForm.brandName,
+        designerName: activeProfile.designer_name || activeProfile.designerName || regForm.designerName,
+        contactPerson: activeProfile.contact_person || activeProfile.contactPerson || regForm.designerName,
+        email: activeProfile.email || pendingEmail || regForm.email,
+        phone: activeProfile.phone || regForm.phone,
+        location: activeProfile.location || regForm.location,
+        vendorType: activeProfile.vendor_type || activeProfile.vendorType || regForm.vendorType,
+        bankName: activeProfile.bank_name || activeProfile.bankName || regForm.bankName,
+        accountNumber: activeProfile.account_number || activeProfile.accountNumber || regForm.accountNumber,
+        accountName: activeProfile.account_name || activeProfile.accountName || regForm.accountName,
+        instagram: activeProfile.instagram || '',
+        bio: activeProfile.bio || '',
       });
 
       setIsVendorLoggedIn(true);
@@ -649,7 +638,7 @@ export default function VendorAuthPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs focus:border-[var(--gold-accent)] focus:outline-none"
                 >
                   <option value="fashion_designer">🧵 Fashion Designer (Ready-to-Wear / Kaftans / Native Wear)</option>
-                  <option value="boutique_merchant">🛍️ Boutique Seller (Ready-to-Wear / Streetwear / Footwear)</option>
+                  <option value="boutique_seller">🛍️ Boutique Seller (Ready-to-Wear / Streetwear / Footwear)</option>
                 </select>
               </div>
 

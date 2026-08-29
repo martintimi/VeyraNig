@@ -19,7 +19,7 @@ export default function MobileProfileView() {
     userAuth,
     setUserAuth,
     bodyProfile,
-    updateBodyProfile,
+    setBodyProfile,
     vault,
     userOrders,
     followedVendors,
@@ -38,7 +38,7 @@ export default function MobileProfileView() {
 
   const handleSaveAddress = (e: React.FormEvent) => {
     e.preventDefault();
-    updateBodyProfile({
+    setBodyProfile({
       deliveryAddress,
       city,
       state,
@@ -50,11 +50,11 @@ export default function MobileProfileView() {
   const handleLogout = () => {
     setUserAuth({
       isLoggedIn: false,
-      role: 'guest',
       email: '',
       name: '',
       phone: '',
-      vendorId: undefined,
+      gender: 'male',
+      userType: 'shopper',
     });
     router.push('/');
   };
@@ -195,7 +195,7 @@ export default function MobileProfileView() {
                     <button
                       key={sz}
                       type="button"
-                      onClick={() => updateBodyProfile({ preferredSize: sz })}
+                      onClick={() => setBodyProfile({ preferredSize: sz as 'S' | 'M' | 'L' | 'XL' | 'XXL' })}
                       className={`py-2.5 rounded-2xl text-xs font-mono-luxury font-bold uppercase transition-all cursor-pointer ${
                         isSel
                           ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
@@ -292,7 +292,7 @@ export default function MobileProfileView() {
             </div>
 
             {/* Vendor Portal Link if user is vendor */}
-            {userAuth.role === 'vendor' && (
+            {userAuth.userType === 'vendor' && (
               <Link
                 href="/vendor"
                 className="block p-4 rounded-3xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/50 text-[var(--gold-accent)] font-mono-luxury uppercase text-xs font-bold text-center shadow-lg"

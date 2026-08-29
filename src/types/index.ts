@@ -213,3 +213,17 @@ export interface NotificationItem {
   orderId?: string;
   actionUrl?: string;
 }
+
+export interface VendorStory {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  vendorAvatar: string;
+  mediaUrl: string;
+  caption: string;
+  taggedProductId?: string;
+  taggedProductName?: string;
+  taggedProductPrice?: number;
+  taggedProductImage?: string;
+  createdAt: string;
+}

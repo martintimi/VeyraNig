@@ -27,7 +27,7 @@ export default function WardrobeVaultDrawer() {
   } = useStore();
 
   const handleTryOn = (product: any) => {
-    const isWorn = activeOutfit[product.category]?.id === product.id;
+    const isWorn = activeOutfit[product.category as keyof typeof activeOutfit]?.id === product.id;
     if (isWorn) {
       removeOutfitItem(product.category);
     } else {

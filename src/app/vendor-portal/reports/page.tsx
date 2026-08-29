@@ -10,7 +10,7 @@ import {
 
 export default function VendorReportsPage() {
   const { vendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -42,7 +42,7 @@ const SnapchatLogo = () => (
 
 export default function VendorAtelierProfilePage() {
   const { vendorProfile, setVendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
   
   const [isSaving, setIsSaving] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
@@ -51,7 +51,6 @@ export default function VendorAtelierProfilePage() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   const [form, setForm] = useState({
-    id: vendorProfile.id || 'moji-wears',
     brandName: vendorProfile.brandName || '',
     designerName: vendorProfile.designerName || '',
     email: vendorProfile.email || '',
@@ -70,7 +69,7 @@ export default function VendorAtelierProfilePage() {
     snapchat: '',
     whatsapp: '',
     bio: '',
-    vendorType: vendorProfile.vendorType || 'boutique_merchant'
+    vendorType: vendorProfile.vendorType || 'fashion_designer'
   });
 
   // Fetch live vendor profile from DB endpoint
@@ -82,7 +81,6 @@ export default function VendorAtelierProfilePage() {
         const v = data.vendor;
         const rates = v.shippingRates || {};
         setForm({
-          id: v.id || 'moji-wears',
           brandName: v.brandName || v.brand_name || '',
           designerName: v.designerName || v.designer_name || v.contact_person || '',
           email: v.email || '',
@@ -101,7 +99,7 @@ export default function VendorAtelierProfilePage() {
           snapchat: v.snapchat || v.socialLinks?.snapchat || '',
           whatsapp: v.whatsapp || v.socialLinks?.whatsapp || v.phone || '',
           bio: v.bio || '',
-          vendorType: v.vendorType || v.vendor_type || (isBoutique ? 'boutique_merchant' : 'fashion_designer')
+          vendorType: v.vendorType || v.vendor_type || (isBoutique ? 'boutique_seller' : 'fashion_designer')
         });
 
         setIsProfileSaved(!!v.isProfileSaved);

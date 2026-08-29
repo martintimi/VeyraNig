@@ -225,7 +225,7 @@ export default function ProductQuickLookModal({ product, onClose }: ProductQuick
                   <span>Virtual Twin Fit Analysis</span>
                 </div>
                 <p className="text-[11px] text-[var(--text-secondary)] font-light">
-                  {fitResult.feedback || 'Tailored to drape naturally over standard Nigerian silhouette metrics.'}
+                  {(fitResult.insights && fitResult.insights[0]) || 'Tailored to drape naturally over standard Nigerian silhouette metrics.'}
                 </p>
               </div>
 

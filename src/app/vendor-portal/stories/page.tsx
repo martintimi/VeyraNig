@@ -19,7 +19,7 @@ export default function VendorStoriesPage() {
 
   // Vendor's own products to tag
   const vendorProducts = allProducts.filter(
-    (p) => (p.vendorId || '').toLowerCase() === (vendorProfile.id || '').toLowerCase() || p.vendorName === vendorProfile.brandName
+    (p) => (p.vendorId || '').toLowerCase() === (vendorProfile.email || '').toLowerCase() || p.vendorName === vendorProfile.brandName
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,7 +42,7 @@ export default function VendorStoriesPage() {
 
     const newStory = {
       id: `story-${Date.now()}`,
-      vendorId: vendorProfile.id || 'moji-wears',
+      vendorId: vendorProfile.email || 'moji-wears',
       vendorName: vendorProfile.brandName || 'Boutique Merchant',
       vendorAvatar: imagePreview,
       mediaUrl: imagePreview,

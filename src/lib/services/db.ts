@@ -28,6 +28,13 @@ export async function getProducts(): Promise<Product[]> {
       imageUrl: item.image_url,
       tags: item.tags || [],
       colors: item.colors || [],
+      sizes: item.sizes || ['S', 'M', 'L', 'XL', 'XXL'],
+      sizeChart: item.size_chart || {},
+      fabricComposition: item.fabric_composition || 'Premium Cotton Blend',
+      fitNotes: item.fit_notes || 'Fits true to size',
+      rating: item.rating || 0,
+      reviewCount: item.review_count || 0,
+      layerZIndex: 1,
     }));
   } catch (err) {
     console.error('Supabase fetch error, using fallback:', err);

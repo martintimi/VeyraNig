@@ -5,10 +5,8 @@ export function calculateFitMatch(profile?: BodyProfile, product?: Product): Fit
     return {
       recommendedSize: 'M',
       matchScore: 92,
-      status: 'optimal',
-      fitInsights: { chest: 'perfect', waist: 'perfect', hips: 'perfect', length: 'perfect' },
-      narrativeReason: 'Standard fit compatible with your body silhouette.',
-      feedback: 'Tailored to drape naturally over standard Nigerian silhouette metrics.',
+      fitLabel: 'Perfect Bespoke Match',
+      insights: ['Perfect fit for standard silhouette', 'Tailored drape compatible with Nigerian proportions'],
     };
   }
 
@@ -20,10 +18,8 @@ export function calculateFitMatch(profile?: BodyProfile, product?: Product): Fit
     return {
       recommendedSize: fallbackSize,
       matchScore: 94,
-      status: 'optimal',
-      fitInsights: { chest: 'perfect', waist: 'perfect', hips: 'perfect', length: 'perfect' },
-      narrativeReason: 'Tailored true to size for standard Nigerian silhouette proportions.',
-      feedback: 'Tailored true to size for standard Nigerian silhouette proportions.',
+      fitLabel: 'Perfect Bespoke Match',
+      insights: ['Tailored true to size', 'Compatible with standard Nigerian silhouette proportions'],
     };
   }
 
@@ -37,17 +33,26 @@ export function calculateFitMatch(profile?: BodyProfile, product?: Product): Fit
   };
 
   const safeProfile = profile || {
-    id: 'default',
-    gender: 'unisex',
+    name: 'default',
     heightCm: 178,
     weightKg: 75,
+    gender: 'male' as const,
+    bodyShape: 'athletic' as const,
+    fitPreference: 'regular' as const,
+    avatarStyle: 'minimal_editorial' as const,
+    skinTone: 'deep' as const,
+    skinToneHex: '#8B4513',
+    hairStyle: 'high_fade' as const,
+    hairColor: '#000000',
+    facialHair: 'clean' as const,
+    avatarDisplayMode: 'bitmoji' as const,
     chestCm: 100,
     waistCm: 84,
     hipsCm: 104,
     shoulderWidthCm: 45,
-    armLengthCm: 62,
     inseamCm: 81,
-    fitPreference: 'regular',
+    twinId: '',
+    isInitialized: false,
   };
 
   // Preference multiplier
@@ -133,29 +138,36 @@ export function calculateFitMatch(profile?: BodyProfile, product?: Product): Fit
 
   // Adjust display score based on body shape nuance
   let adjustedScore = Math.min(99, Math.max(78, highestScore));
-  let status: 'optimal' | 'snug' | 'relaxed' = 'optimal';
+  let fitLabel: 'Perfect Bespoke Match' | 'Slightly Snug' | 'Relaxed Drape' | 'Check Alterations' = 'Perfect Bespoke Match';
+  
   if (adjustedScore >= 93) {
-    status = 'optimal';
-  } else if (safeProfile.fitPreference === 'skinny' || bestInsights.waist === 'tight' || bestInsights.chest === 'tight') {
-    status = 'snug';
+    fitLabel = 'Perfect Bespoke Match';
+  } else if (adjustedScore >= 85) {
+    if (safeProfile.fitPreference === 'skinny' || bestInsights.waist === 'tight' || bestInsights.chest === 'tight') {
+      fitLabel = 'Slightly Snug';
+    } else {
+      fitLabel = 'Relaxed Drape';
+    }
   } else {
-    status = 'relaxed';
+    fitLabel = 'Check Alterations';
   }
 
-  let narrativeReason = `Size ${bestSize} gives an optimal drape tailored to your ${profile.bodyShape.replace('_', ' ')} silhouette.`;
-  if (product.category === 'tops') {
-    narrativeReason = `Size ${bestSize} aligns with your ${profile.chestCm}cm chest and ${profile.shoulderWidthCm}cm shoulder width for a clean line.`;
-  } else if (product.category === 'bottoms') {
-    narrativeReason = `Size ${bestSize} matches your ${profile.waistCm}cm waist and ${profile.hipsCm}cm hip contour with zero gaping.`;
-  } else if (product.category === 'outerwear') {
-    narrativeReason = `Size ${bestSize} allows smooth layering over tops while maintaining structured shoulder line.`;
+  const insightMessages: string[] = [];
+  if (bestInsights.chest === 'tight') insightMessages.push('Chest runs slightly snug');
+  if (bestInsights.chest === 'loose') insightMessages.push('Chest runs loose');
+  if (bestInsights.waist === 'tight') insightMessages.push('Waist runs slightly snug');
+  if (bestInsights.waist === 'loose') insightMessages.push('Waist runs loose');
+  if (bestInsights.hips === 'tight') insightMessages.push('Hips run slightly snug');
+  if (bestInsights.hips === 'loose') insightMessages.push('Hips run loose');
+  
+  if (insightMessages.length === 0) {
+    insightMessages.push(`Size ${bestSize} provides an optimal fit for your measurements`);
   }
 
   return {
     recommendedSize: bestSize,
     matchScore: adjustedScore,
-    status,
-    fitInsights: bestInsights,
-    narrativeReason,
+    fitLabel,
+    insights: insightMessages,
   };
 }

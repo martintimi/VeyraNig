@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   ActiveOutfit, BodyProfile, CartItem, Product, GarmentCategory,
-  GarmentOriginType, Order, NotificationItem, VendorProfile
+  GarmentOriginType, Order, NotificationItem, VendorProfile, VendorStory
 } from '@/types';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
 
@@ -41,6 +41,7 @@ interface VeyraState {
   userOrders: Order[];
   createNewOrder: (order: Omit<Order, 'id'>) => Order;
   rateOrder: (orderId: string, rating: number, comment: string) => void;
+  updateOrderStatus: (orderNumber: string, status: string, trackingStage: number) => void;
 
   // Notifications Management
   userNotifications: NotificationItem[];
@@ -87,6 +88,7 @@ interface VeyraState {
   setIsVendorLoggedIn: (loggedIn: boolean) => void;
   vendorProfile: VendorProfile;
   setVendorProfile: (profile: Partial<VendorProfile>) => void;
+  vendorLogout: () => void;
   // Wardrobe Vault (Curated Wishlist)
   vault: Product[];
   toggleVaultItem: (product: Product) => void;
@@ -103,14 +105,13 @@ interface VeyraState {
 }
 
 export const defaultVendorProfile: VendorProfile = {
-  id: 'moji-wears',
   brandName: 'Moji wears',
   designerName: 'Moji Wears',
   contactPerson: 'Moji Wears',
   email: 'brewmarfle@gmail.com',
   phone: '+234 812 345 6789',
   location: 'Lagos, Nigeria',
-  vendorType: 'boutique_merchant',
+  vendorType: 'boutique_seller',
   bankName: 'Guaranty Trust Bank (GTBank)',
   accountNumber: '0123456789',
   accountName: 'KLASSIC WEARS ENTERPRISE',
@@ -132,6 +133,11 @@ const defaultProfile: BodyProfile = {
   fitPreference: 'tailored',
   avatarStyle: 'minimal_editorial',
   skinTone: 'deep',
+  skinToneHex: '#8B4513',
+  hairStyle: 'high_fade',
+  hairColor: '#000000',
+  facialHair: 'clean',
+  avatarDisplayMode: 'bitmoji',
   chestCm: 102,
   waistCm: 84,
   hipsCm: 100,
@@ -404,8 +410,6 @@ export const useStore = create<VeyraState>()(
         set({
           userAuth: {
             isLoggedIn: false,
-  preferredSize: 'M',
-  preferredFit: 'regular',
             name: '',
             email: '',
             phone: '',
@@ -505,7 +509,7 @@ export const useStore = create<VeyraState>()(
           if (data.success && Array.isArray(data.products) && data.products.length > 0) {
             const dbProducts: Product[] = data.products.map((p: any) => {
               const rawGender = String(p.gender_target || p.genderTarget || 'unisex').toLowerCase();
-              let normalizedGender: GenderTarget = 'unisex';
+              let normalizedGender: 'male' | 'female' | 'unisex' = 'unisex';
               if (rawGender === 'male' || rawGender === 'men' || rawGender === 'man') {
                 normalizedGender = 'male';
               } else if (rawGender === 'female' || rawGender === 'women' || rawGender === 'woman') {

@@ -46,10 +46,10 @@ export default function DirectSalesAssistantPage() {
 
         const resProf = await vendorFetch('/api/vendor/profile');
         const profData = await resProf.json();
-        let targetVendorId = vendorProfile.id;
+        let targetVendorId = vendorProfile.email || 'moji-wears';
 
         if (resProf.ok && profData.success && profData.vendor) {
-          targetVendorId = profData.vendor.id || vendorProfile.id;
+          targetVendorId = profData.vendor.email || vendorProfile.email || 'moji-wears';
         }
 
         const resProd = await vendorFetch('/api/products');
@@ -88,7 +88,7 @@ export default function DirectSalesAssistantPage() {
     }
 
     loadVendorCatalog();
-  }, [vendorProfile.id, vendorProfile.brandName]);
+  }, [vendorProfile.email, vendorProfile.brandName]);
 
   const categoryTabs: { id: GarmentCategory | 'all'; label: string }[] = [
     { id: 'all', label: 'All Garments' },

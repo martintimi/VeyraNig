@@ -15,7 +15,7 @@ import {
 
 export default function VendorOverviewPage() {
   const { vendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
 
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -32,7 +32,7 @@ export default function VendorOverviewPage() {
     async function loadVendorData() {
       try {
         setLoadingData(true);
-        const currentVendorId = vendorProfile.id || 'moji-wears';
+        const currentVendorId = vendorProfile.email || 'moji-wears';
         const currentBrandName = (vendorProfile.brandName || '').toLowerCase().trim();
 
         // 1. Fetch live vendor profile status from DB for THIS specific vendor
@@ -73,7 +73,7 @@ export default function VendorOverviewPage() {
       }
     }
     loadVendorData();
-  }, [vendorProfile.id]);
+  }, [vendorProfile.email]);
 
   const isVerified = profileStatus?.isVerified || profileStatus?.approvalStatus === 'approved';
   const isRejected = profileStatus?.approvalStatus === 'rejected';

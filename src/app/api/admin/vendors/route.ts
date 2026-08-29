@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         email: v.email || 'N/A',
         phone: v.phone || 'N/A',
         location: v.location || 'Lagos, Nigeria',
-        vendorType: v.vendor_type || 'boutique_merchant',
+        vendorType: v.vendor_type || 'fashion_designer',
         bankName: v.bank_name || 'Not Configured',
         accountNumber: v.account_number || 'N/A',
         accountName: v.account_name || 'N/A',

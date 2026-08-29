@@ -66,7 +66,7 @@ export default function VendorPortalLayout({
     return <>{children}</>;
   }
 
-  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
 
   const navItems = [
     {

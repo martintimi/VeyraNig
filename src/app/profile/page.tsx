@@ -378,7 +378,7 @@ export default function ProfilePage() {
 
                 {/* Garments in this Order */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {order.items.map((item: any, idx) => (
+                  {order.items.map((item: any, idx: number) => (
                     <div
                       key={idx}
                       className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3.5"

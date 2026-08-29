@@ -161,7 +161,7 @@ export default function BrandStorefrontPage() {
     );
   }
 
-  const isBoutique = vendor.vendorType === 'boutique_merchant' || vendor.vendorType === 'boutique_seller';
+  const isBoutique = vendor.vendorType === 'boutique_seller';
 
   const categories = [
     { id: 'all', label: 'ALL' },

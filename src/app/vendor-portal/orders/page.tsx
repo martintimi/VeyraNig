@@ -7,13 +7,13 @@ import {
   PackageCheck, Clock, CheckCircle2, ShieldCheck,
   Phone, MapPin, User, Truck, ShoppingBag, Scissors, Layers,
   Ruler, Sparkles, ChevronRight, Check, AlertCircle, Package,
-  Send, Loader2, X, Navigation, RefreshCw
+  Send, Loader2, X, Navigation, RefreshCw, Star
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function VendorOrdersPage() {
   const { vendorProfile, updateOrderStatus } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_merchant' || vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'dispatched' | 'delivered'>('all');
   const [dbOrders, setDbOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,8 +30,8 @@ export default function VendorOrdersPage() {
       const storedId = localStorage.getItem('veyra_vendor_id');
       if (storedId) return storedId;
     }
-    return vendorProfile.id || 'moji-wears';
-  }, [vendorProfile.id]);
+    return vendorProfile.email || 'moji-wears';
+  }, [vendorProfile.email]);
 
   // Load orders strictly from live PostgreSQL DB
   const loadVendorDbOrders = useCallback(async () => {
