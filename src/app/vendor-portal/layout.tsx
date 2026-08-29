@@ -10,7 +10,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   LayoutDashboard, UploadCloud, PackageCheck, BarChart3,
   Building, MessageSquare, DollarSign, LogOut, Sun, Moon,
-  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle, Star
+  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle, Star, Menu, X
 } from 'lucide-react';
 import VendorNotificationBell from '@/components/vendor/VendorNotificationBell';
 import Image from 'next/image';
@@ -36,6 +36,13 @@ export default function VendorPortalLayout({
     isVerified: false,
     approvalStatus: 'pending'
   });
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Close mobile menu when route changes
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     async function checkVendorStatus() {
@@ -131,8 +138,16 @@ export default function VendorPortalLayout({
       {/* ======================================================== */}
       <header className="sticky top-0 z-30 w-full border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-md px-6 sm:px-10 py-3.5 flex items-center justify-between">
         
-        {/* Left: Brand Identity */}
-        <div className="flex items-center gap-4">
+        {/* Left: Menu Toggle + Brand Identity */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] transition-all"
+            title="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+          
           <Link href="/vendor-portal" className="flex items-center gap-3 group">
             <Image
               src="/images/logo/veyra-logo-horizontal.png"
@@ -178,7 +193,7 @@ export default function VendorPortalLayout({
 
           <button
             onClick={handleLogout}
-            className="p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-rose-500/10 text-[var(--text-secondary)] hover:text-rose-500 transition-all cursor-pointer"
+            className="hidden md:flex p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-rose-500/10 text-[var(--text-secondary)] hover:text-rose-500 transition-all cursor-pointer"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />
@@ -193,8 +208,26 @@ export default function VendorPortalLayout({
       {/* ======================================================== */}
       <div className="flex-1 flex">
         
-        {/* Left Fixed Sticky Sidebar */}
-        <aside className="w-64 lg:w-72 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 flex flex-col justify-between p-4 sm:p-6 shrink-0 hidden md:flex sticky top-[65px] h-[calc(100vh-65px)] self-start overflow-y-auto">
+        {/* Mobile Overlay Backdrop */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+        
+        {/* Left Sidebar - Desktop Fixed | Mobile Drawer */}
+        <aside className={`
+          w-64 lg:w-72 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)]
+          flex flex-col justify-between p-4 sm:p-6 shrink-0 
+          transition-all duration-300 ease-in-out
+          
+          md:relative md:flex md:sticky md:top-[65px] md:h-[calc(100vh-65px)] md:self-start md:overflow-y-auto
+          
+          fixed inset-y-0 left-0 top-[65px] h-[calc(100vh-65px)] z-20
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:translate-x-0
+        `}>
           
           <div className="space-y-6">
             
@@ -245,38 +278,33 @@ export default function VendorPortalLayout({
 
           </div>
 
-          {/* Bottom Info */}
-          <div className="pt-4 border-t border-[var(--border-subtle)] text-[11px] font-mono-luxury text-[var(--text-muted)] space-y-1">
-            <div className="flex items-center justify-between">
-              <span>Settlement Escrow:</span>
-              <strong className="text-emerald-500">Active</strong>
+          {/* Bottom Info & Logout */}
+          <div className="pt-4 border-t border-[var(--border-subtle)] space-y-3">
+            <div className="text-[11px] font-mono-luxury text-[var(--text-muted)] space-y-1">
+              <div className="flex items-center justify-between">
+                <span>Settlement Escrow:</span>
+                <strong className="text-emerald-500">Active</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Storefront Status:</span>
+                <strong className={liveStatus.isVerified ? 'text-emerald-500' : liveStatus.approvalStatus === 'rejected' ? 'text-rose-400' : 'text-amber-400'}>
+                  {liveStatus.isVerified ? 'Verified' : liveStatus.approvalStatus === 'rejected' ? 'Action Needed' : 'Pending Review'}
+                </strong>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Storefront Status:</span>
-              <strong className={liveStatus.isVerified ? 'text-emerald-500' : liveStatus.approvalStatus === 'rejected' ? 'text-rose-400' : 'text-amber-400'}>
-                {liveStatus.isVerified ? 'Verified' : liveStatus.approvalStatus === 'rejected' ? 'Action Needed' : 'Pending Review'}
-              </strong>
-            </div>
+            
+            {/* Mobile Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="md:hidden w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-mono-luxury uppercase font-bold transition-all"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
           </div>
 
         </aside>
-
-        {/* Mobile Horizontal Navigation */}
-        <div className="md:hidden w-full overflow-x-auto border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2 flex gap-2 scrollbar-none">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`px-3 py-2 rounded-xl text-xs font-mono-luxury font-bold uppercase whitespace-nowrap ${
-                item.active
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)]'
-                  : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
 
         {/* Main Content Area */}
         <main className="flex-1 p-6 sm:p-10 lg:p-12 overflow-y-auto">

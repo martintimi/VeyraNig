@@ -23,6 +23,21 @@ export default function MobileShopView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefineOpen, setIsRefineOpen] = useState(false);
   const [quickBuyProduct, setQuickBuyProduct] = useState<any>(null);
+  // Track which product hearts are animating (Instagram-style burst)
+  const [burstingHearts, setBurstingHearts] = useState<Set<string>>(new Set());
+
+  const handleHeartClick = (product: any) => {
+    toggleVaultItem(product);
+    // Trigger burst animation
+    setBurstingHearts((prev) => new Set(prev).add(product.id));
+    setTimeout(() => {
+      setBurstingHearts((prev) => {
+        const next = new Set(prev);
+        next.delete(product.id);
+        return next;
+      });
+    }, 700);
+  };
 
   useEffect(() => {
     fetchProductsFromDb();
@@ -161,20 +176,31 @@ export default function MobileShopView() {
                       className="object-cover"
                     />
                   </Link>
-                  {/* Wishlist heart */}
+                  {/* Wishlist heart — Instagram burst animation */}
                   <button
                     type="button"
-                    onClick={() => toggleVaultItem(product)}
+                    onClick={() => handleHeartClick(product)}
                     className="absolute top-2 right-2 p-1.5 cursor-pointer"
                     aria-label="Save"
                   >
+                    {/* Burst pop heart (appears briefly on save) */}
+                    {burstingHearts.has(product.id) && (
+                      <span
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        style={{ animation: 'heartBurst 0.6s ease-out forwards' }}
+                      >
+                        <Heart className="h-8 w-8 fill-red-500 text-red-500 opacity-80" />
+                      </span>
+                    )}
                     <Heart
-                      className={`h-5 w-5 transition-colors ${
-                        saved
-                          ? 'fill-red-500 stroke-red-500'
-                          : 'stroke-[var(--text-primary)] fill-transparent'
-                      }`}
+                      className={`h-5 w-5 transition-all duration-200 ${
+                        saved ? 'fill-red-500 stroke-red-500' : 'stroke-white fill-black/30'
+                      } ${burstingHearts.has(product.id) ? 'scale-125' : 'scale-100'}`}
                       strokeWidth={1.5}
+                      style={{
+                        filter: saved ? 'drop-shadow(0 0 4px rgba(239,68,68,0.6))' : undefined,
+                        transition: 'transform 0.2s cubic-bezier(0.36,0.07,0.19,0.97)',
+                      }}
                     />
                   </button>
                 </div>

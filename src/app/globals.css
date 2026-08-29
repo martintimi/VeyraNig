@@ -104,6 +104,13 @@ button:active, a:active {
   100% { background-position: 200% 0; }
 }
 
+@keyframes heartBurst {
+  0%   { transform: scale(0.6); opacity: 1; }
+  40%  { transform: scale(1.5); opacity: 0.9; }
+  70%  { transform: scale(1.2); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
 /* Clean Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 5px;

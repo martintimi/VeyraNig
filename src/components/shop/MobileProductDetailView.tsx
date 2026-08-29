@@ -393,37 +393,54 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
 
       </div>
 
-      {/* 8. FIXED FLOATING BOTTOM DOCK WITH ACTIONS */}
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-[#0a0a0c]/90 dark:bg-[#0a0a0c]/90 bg-white/95 backdrop-blur-2xl border-t border-black/10 dark:border-white/10 p-3.5 px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] flex items-center justify-between gap-3">
-        <div>
-          <span className="text-[9px] font-mono-luxury text-[var(--text-muted)] uppercase block">Total Price:</span>
-          <div className="font-editorial text-xl font-bold text-amber-600 dark:text-[var(--gold-accent)] leading-none mt-0.5">
+      {/* 8. FIXED FLOATING BOTTOM DOCK */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-primary)] border-t border-[var(--border-subtle)] p-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]">
+        {/* Top row: Back + Home navigation */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] text-[10px] font-mono-luxury uppercase font-bold cursor-pointer hover:border-[var(--text-primary)] transition-colors"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            <span>Back</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] text-[10px] font-mono-luxury uppercase font-bold cursor-pointer hover:border-[var(--text-primary)] transition-colors"
+          >
+            <span>Home</span>
+          </button>
+          {/* Price shown here instead */}
+          <div className="ml-auto font-editorial text-lg font-bold text-[var(--text-primary)] leading-none">
             ₦{Number(product.price || 0).toLocaleString()}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-1 max-w-[240px]">
+        {/* Bottom row: Add to Bag + Instant Buy */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={isOutOfStock}
-            className="flex-1 py-3 px-3 rounded-2xl surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--gold-accent)] font-mono-luxury uppercase text-[10px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer"
+            className="flex-1 py-3 rounded-xl border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer hover:border-[var(--text-primary)]"
           >
             <ShoppingBag className="h-3.5 w-3.5" />
-            <span>Add to Bag</span>
+            <span>{isOutOfStock ? 'Out of Stock' : 'Add to Bag'}</span>
           </button>
-
           <button
             type="button"
             onClick={handleBuyNow}
             disabled={isOutOfStock}
-            className="flex-1 py-3 px-3 rounded-2xl bg-[var(--gold-accent)] text-black font-mono-luxury uppercase text-[10px] font-bold hover:bg-[#d8b357] transition-all shadow-xl flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer"
+            className="flex-1 py-3 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 cursor-pointer active:scale-[0.98]"
           >
-            <Zap className="h-3.5 w-3.5 fill-current text-black" />
-            <span>Instant Buy</span>
+            <Zap className="h-3.5 w-3.5 fill-current" />
+            <span>Buy Now</span>
           </button>
         </div>
       </div>
+
 
     </div>
   );

@@ -325,7 +325,7 @@ export default function VendorAuthPage() {
       {/* ======================================================== */}
       {/* LEFT COLUMN: STICKY EDITORIAL SLIDESHOW (50% WIDTH) */}
       {/* ======================================================== */}
-      <div className="relative w-full lg:w-1/2 h-[340px] lg:h-screen lg:sticky lg:top-0 shrink-0 overflow-hidden flex flex-col justify-between p-6 lg:p-12 bg-black select-none z-10">
+      <div className="hidden lg:flex relative w-full lg:w-1/2 h-[340px] lg:h-screen lg:sticky lg:top-0 shrink-0 overflow-hidden flex-col justify-between p-6 lg:p-12 bg-black select-none z-10">
         
         {/* Background Images Carousel */}
         {vendorEditorialSlides.map((slide, idx) => (
