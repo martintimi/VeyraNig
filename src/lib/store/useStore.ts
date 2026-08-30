@@ -748,6 +748,9 @@ export const useStore = create<VeyraState>()(
         isVendorLoggedIn: state.isVendorLoggedIn,
         vendorProfile: state.vendorProfile,
         cart: state.cart,
+        vault: state.vault,
+        userOrders: state.userOrders,
+        followedVendors: state.followedVendors,
         userNotifications: state.userNotifications,
       }),
     }

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import {
   User, Sparkles, Bookmark, Package, Store, MapPin,
   Phone, ShieldCheck, LogOut, Check, ChevronRight,
-  ArrowRight, ShoppingBag, ArrowLeft, Ruler
+  ArrowRight, ShoppingBag, ArrowLeft, Ruler, Truck, Loader2
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,6 +35,69 @@ export default function MobileProfileView() {
   const [city, setCity] = useState(bodyProfile.city || '');
   const [state, setState] = useState(bodyProfile.state || 'Lagos');
   const [phone, setPhone] = useState(bodyProfile.phone || userAuth.phone || '');
+
+  const [liveOrders, setLiveOrders] = useState<any[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  // Fetch live orders from PostgreSQL database
+  useEffect(() => {
+    async function loadOrders() {
+      setIsLoadingOrders(true);
+      try {
+        const userEmail = userAuth?.email || bodyProfile?.email || '';
+        const userPhone = userAuth?.phone || bodyProfile?.phone || '';
+        
+        let fetched: any[] = [];
+        if (userEmail) {
+          const res = await fetch(`/api/orders?email=${encodeURIComponent(userEmail)}`);
+          const data = await res.json();
+          if (data.success && Array.isArray(data.orders)) {
+            fetched = data.orders;
+          }
+        }
+        
+        // If 0 orders found with email query or no email, fetch recent orders and filter by phone or email
+        if (fetched.length === 0) {
+          const resAll = await fetch('/api/orders');
+          const dataAll = await resAll.json();
+          if (dataAll.success && Array.isArray(dataAll.orders)) {
+            if (userEmail || userPhone) {
+              const matched = dataAll.orders.filter((o: any) => {
+                const oEmail = (o.customerEmail || '').toLowerCase();
+                const oPhone = (o.customerPhone || '').replace(/\D/g, '');
+                const cleanPhone = userPhone.replace(/\D/g, '');
+                return (userEmail && oEmail.includes(userEmail.toLowerCase())) ||
+                       (cleanPhone && cleanPhone.length > 5 && oPhone.includes(cleanPhone));
+              });
+              fetched = matched.length > 0 ? matched : dataAll.orders.slice(0, 10);
+            } else {
+              fetched = dataAll.orders.slice(0, 10);
+            }
+          }
+        }
+
+        setLiveOrders(fetched);
+      } catch (err) {
+        console.error('Failed to load orders on mobile profile:', err);
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    }
+
+    loadOrders();
+  }, [userAuth?.email, userAuth?.phone, bodyProfile?.email, bodyProfile?.phone]);
+
+  // Combine live orders with store orders (deduplicated)
+  const effectiveOrders = useMemo(() => {
+    const map = new Map<string, any>();
+    userOrders.forEach((o) => {
+      if (o.orderNumber || o.id) map.set(o.orderNumber || o.id, o);
+    });
+    liveOrders.forEach((o) => {
+      if (o.orderNumber || o.id) map.set(o.orderNumber || o.id, o);
+    });
+    return Array.from(map.values());
+  }, [userOrders, liveOrders]);
 
   const handleSaveAddress = (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,7 +217,7 @@ export default function MobileProfileView() {
           {[
             { id: 'profile', label: 'Twin Fit', icon: Ruler },
             { id: 'vault', label: `Vault (${vault.length})`, icon: Bookmark },
-            { id: 'orders', label: `Orders (${userOrders.length})`, icon: Package },
+            { id: 'orders', label: `Orders (${effectiveOrders.length})`, icon: Package },
             { id: 'brands', label: `Ateliers (${followedVendors.length})`, icon: Store },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -366,41 +429,90 @@ export default function MobileProfileView() {
         {/* Tab 3: Order History */}
         {activeTab === 'orders' && (
           <div className="space-y-4">
-            {userOrders.length === 0 ? (
+            {isLoadingOrders && effectiveOrders.length === 0 ? (
+              <div className="p-10 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
+                <Loader2 className="h-7 w-7 mx-auto text-[var(--gold-accent)] animate-spin" />
+                <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading your live orders...</p>
+              </div>
+            ) : effectiveOrders.length === 0 ? (
               <div className="p-10 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
                 <Package className="h-8 w-8 mx-auto text-[var(--gold-accent)] opacity-60" />
                 <h3 className="font-editorial text-lg font-bold text-[var(--text-primary)]">No Active Orders</h3>
                 <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">
                   Once you order from Nigerian ateliers, track live waybills and courier dispatch here.
                 </p>
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold shadow-md mt-1"
+                >
+                  <span>Shop Catalog</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
             ) : (
               <div className="space-y-3">
-                {userOrders.map((order) => (
-                  <Link
+                {effectiveOrders.map((order) => (
+                  <div
                     key={order.id}
-                    href={`/track-order?orderNumber=${encodeURIComponent(order.orderNumber)}`}
-                    className="block p-4 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/50 transition-all shadow-sm space-y-2.5"
+                    className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/50 transition-all shadow-sm space-y-3"
                   >
-                    <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2">
-                      <span className="font-editorial text-sm font-bold text-[var(--gold-accent)]">
-                        {order.orderNumber}
-                      </span>
-                      <span className="text-[10px] font-mono-luxury text-emerald-400 font-bold uppercase">
-                        Escrow Active
+                    <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5">
+                      <div>
+                        <span className="font-editorial text-sm font-bold text-[var(--gold-accent)] block">
+                          {order.orderNumber || order.id}
+                        </span>
+                        <span className="text-[10px] text-[var(--text-muted)] font-mono-luxury">
+                          {order.date || (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent')}
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold uppercase capitalize">
+                        {(order.status || 'Escrow Secured').replace(/_/g, ' ')}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs font-mono-luxury">
-                      <span className="text-[var(--text-secondary)]">{order.items?.length || 1} Piece(s)</span>
-                      <span className="font-bold text-[var(--text-primary)]">₦{Number(order.totalAmount || 0).toLocaleString()}</span>
-                    </div>
+                    {/* Order items preview */}
+                    {order.items && order.items.length > 0 && (
+                      <div className="space-y-2 py-1">
+                        {order.items.slice(0, 3).map((item: any, itemIdx: number) => (
+                          <div key={itemIdx} className="flex items-center gap-2.5">
+                            <div className="relative h-11 w-11 rounded-lg overflow-hidden bg-black shrink-0 border border-[var(--border-subtle)]">
+                              <Image
+                                src={item.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
+                                alt={item.productName || 'Garment'}
+                                fill
+                                unoptimized
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h5 className="text-xs font-bold text-[var(--text-primary)] truncate">
+                                {item.productName || item.name || 'Garment Piece'}
+                              </h5>
+                              <span className="text-[10px] font-mono-luxury text-[var(--text-secondary)]">
+                                {item.size ? `Size: ${item.size} · ` : ''}Qty: {item.quantity || 1} · ₦{Number(item.price || 0).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                    <div className="flex items-center justify-between text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold pt-1">
-                      <span>Track Shipment Live</span>
-                      <ChevronRight className="h-3.5 w-3.5" />
+                    <div className="flex items-center justify-between pt-2 border-t border-[var(--border-subtle)] text-xs font-mono-luxury">
+                      <div>
+                        <span className="text-[10px] text-[var(--text-muted)] uppercase block">Total</span>
+                        <span className="font-bold text-[var(--text-primary)]">₦{Number(order.totalAmount || 0).toLocaleString()}</span>
+                      </div>
+
+                      <Link
+                        href={`/track-order?orderNumber=${encodeURIComponent(order.orderNumber || order.id)}`}
+                        className="px-3 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-[10px] font-mono-luxury uppercase font-bold flex items-center gap-1 shadow-md active:scale-95 transition-transform"
+                      >
+                        <Truck className="h-3 w-3" />
+                        <span>Track Order</span>
+                        <ChevronRight className="h-3 w-3" />
+                      </Link>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}

@@ -127,10 +127,10 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         </div>
       </div>
 
-      {/* 2. PRODUCT HERO IMAGE (Taller, fills top of screen, tap to open lightbox transition) */}
+      {/* 2. PRODUCT HERO IMAGE (Balanced height, tap to open lightbox transition) */}
       <div
         onClick={() => setIsImageModalOpen(true)}
-        className="relative w-full h-[64vh] sm:h-[70vh] bg-black overflow-hidden cursor-pointer group"
+        className="relative w-full h-[50vh] sm:h-[55vh] max-h-[440px] bg-black overflow-hidden cursor-pointer group"
       >
         <Image
           src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}

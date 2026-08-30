@@ -262,7 +262,7 @@ export default function CheckoutPage() {
         orderNumber: orderNum,
         customerName: formData.name,
         customerPhone: formData.phone,
-        customerEmail: formData.email,
+        customerEmail: formData.email || userAuth?.email || bodyProfile?.email || '',
         deliveryAddress: `${formData.address}, ${formData.city}, ${formData.state}`,
         deliveryCity: formData.city,
         subtotal,
