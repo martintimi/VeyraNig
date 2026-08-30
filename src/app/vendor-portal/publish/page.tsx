@@ -88,6 +88,53 @@ export default function PublishGarmentPage() {
   const [description, setDescription] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [aiToast, setAiToast] = useState('');
+
+  const handleGenerateAiDescription = async () => {
+    if (!name.trim()) {
+      setAiToast('Please enter a garment title first to generate description with AI.');
+      setTimeout(() => setAiToast(''), 3500);
+      return;
+    }
+
+    setIsGeneratingAi(true);
+    try {
+      const res = await fetch('/api/ai/generate-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: name.trim(),
+          category: subCategory,
+          genderTarget,
+          vendorType: vendorProfile.vendorType,
+          brandName: vendorProfile.brandName
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.description) {
+          setDescription(data.description);
+        }
+        if (data.tags && Array.isArray(data.tags)) {
+          setTags(prev => Array.from(new Set([...prev, ...data.tags])));
+        }
+        if (!rawPrice && data.suggestedPrice) {
+          setRawPrice(String(data.suggestedPrice));
+        }
+        setAiToast('AI generated description, fabric specs, and tags!');
+        confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
+        setTimeout(() => setAiToast(''), 4000);
+      }
+    } catch (e) {
+      console.error('AI generation error:', e);
+      setAiToast('AI generation timed out. Please try again.');
+      setTimeout(() => setAiToast(''), 3500);
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
   
   // Interactive Colorway State
   const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([
@@ -621,14 +668,33 @@ export default function PublishGarmentPage() {
             {/* Description & Tags */}
             <div className="space-y-4 pt-3 border-t border-[var(--border-subtle)]">
               <div>
-                <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1.5 font-bold">
-                  Description & Care Details
-                </label>
+                <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                  <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] font-bold">
+                    Description & Care Details
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAiDescription}
+                    disabled={isGeneratingAi}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 hover:bg-[var(--gold-accent)] hover:text-black transition-all text-xs font-mono-luxury font-bold cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className={`h-3.5 w-3.5 ${isGeneratingAi ? 'animate-spin' : ''}`} />
+                    <span>{isGeneratingAi ? 'Generating Description...' : 'Generate with AI'}</span>
+                  </button>
+                </div>
+
+                {aiToast && (
+                  <div className="mb-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono-luxury font-bold flex items-center gap-2 animate-fadeIn">
+                    <Sparkles className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
+                    <span>{aiToast}</span>
+                  </div>
+                )}
+
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Fabric composition, fit silhouette, wash instructions..."
+                  placeholder="Fabric composition, fit silhouette, wash instructions... (Or tap 'Generate with AI' above!)"
                   className="w-full p-3.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-mono-luxury focus:border-[var(--gold-accent)] focus:outline-none resize-none"
                 />
               </div>

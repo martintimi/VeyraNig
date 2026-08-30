@@ -81,6 +81,73 @@ export default function MobileVendorPublish({
   const [customName, setCustomName] = useState('');
   const [showCustomColor, setShowCustomColor] = useState(false);
 
+  // Description, Tags & AI Generator
+  const [description, setDescription] = useState('');
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [aiToast, setAiToast] = useState('');
+
+  const handleGenerateAiDescription = async () => {
+    if (!name.trim()) {
+      setAiToast('Enter garment title first (e.g. Silk Boubou or Senator Kaftan)');
+      setTimeout(() => setAiToast(''), 3500);
+      return;
+    }
+
+    setIsGeneratingAi(true);
+    try {
+      const res = await fetch('/api/ai/generate-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: name.trim(),
+          category: subCategory,
+          genderTarget,
+          vendorType: vendorProfile.vendorType,
+          brandName: vendorProfile.brandName
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.description) {
+          setDescription(data.description);
+        }
+        if (data.tags && Array.isArray(data.tags)) {
+          setTags(prev => Array.from(new Set([...prev, ...data.tags])));
+        }
+        if (!rawPrice && data.suggestedPrice) {
+          setRawPrice(String(data.suggestedPrice));
+        }
+        setAiToast('AI generated description, fabric specs & tags!');
+        confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
+        setTimeout(() => setAiToast(''), 4000);
+      }
+    } catch (e) {
+      console.error('AI generation error:', e);
+      setAiToast('AI generation timed out. Please try again.');
+      setTimeout(() => setAiToast(''), 3500);
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = tagInput.trim().replace(/^#/, '');
+      if (val && !tags.includes(val)) {
+        setTags([...tags, val]);
+        setTagInput('');
+      }
+    }
+  };
+
+  const handleRemoveTag = (tToRemove: string) => {
+    setTags(tags.filter(t => t !== tToRemove));
+  };
+
   // Size Stock
   const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number } }>({
     'S': { enabled: true, quantity: 10 },
@@ -208,6 +275,8 @@ export default function MobileVendorPublish({
         imageUrl: imagePreview,
         colors: selectedColors,
         sizes: sizeStock,
+        description: description.trim(),
+        tags: tags.length > 0 ? tags : [genderTarget, category, 'ready_to_wear'],
         vendorId: activeVendorId,
         vendorName: vendorProfile.brandName || 'Atelier',
         isBoutique: isBoutiqueVendor(vendorProfile),
@@ -515,10 +584,75 @@ export default function MobileVendorPublish({
         </div>
       </div>
 
-      {/* 6. Ready-to-Wear Sizes & Stock Counters */}
+      {/* 4. Description & Care Details with AI Generator */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="text-xs uppercase font-bold text-[var(--text-primary)]">
+            4. Description & Care Details
+          </span>
+          <button
+            type="button"
+            onClick={handleGenerateAiDescription}
+            disabled={isGeneratingAi}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 hover:bg-[var(--gold-accent)] hover:text-black transition-all text-[11px] font-bold cursor-pointer disabled:opacity-50"
+          >
+            <Sparkles className={`h-3 w-3 ${isGeneratingAi ? 'animate-spin' : ''}`} />
+            <span>{isGeneratingAi ? 'Generating...' : 'Generate with AI'}</span>
+          </button>
+        </div>
+
+        {aiToast && (
+          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center gap-2 animate-fadeIn">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
+            <span>{aiToast}</span>
+          </div>
+        )}
+
+        <textarea
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Fabric composition, fit silhouette, wash instructions... (Or tap 'Generate with AI' above!)"
+          className="w-full p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none font-sans"
+        />
+
+        {/* Search Tags */}
+        <div className="space-y-1.5 pt-1">
+          <label className="block text-[10px] uppercase text-[var(--text-muted)] font-bold">
+            Search Tags:
+          </label>
+          <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] min-h-[38px]">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[10px] text-[var(--text-primary)] flex items-center gap-1"
+              >
+                <span>#{t}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(t)}
+                  className="text-[var(--text-muted)] hover:text-rose-500 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleAddTag}
+              placeholder={tags.length === 0 ? "Type tag & tap enter..." : "Add tag..."}
+              className="flex-1 min-w-[90px] bg-transparent text-[11px] text-[var(--text-primary)] focus:outline-none px-1"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Ready-to-Wear Sizes & Stock Counters */}
       <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
         <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-          4. Ready-to-Wear Sizing Stock
+          5. Ready-to-Wear Sizing Stock
         </span>
 
         <div className="space-y-2">
