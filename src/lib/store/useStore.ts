@@ -332,7 +332,7 @@ export const useStore = create<VeyraState>()(
   persist(
     (set, get) => ({
       // Theme State
-      theme: 'dark',
+      theme: 'light',
       toggleTheme: () => {
         const next = get().theme === 'dark' ? 'light' : 'dark';
         set({ theme: next });
