@@ -30,18 +30,17 @@ function FadeUp({ children, delay = 0, className = '' }: { children: React.React
   );
 }
 
-// Auto-transitioning category card that cycles between product images
-function AnimatedCategoryCard({ dept, idx }: { dept: { title: string; sub: string; cat: string; images: string[] }; idx: number }) {
-  const [currentImgIdx, setCurrentImgIdx] = useState(0);
-
-  useEffect(() => {
-    // Stagger interval across cards so they cycle gracefully
-    const intervalMs = 3600 + (idx * 800);
-    const timer = setInterval(() => {
-      setCurrentImgIdx((prev) => (prev + 1) % dept.images.length);
-    }, intervalMs);
-    return () => clearInterval(timer);
-  }, [dept.images.length, idx]);
+// Auto-transitioning category card that displays image based on synchronized sequence
+function AnimatedCategoryCard({
+  dept,
+  idx,
+  currentImgIdx,
+}: {
+  dept: { title: string; sub: string; cat: string; images: string[] };
+  idx: number;
+  currentImgIdx: number;
+}) {
+  const activeImage = dept.images[currentImgIdx % dept.images.length];
 
   return (
     <FadeUp delay={idx * 0.07}>
@@ -51,15 +50,15 @@ function AnimatedCategoryCard({ dept, idx }: { dept: { title: string; sub: strin
       >
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentImgIdx}
-            initial={{ opacity: 0, scale: 1.05 }}
+            key={activeImage}
+            initial={{ opacity: 0, scale: 1.04 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-0"
           >
             <Image
-              src={dept.images[currentImgIdx]}
+              src={activeImage}
               alt={dept.title}
               fill
               unoptimized
@@ -150,6 +149,9 @@ export default function MobileHomeView() {
     { id: 'moji-wears', name: 'Moji Wears', origin: 'Lagos', tagline: 'Heavyweight Urban Streetwear & Sets', image: '/images/products/BlackTrapStarHoodie.jpg', dispatch: '24–48h' },
     { id: 'arike-brand', name: 'Arike Brand', origin: 'Kano & Lagos', tagline: 'Hand-Embroidered Royal Senator & Agbada', image: '/images/products/BlackAgbada.jpg', dispatch: 'Express' },
     { id: 'sartorial-lagos', name: 'Sartorial Lagos', origin: 'Victoria Island', tagline: 'Bespoke Contemporary Tailoring', image: '/images/products/BlackSmartShoes.jpg', dispatch: 'Same-day' },
+    { id: 'lagos-streetwear', name: 'Street Souk Co.', origin: 'Lekki Phase 1', tagline: 'Afro-Streetwear & Heavyweight Drops', image: '/images/products/BlueAndWhiteLosAngelisHoddie.jpg', dispatch: '24–48h' },
+    { id: 'adire-heritage', name: 'Adire Silk Atelier', origin: 'Abeokuta & Ikoyi', tagline: 'Hand-Dyed Artisanal Silks & Boubous', image: '/images/products/PurpleAgbada.jpg', dispatch: 'Express' },
+    { id: 'yaba-denim', name: 'Yaba Denim Works', origin: 'Yaba, Lagos', tagline: 'Street Denim & Tailored Cargo Fits', image: '/images/products/BaggyJean.jpg', dispatch: 'Same-day' },
   ];
 
   const departments = [
@@ -204,6 +206,23 @@ export default function MobileHomeView() {
       ]
     },
   ];
+
+  // Synchronized sequential image rotation: 1 card changes at a time in sequence (0 -> 1 -> 2 -> 3 -> 0...)
+  const [cardImageIndices, setCardImageIndices] = useState([0, 0, 0, 0]);
+
+  useEffect(() => {
+    let step = 0;
+    const interval = setInterval(() => {
+      const targetCard = step % departments.length;
+      setCardImageIndices((prev) => {
+        const next = [...prev];
+        next[targetCard] = (next[targetCard] + 1) % departments[targetCard].images.length;
+        return next;
+      });
+      step++;
+    }, 2400);
+    return () => clearInterval(interval);
+  }, [departments.length]);
 
   const marqueeItems = [
     '100% Escrow via Paystack',
@@ -366,12 +385,17 @@ export default function MobileHomeView() {
 
         <div className="grid grid-cols-2 gap-3">
           {departments.map((dept, idx) => (
-            <AnimatedCategoryCard key={dept.title} dept={dept} idx={idx} />
+            <AnimatedCategoryCard
+              key={dept.title}
+              dept={dept}
+              idx={idx}
+              currentImgIdx={cardImageIndices[idx] ?? 0}
+            />
           ))}
         </div>
       </div>
 
-      {/* ── 6. FEATURED ATELIERS ─────────────────────────────── */}
+      {/* ── 6. FEATURED ATELIERS (Slow continuous auto-sliding slideshow) ── */}
       <div className="pt-10 space-y-4">
         <FadeUp className="px-4">
           <div className="flex items-center justify-between">
@@ -379,53 +403,56 @@ export default function MobileHomeView() {
               <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">Featured Ateliers</h3>
               <span className="text-xs text-[var(--text-secondary)]">Verified Nigerian fashion houses</span>
             </div>
-            <span className="text-xs font-mono-luxury text-[var(--gold-accent)] font-bold">Verified (3)</span>
+            <span className="text-xs font-mono-luxury text-[var(--gold-accent)] font-bold">Verified ({featuredAteliers.length})</span>
           </div>
         </FadeUp>
 
-        <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar px-4 pb-2">
-          {featuredAteliers.map((atelier, idx) => {
-            const isFollowed = safeFollowed.includes(atelier.id.toLowerCase());
-            return (
-              <motion.div
-                key={atelier.id}
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="w-60 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] p-4 shrink-0 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-[var(--border-subtle)] bg-black">
-                      <Image src={atelier.image} alt={atelier.name} fill unoptimized className="object-cover" />
+        <div className="overflow-hidden py-1">
+          <motion.div
+            animate={{ x: ['0%', '-50%'] }}
+            transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+            className="flex items-stretch gap-3 w-max px-4"
+          >
+            {[...featuredAteliers, ...featuredAteliers].map((atelier, idx) => {
+              const isFollowed = safeFollowed.includes(atelier.id.toLowerCase());
+              return (
+                <div
+                  key={`${atelier.id}-${idx}`}
+                  className="w-64 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] p-4 shrink-0 space-y-3 shadow-sm hover:border-[var(--gold-accent)]/50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-[var(--border-subtle)] bg-black shrink-0">
+                        <Image src={atelier.image} alt={atelier.name} fill unoptimized className="object-cover" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1 truncate">
+                          {atelier.name}
+                          <ShieldCheck className="h-3 w-3 text-[var(--gold-accent)] shrink-0" />
+                        </h4>
+                        <span className="text-[10px] text-[var(--text-secondary)] block truncate">{atelier.origin}</span>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-[var(--text-primary)] flex items-center gap-1">
-                        {atelier.name}
-                        <ShieldCheck className="h-3 w-3 text-[var(--gold-accent)]" />
-                      </h4>
-                      <span className="text-[10px] text-[var(--text-secondary)]">{atelier.origin}</span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleFollowVendor(atelier.id)}
+                      className={`p-1.5 rounded-full transition-all cursor-pointer border shrink-0 ${isFollowed ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'border-[var(--border-subtle)] text-[var(--text-primary)]'}`}
+                      aria-label="Follow brand"
+                    >
+                      {isFollowed ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleFollowVendor(atelier.id)}
-                    className={`p-1.5 rounded-full transition-all cursor-pointer border ${isFollowed ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'border-[var(--border-subtle)] text-[var(--text-primary)]'}`}
-                  >
-                    {isFollowed ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                  </button>
+                  <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed">{atelier.tagline}</p>
+                  <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-2 text-[10px] font-mono-luxury">
+                    <span className="text-emerald-500 font-bold">{atelier.dispatch}</span>
+                    <Link href={`/brand/${atelier.id}`} className="text-[var(--gold-accent)] font-bold uppercase flex items-center gap-0.5 hover:underline">
+                      Store <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
                 </div>
-                <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed">{atelier.tagline}</p>
-                <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-2 text-[10px] font-mono-luxury">
-                  <span className="text-emerald-500 font-bold">{atelier.dispatch}</span>
-                  <Link href={`/brand/${atelier.id}`} className="text-[var(--gold-accent)] font-bold uppercase flex items-center gap-0.5">
-                    Store <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              </motion.div>
-            );
-          })}
+              );
+            })}
+          </motion.div>
         </div>
       </div>
 

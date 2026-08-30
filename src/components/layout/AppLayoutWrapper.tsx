@@ -50,11 +50,9 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
         {children}
       </main>
       
-      {/* Footer strictly for Desktop / Tablets */}
+      {/* Footer across both Mobile and Desktop */}
       {!isStandalonePage && (
-        <div className="hidden md:block">
-          <Footer />
-        </div>
+        <Footer />
       )}
 
       <SplitCartDrawer />
