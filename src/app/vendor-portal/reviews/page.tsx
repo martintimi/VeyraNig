@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Star, ShieldCheck, CheckCircle2, MessageSquare, RefreshCw, Loader2, ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Star, ShieldCheck, CheckCircle2, MessageSquare, RefreshCw, Loader2, ArrowUpRight, Sparkles } from 'lucide-react';
 import { getActiveVendorId } from '@/lib/services/apiClient';
 import { useStore } from '@/lib/store/useStore';
 import Link from 'next/link';
+import MobileVendorReviews from '@/components/vendor/MobileVendorReviews';
+import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 export default function VendorReviewsPage() {
   const { vendorProfile } = useStore();
@@ -23,7 +25,7 @@ export default function VendorReviewsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch(`/api/reviews?vendorId=${encodeURIComponent(activeVendorId)}`, {
@@ -43,42 +45,53 @@ export default function VendorReviewsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeVendorId]);
 
   useEffect(() => {
     fetchReviews();
-  }, [activeVendorId]);
+  }, [fetchReviews]);
 
   return (
-    <div className="p-6 sm:p-10 max-w-6xl mx-auto space-y-8 animate-fadeIn">
-      
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[var(--gold-accent)] animate-pulse" />
-            <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
-              Client Reputation Ledger
-            </span>
-          </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mt-1">
-            Customer Reviews & Ratings
-          </h1>
-          <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-1">
-            Real feedback and sizing drape scores left by verified buyers upon confirming order delivery.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={fetchReviews}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all cursor-pointer self-start sm:self-center"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh Ratings</span>
-        </button>
+    <>
+      {/* Mobile View */}
+      <div className="md:hidden">
+        <MobileVendorReviews
+          reviewsData={reviewsData}
+          isLoading={isLoading}
+          onRefresh={fetchReviews}
+        />
       </div>
+
+      {/* Desktop View */}
+      <div className="hidden md:block p-6 sm:p-10 max-w-6xl mx-auto space-y-8 animate-fadeIn">
+        
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[var(--gold-accent)] animate-pulse" />
+              <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
+                Client Reputation Ledger
+              </span>
+            </div>
+            <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mt-1">
+              Customer Reviews & Ratings
+            </h1>
+            <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-1">
+              Real feedback and sizing drape scores left by verified buyers upon confirming order delivery.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={fetchReviews}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all cursor-pointer self-start sm:self-center"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Refresh Ratings</span>
+          </button>
+        </div>
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -224,6 +237,7 @@ export default function VendorReviewsPage() {
         )}
       </div>
 
-    </div>
+      </div>
+    </>
   );
 }

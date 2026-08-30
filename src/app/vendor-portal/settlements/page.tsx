@@ -1,35 +1,38 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { vendorFetch, getActiveVendorId } from '@/lib/services/apiClient';
 import {
   DollarSign, CreditCard, ShieldCheck, CheckCircle2,
-  Clock, ArrowUpRight, TrendingUp, Download, Loader2
+  Clock, ArrowUpRight, TrendingUp, Download, Loader2, Sparkles, RefreshCw
 } from 'lucide-react';
+import MobileVendorSettlements from '@/components/vendor/MobileVendorSettlements';
+import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 export default function VendorSettlementsPage() {
   const { vendorProfile } = useStore();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadSettlements() {
-      try {
-        setIsLoading(true);
-        const res = await vendorFetch('/api/orders');
-        const data = await res.json();
-        if (data.success && Array.isArray(data.orders)) {
-          setOrders(data.orders);
-        }
-      } catch (e) {
-        console.error('Error loading settlements:', e);
-      } finally {
-        setIsLoading(false);
+  const loadSettlements = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const res = await vendorFetch('/api/orders');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        setOrders(data.orders);
       }
+    } catch (e) {
+      console.error('Error loading settlements:', e);
+    } finally {
+      setIsLoading(false);
     }
-    loadSettlements();
   }, []);
+
+  useEffect(() => {
+    loadSettlements();
+  }, [loadSettlements]);
 
   const totalEscrowLocked = orders.reduce((sum, ord) => {
     const itemsTotal = (ord.items || []).reduce((s: number, i: any) => s + (Number(i.price) || 0) * (i.quantity || 1), 0);
@@ -45,33 +48,53 @@ export default function VendorSettlementsPage() {
   }, 0);
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl pb-20">
-      
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-            Settlements & Merchant Treasury
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-            Automated payouts wired directly into your verified Nigerian commercial bank account with 0% platform promo fee.
-          </p>
-        </div>
-
-        <button
-          onClick={() => alert('Payout ledger statement downloaded!')}
-          className="px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all flex items-center gap-2 cursor-pointer"
-        >
-          <Download className="h-4 w-4 text-[var(--gold-accent)]" />
-          <span>Download Payout Advice</span>
-        </button>
+    <>
+      {/* Mobile View */}
+      <div className="md:hidden">
+        <MobileVendorSettlements
+          orders={orders}
+          isLoading={isLoading}
+          vendorProfile={vendorProfile}
+          onRefresh={loadSettlements}
+        />
       </div>
 
-      {isLoading ? (
-        <div className="p-16 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
-          <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin mx-auto" />
-          <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading treasury balances...</p>
+      {/* Desktop View */}
+      <div className="hidden md:block space-y-8 animate-fadeIn max-w-7xl pb-20">
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+              Settlements & Merchant Treasury
+            </h1>
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+              Automated payouts wired directly into your verified Nigerian commercial bank account with 0% platform promo fee.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadSettlements}
+              disabled={isLoading}
+              className="px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+
+            <button
+              onClick={() => alert('Payout ledger statement downloaded!')}
+              className="px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Download className="h-4 w-4 text-[var(--gold-accent)]" />
+              <span>Download Payout Advice</span>
+            </button>
+          </div>
         </div>
-      ) : (
+
+        {isLoading ? (
+          <VendorLuxuryLoader label="Loading Treasury Balances & Payouts..." />
+        ) : (
         <>
           {/* 3 Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -172,6 +195,7 @@ export default function VendorSettlementsPage() {
         </>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

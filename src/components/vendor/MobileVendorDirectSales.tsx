@@ -210,74 +210,26 @@ export default function MobileVendorDirectSales({
 
       {activeProduct && (
         <>
-          {/* 3. Step 2: Instant DM Message Generator */}
-          <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
-            <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-              2. Fast DM Pitch Message
+          {/* Quick Copy Link Bar */}
+          <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center justify-between gap-2 text-xs font-mono-luxury">
+            <span className="text-[11px] text-[var(--text-secondary)] truncate flex-1 font-bold">
+              {productLink}
             </span>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] text-[var(--text-secondary)] uppercase mb-1 font-bold">
-                  Client Name
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="e.g. Timi"
-                  className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] text-[var(--text-secondary)] uppercase mb-1 font-bold">
-                  Custom Offer / Note
-                </label>
-                <input
-                  type="text"
-                  value={customNote}
-                  onChange={(e) => setCustomNote(e.target.value)}
-                  placeholder="e.g. Free delivery"
-                  className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Generated Message Box */}
-            <div className="p-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
-              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed whitespace-pre-line font-mono-luxury">
-                {generatedMessage}
-              </p>
-            </div>
-
-            {/* Message Actions */}
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleCopyMessage}
-                className="py-3 px-3 rounded-2xl bg-[var(--text-primary)] text-[var(--bg-primary)] uppercase text-[10px] font-bold shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
-              >
-                {copiedMsg ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                <span>{copiedMsg ? 'Message Copied!' : 'Copy DM Text'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleShareWhatsApp}
-                className="py-3 px-3 rounded-2xl bg-emerald-600 text-white uppercase text-[10px] font-bold shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
-              >
-                <Share2 className="h-3.5 w-3.5" />
-                <span>Send WhatsApp</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleCopyLinkOnly}
+              className="px-3 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] uppercase text-[10px] font-bold shrink-0 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-transform"
+            >
+              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+              <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+            </button>
           </div>
 
-          {/* 4. Step 3: Lookbook Card Downloader */}
+          {/* 2. Branded Lookbook Card Downloader */}
           <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase font-bold text-[var(--text-primary)]">
-                3. Branded Lookbook Card
+                2. Branded Lookbook Card
               </span>
               <span className="text-[9px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10">
                 High-Res
