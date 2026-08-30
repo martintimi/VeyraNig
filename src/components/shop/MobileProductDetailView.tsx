@@ -395,30 +395,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
 
       {/* 8. FIXED FLOATING BOTTOM DOCK */}
       <div className="fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-primary)] border-t border-[var(--border-subtle)] p-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]">
-        {/* Top row: Back + Home navigation */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] text-[10px] font-mono-luxury uppercase font-bold cursor-pointer hover:border-[var(--text-primary)] transition-colors"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            <span>Back</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] text-[10px] font-mono-luxury uppercase font-bold cursor-pointer hover:border-[var(--text-primary)] transition-colors"
-          >
-            <span>Home</span>
-          </button>
-          {/* Price shown here instead */}
-          <div className="ml-auto font-editorial text-lg font-bold text-[var(--text-primary)] leading-none">
-            ₦{Number(product.price || 0).toLocaleString()}
-          </div>
-        </div>
-
-        {/* Bottom row: Add to Bag + Instant Buy */}
+        {/* Add to Bag + Instant Buy */}
         <div className="flex items-center gap-2">
           <button
             type="button"

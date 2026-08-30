@@ -80,17 +80,17 @@ export default function MobileBottomNav() {
 
           <div className="flex items-end justify-around h-[62px] px-1 max-w-md mx-auto pb-1">
 
-            {/* Saved / Wishlist */}
-            <Link href="/vault" className="flex flex-col items-center justify-center gap-[3px] w-14 pt-2 relative group">
-              {isActive('/vault') && (
+            {/* Feed / Home */}
+            <Link href="/" className="flex flex-col items-center justify-center gap-[3px] w-14 pt-2 relative group">
+              {isActive('/') && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-6 rounded-full bg-[var(--gold-accent)]" />
               )}
-              <Heart
-                strokeWidth={isActive('/vault') ? 0 : 1.5}
-                className={`h-[21px] w-[21px] transition-all ${isActive('/vault') ? 'fill-red-500 text-red-500' : 'text-[var(--text-secondary)]'}`}
+              <Home
+                strokeWidth={isActive('/') ? 2 : 1.5}
+                className={`h-[21px] w-[21px] transition-all ${isActive('/') ? 'text-[var(--gold-accent)]' : 'text-[var(--text-secondary)]'}`}
               />
-              <span className={`text-[9px] uppercase tracking-wider font-medium transition-colors ${isActive('/vault') ? 'text-red-500' : 'text-[var(--text-secondary)]'}`}>
-                Saved
+              <span className={`text-[9px] uppercase tracking-wider font-medium transition-colors ${isActive('/') ? 'text-[var(--gold-accent)]' : 'text-[var(--text-secondary)]'}`}>
+                Feed
               </span>
             </Link>
 

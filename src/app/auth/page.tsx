@@ -298,7 +298,7 @@ function AuthPageContent() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col lg:flex-row bg-[var(--bg-primary)]">
+    <div className="w-full min-h-[100dvh] flex flex-col lg:flex-row bg-[var(--bg-primary)]">
       
       {/* LEFT COLUMN: Fixed full-height non-scrollable slideshow — desktop only */}
       <div className="hidden lg:flex relative w-full lg:w-1/2 h-[340px] lg:h-screen lg:sticky lg:top-0 shrink-0 overflow-hidden flex-col justify-between p-6 lg:p-12 bg-black select-none z-10">
@@ -376,19 +376,9 @@ function AuthPageContent() {
       </div>
 
       {/* RIGHT COLUMN: Independently scrollable form */}
-      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-start lg:justify-center bg-[var(--bg-primary)]">
-        
-        {/* Mobile-only top bar with logo + back */}
-        <div className="lg:hidden flex items-center justify-between px-5 pt-10 pb-6 border-b border-[var(--border-subtle)]">
-          <Link href="/shop" className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Back</span>
-          </Link>
-          <span className="font-editorial text-xl font-bold tracking-[0.25em] text-[var(--text-primary)]">VEYRA</span>
-          <span className="w-10" />
-        </div>
+      <div className="w-full lg:w-1/2 min-h-[100dvh] flex flex-col justify-start lg:justify-center bg-[var(--bg-primary)]">
 
-        <div className="w-full max-w-lg mx-auto space-y-6 px-6 sm:px-8 lg:px-14 pt-8 pb-24">
+        <div className="w-full max-w-lg mx-auto space-y-6 px-6 sm:px-8 lg:px-14 pt-12 pb-24">
           
           {/* Header */}
           <div className="space-y-1.5">
