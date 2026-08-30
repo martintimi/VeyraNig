@@ -8,8 +8,9 @@ import { useStore } from '@/lib/store/useStore';
 import {
   ArrowLeft, Bookmark, Share2, Sparkles, ShieldCheck, MapPin,
   Clock, Truck, ShoppingBag, Zap, Star, Check, CheckCircle2,
-  ChevronDown, ChevronUp, Store, RotateCcw
+  ChevronDown, ChevronUp, Store, RotateCcw, X, ZoomIn
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
 interface MobileProductDetailViewProps {
@@ -43,6 +44,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   const [isRatesOpen, setIsRatesOpen] = useState(true);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   // Stock for chosen size
   const currentSizeStock = product.sizeStock && selectedSize && product.sizeStock[selectedSize] !== undefined
@@ -125,33 +127,37 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         </div>
       </div>
 
-      {/* 2. PRODUCT HERO IMAGE */}
-      <div className="relative w-full h-[55vh] max-h-[420px] bg-black overflow-hidden">
+      {/* 2. PRODUCT HERO IMAGE (Taller, fills top of screen, tap to open lightbox transition) */}
+      <div
+        onClick={() => setIsImageModalOpen(true)}
+        className="relative w-full h-[64vh] sm:h-[70vh] bg-black overflow-hidden cursor-pointer group"
+      >
         <Image
           src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
           alt={product.name}
           fill
           unoptimized
           priority
-          className="object-cover object-center"
+          className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
 
-        {/* Bottom Floating Badges */}
+        {/* Bottom Floating Controls */}
         <div className="absolute bottom-4 left-4 right-4 z-10 flex items-center justify-between text-xs font-mono-luxury">
-          <div className="px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-[var(--gold-accent)]/40 text-[var(--gold-accent)] font-bold flex items-center gap-1.5 shadow-lg">
-            <Sparkles className="h-3.5 w-3.5 fill-current animate-pulse" />
-            <span>98% Twin Fit Match</span>
+          <div className="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white/90 text-[10px] font-bold flex items-center gap-1.5 shadow-lg">
+            <ZoomIn className="h-3 w-3 text-[var(--gold-accent)]" />
+            <span>Tap to View</span>
           </div>
 
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setOutfitItem(product);
             }}
-            className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white font-bold uppercase text-[10px] active:scale-95 transition-transform flex items-center gap-1"
+            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--gold-accent)] to-amber-600 text-black font-bold uppercase text-[10px] active:scale-95 transition-transform flex items-center gap-1 shadow-xl"
           >
-            <Sparkles className="h-3 w-3 text-[var(--gold-accent)]" />
+            <Sparkles className="h-3 w-3 fill-black" />
             <span>Try on 3D Twin</span>
           </button>
         </div>
@@ -206,19 +212,13 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
               <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-mono-luxury font-bold uppercase animate-pulse">
                 Only {currentSizeStock} Left!
               </span>
-            ) : (
-              <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold uppercase">
-                In Stock · Ready to Wear
-              </span>
-            )}
+            ) : null}
           </div>
 
-          {/* Location & Turnaround line */}
+          {/* Location line */}
           <div className="flex items-center gap-2 text-xs font-mono-luxury text-[var(--text-secondary)] pt-1">
             <MapPin className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
             <span>Ships from <strong className="text-[var(--text-primary)]">{product.vendorCity ? `${product.vendorCity}, ` : ''}{product.vendorState || 'Lagos'}</strong></span>
-            <span>•</span>
-            <span className="text-emerald-400 font-bold">{product.dispatchDays || '1-2 days'}</span>
           </div>
         </div>
 
@@ -418,6 +418,79 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         </div>
       </div>
 
+      {/* 9. FULL-SCREEN INTERACTIVE IMAGE LIGHTBOX WITH TRANSITION */}
+      <AnimatePresence>
+        {isImageModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.28 }}
+            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col justify-between p-4 pt-12 pb-8 select-none"
+            onClick={() => setIsImageModalOpen(false)}
+          >
+            {/* Top Bar: Title & Close */}
+            <div className="flex items-center justify-between text-white z-10" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold block">
+                  {product.vendorName || 'Veyra Atelier'}
+                </span>
+                <h3 className="font-editorial text-lg font-bold text-white truncate max-w-[240px]">
+                  {product.name}
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsImageModalOpen(false)}
+                className="p-2.5 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
+                aria-label="Close image view"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Centered Image with smooth scale transition */}
+            <motion.div
+              initial={{ scale: 0.86, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.86, opacity: 0, y: 20 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full h-[62vh] my-auto flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
+                alt={product.name}
+                fill
+                unoptimized
+                priority
+                className="object-contain"
+              />
+            </motion.div>
+
+            {/* Bottom Actions inside Lightbox */}
+            <div className="flex items-center justify-between gap-3 z-10 pt-2" onClick={(e) => e.stopPropagation()}>
+              <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)]">
+                ₦{Number(product.price || 0).toLocaleString()}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImageModalOpen(false);
+                  handleAddToCart();
+                }}
+                disabled={isOutOfStock}
+                className="py-3 px-6 rounded-full bg-white text-black font-mono-luxury uppercase text-xs font-bold hover:bg-zinc-200 active:scale-95 transition-all shadow-xl flex items-center gap-2 cursor-pointer disabled:opacity-40"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                <span>{isOutOfStock ? 'Out of Stock' : 'Add to Bag'}</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

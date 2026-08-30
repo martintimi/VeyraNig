@@ -30,6 +30,74 @@ function FadeUp({ children, delay = 0, className = '' }: { children: React.React
   );
 }
 
+// Auto-transitioning category card that cycles between product images
+function AnimatedCategoryCard({ dept, idx }: { dept: { title: string; sub: string; cat: string; images: string[] }; idx: number }) {
+  const [currentImgIdx, setCurrentImgIdx] = useState(0);
+
+  useEffect(() => {
+    // Stagger interval across cards so they cycle gracefully
+    const intervalMs = 3600 + (idx * 800);
+    const timer = setInterval(() => {
+      setCurrentImgIdx((prev) => (prev + 1) % dept.images.length);
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [dept.images.length, idx]);
+
+  return (
+    <FadeUp delay={idx * 0.07}>
+      <Link
+        href={`/shop?category=${dept.cat}`}
+        className="relative h-48 rounded-2xl overflow-hidden border border-[var(--border-subtle)] shadow-sm group block bg-black"
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentImgIdx}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={dept.images[currentImgIdx]}
+              alt={dept.title}
+              fill
+              unoptimized
+              className="object-cover group-hover:scale-105 transition-transform duration-700"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Gradient Overlay for Legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent pointer-events-none" />
+
+        {/* Shimmer / Dots indicator top-right */}
+        <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-full">
+          {dept.images.slice(0, 4).map((_, dotIdx) => (
+            <span
+              key={dotIdx}
+              className={`h-1 rounded-full transition-all duration-300 ${
+                dotIdx === (currentImgIdx % 4) ? 'w-2.5 bg-[var(--gold-accent)]' : 'w-1 bg-white/30'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Card Titles */}
+        <div className="absolute bottom-3 inset-x-3 z-10">
+          <span className="text-[9px] font-mono-luxury text-zinc-300 uppercase font-bold block drop-shadow-sm">
+            {dept.sub}
+          </span>
+          <span className="font-editorial text-sm font-bold text-white flex items-center justify-between">
+            <span>{dept.title}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 opacity-80 text-[var(--gold-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </span>
+        </div>
+      </Link>
+    </FadeUp>
+  );
+}
+
 export default function MobileHomeView() {
   const {
     allProducts,
@@ -64,7 +132,7 @@ export default function MobileHomeView() {
     {
       title: 'Handcrafted\nLeather Footwear',
       tagline: 'ARTISANAL SLIDES & MULES',
-      image: '/images/products/BrownLeatherLoafers.jpg',
+      image: '/images/products/UnisexSlides.jpg',
       badge: 'Footwear Drop',
       cta: '/shop',
     },
@@ -81,14 +149,60 @@ export default function MobileHomeView() {
   const featuredAteliers = [
     { id: 'moji-wears', name: 'Moji Wears', origin: 'Lagos', tagline: 'Heavyweight Urban Streetwear & Sets', image: '/images/products/BlackTrapStarHoodie.jpg', dispatch: '24–48h' },
     { id: 'arike-brand', name: 'Arike Brand', origin: 'Kano & Lagos', tagline: 'Hand-Embroidered Royal Senator & Agbada', image: '/images/products/BlackAgbada.jpg', dispatch: 'Express' },
-    { id: 'sartorial-lagos', name: 'Sartorial Lagos', origin: 'Victoria Island', tagline: 'Bespoke Contemporary Tailoring', image: '/images/products/BrownLeatherLoafers.jpg', dispatch: 'Same-day' },
+    { id: 'sartorial-lagos', name: 'Sartorial Lagos', origin: 'Victoria Island', tagline: 'Bespoke Contemporary Tailoring', image: '/images/products/BlackSmartShoes.jpg', dispatch: 'Same-day' },
   ];
 
   const departments = [
-    { title: 'Native & Agbada', sub: 'Royal Senator Sets', cat: 'tops', image: '/images/products/BlackAgbada.jpg' },
-    { title: 'Streetwear Drops', sub: 'Hoodies & Urban Sets', cat: 'outerwear', image: '/images/products/BlackTrapStarHoodie.jpg' },
-    { title: 'Handcrafted Footwear', sub: 'Leather Slides & Mules', cat: 'footwear', image: '/images/products/BrownLeatherLoafers.jpg' },
-    { title: 'Trousers & Sets', sub: 'Bespoke Nigerian Bottoms', cat: 'bottoms', image: '/images/products/BlackAgbada.jpg' },
+    {
+      title: 'Native & Agbada',
+      sub: 'Senator Sets & Agbada',
+      cat: 'tops',
+      images: [
+        '/images/products/BlackAgbada.jpg',
+        '/images/products/BlackSenator.jpg',
+        '/images/products/PurpleAgbada.jpg',
+        '/images/products/SenatorBrown.jpg',
+        '/images/products/SecondAgbada.jpg',
+        '/images/products/BlueSenator.png',
+      ]
+    },
+    {
+      title: 'Streetwear Drops',
+      sub: 'Hoodies & Urban Sets',
+      cat: 'outerwear',
+      images: [
+        '/images/products/BlackTrapStarHoodie.jpg',
+        '/images/products/BlueAndWhiteLosAngelisHoddie.jpg',
+        '/images/products/BrownHoodie.jpg',
+        '/images/products/LVhoodie.jpg',
+        '/images/products/WhiteNdBrownHoodie.jpg',
+      ]
+    },
+    {
+      title: 'Handcrafted Footwear',
+      sub: 'Leather Slides & Palms',
+      cat: 'footwear',
+      images: [
+        '/images/products/UnisexSlides.jpg',
+        '/images/products/AdiletteAquaSlides.jpg',
+        '/images/products/BlackSmartShoes.jpg',
+        '/images/products/AdiletteAquaSlides2.jpg',
+        '/images/products/ShoeUnisex2.jpg',
+      ]
+    },
+    {
+      title: 'Trousers & Sets',
+      sub: 'Bespoke Pants & Denim',
+      cat: 'bottoms',
+      images: [
+        '/images/products/BaggyJean.jpg',
+        '/images/products/GreyCargoPantsHollister.jpg',
+        '/images/products/MenCasualJoggers.jpg',
+        '/images/products/MenVintageCasualJean.jpg',
+        '/images/products/TeryWidePant.jpg',
+        '/images/products/CasualPoshMark.jpg',
+      ]
+    },
   ];
 
   const marqueeItems = [
@@ -252,25 +366,7 @@ export default function MobileHomeView() {
 
         <div className="grid grid-cols-2 gap-3">
           {departments.map((dept, idx) => (
-            <FadeUp key={idx} delay={idx * 0.07}>
-              <Link
-                href={`/shop?category=${dept.cat}`}
-                className="relative h-44 rounded-2xl overflow-hidden border border-[var(--border-subtle)] shadow-sm group block"
-              >
-                <Image
-                  src={dept.image} alt={dept.title} fill unoptimized
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                <div className="absolute bottom-3 inset-x-3">
-                  <span className="text-[9px] font-mono-luxury text-zinc-400 uppercase font-bold block">{dept.sub}</span>
-                  <span className="font-editorial text-sm font-bold text-white flex items-center justify-between">
-                    <span>{dept.title}</span>
-                    <ArrowUpRight className="h-3.5 w-3.5 opacity-70" />
-                  </span>
-                </div>
-              </Link>
-            </FadeUp>
+            <AnimatedCategoryCard key={dept.title} dept={dept} idx={idx} />
           ))}
         </div>
       </div>
