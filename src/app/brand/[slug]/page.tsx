@@ -15,6 +15,7 @@ import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import ProductQuickLookModal from '@/components/shop/ProductQuickLookModal';
 import MobileBrandView from '@/components/brand/MobileBrandView';
+import { isBoutiqueVendor } from '@/types';
 
 // Vector App Logos
 const InstagramLogo = () => (
@@ -161,7 +162,7 @@ export default function BrandStorefrontPage() {
     );
   }
 
-  const isBoutique = vendor.vendorType === 'boutique_seller';
+  const isBoutique = isBoutiqueVendor(vendor);
 
   const categories = [
     { id: 'all', label: 'ALL' },

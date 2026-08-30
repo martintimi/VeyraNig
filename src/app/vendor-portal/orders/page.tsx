@@ -13,9 +13,11 @@ import MobileVendorOrders from '@/components/vendor/MobileVendorOrders';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 import confetti from 'canvas-confetti';
 
+import { isBoutiqueVendor } from '@/types';
+
 export default function VendorOrdersPage() {
   const { vendorProfile, updateOrderStatus } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = isBoutiqueVendor(vendorProfile);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'dispatched' | 'delivered'>('all');
   const [dbOrders, setDbOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);

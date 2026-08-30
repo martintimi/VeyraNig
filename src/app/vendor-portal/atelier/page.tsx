@@ -42,9 +42,11 @@ const SnapchatLogo = () => (
   </svg>
 );
 
+import { isBoutiqueVendor } from '@/types';
+
 export default function VendorAtelierProfilePage() {
   const { vendorProfile, setVendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = isBoutiqueVendor(vendorProfile);
   
   const [isSaving, setIsSaving] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
@@ -101,19 +103,35 @@ export default function VendorAtelierProfilePage() {
           snapchat: v.snapchat || v.socialLinks?.snapchat || '',
           whatsapp: v.whatsapp || v.socialLinks?.whatsapp || v.phone || '',
           bio: v.bio || '',
-          vendorType: v.vendorType || v.vendor_type || (isBoutique ? 'boutique_seller' : 'fashion_designer')
+          vendorType: isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer'
         });
 
         setIsProfileSaved(!!v.isProfileSaved);
         setApprovalStatus(v.approvalStatus || (v.isVerified ? 'approved' : 'pending'));
         setRejectionReason(v.rejectionReason || '');
+
+        // Sync to Zustand Store
+        const normalizedType = isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer';
+        setVendorProfile({
+          brandName: v.brandName || v.brand_name || vendorProfile.brandName || 'My Brand',
+          designerName: v.designerName || v.designer_name || v.contact_person || vendorProfile.designerName || 'Manager',
+          contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || vendorProfile.contactPerson,
+          email: v.email || vendorProfile.email,
+          phone: v.phone || vendorProfile.phone,
+          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || 'Lagos, Nigeria',
+          vendorType: normalizedType,
+          bankName: v.bankName || v.bank_name || vendorProfile.bankName,
+          accountNumber: v.accountNumber || v.account_number || vendorProfile.accountNumber,
+          accountName: v.accountName || v.account_name || vendorProfile.accountName,
+          bio: v.bio || vendorProfile.bio
+        });
       }
     } catch (err) {
       console.error('Failed to load profile:', err);
     } finally {
       setIsLoadingProfile(false);
     }
-  }, [isBoutique]);
+  }, [vendorProfile, setVendorProfile]);
 
   useEffect(() => {
     fetchLiveProfile();

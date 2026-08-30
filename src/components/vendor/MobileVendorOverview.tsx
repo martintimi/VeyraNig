@@ -24,6 +24,8 @@ interface MobileVendorOverviewProps {
   pendingOrdersCount?: number;
 }
 
+import { isBoutiqueVendor } from '@/types';
+
 export default function MobileVendorOverview({
   vendorProfile,
   dbProducts,
@@ -32,7 +34,7 @@ export default function MobileVendorOverview({
   pendingOrdersCount = 0
 }: MobileVendorOverviewProps) {
   const [copied, setCopied] = useState(false);
-  const isBoutique = vendorProfile?.vendorType === 'boutique_seller';
+  const isBoutique = isBoutiqueVendor(vendorProfile);
 
   const isVerified = profileStatus?.isVerified || profileStatus?.approvalStatus === 'approved';
   const isRejected = profileStatus?.approvalStatus === 'rejected';

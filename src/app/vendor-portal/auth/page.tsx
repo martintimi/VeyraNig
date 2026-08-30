@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import { signUpVendor, signInVendor, verifyOtpCode, resendOtpCode } from '@/lib/services/auth';
+import { isBoutiqueVendor } from '@/types';
 
 const vendorEditorialSlides = [
   {
@@ -132,13 +133,13 @@ export default function VendorAuthPage() {
         }
 
         setVendorProfile({
-          brandName: res.vendor.brand_name || 'My Atelier',
-          designerName: res.vendor.designer_name || 'Lead Designer',
+          brandName: res.vendor.brand_name || 'My Brand',
+          designerName: res.vendor.designer_name || 'Lead Manager',
           contactPerson: res.vendor.contact_person || res.vendor.designer_name,
           email: res.vendor.email || loginIdentifier,
           phone: res.vendor.phone || '',
           location: res.vendor.location || 'Lagos, Nigeria',
-          vendorType: res.vendor.vendor_type || 'fashion_designer',
+          vendorType: isBoutiqueVendor(res.vendor) ? 'boutique_seller' : 'fashion_designer',
           bankName: res.vendor.bank_name || 'Guaranty Trust Bank (GTBank)',
           accountNumber: res.vendor.account_number || '',
           accountName: res.vendor.account_name || '',
@@ -266,7 +267,7 @@ export default function VendorAuthPage() {
         email: activeProfile.email || pendingEmail || regForm.email,
         phone: activeProfile.phone || regForm.phone,
         location: activeProfile.location || regForm.location,
-        vendorType: activeProfile.vendor_type || activeProfile.vendorType || regForm.vendorType,
+        vendorType: isBoutiqueVendor(activeProfile) || isBoutiqueVendor(regForm.vendorType) ? 'boutique_seller' : 'fashion_designer',
         bankName: activeProfile.bank_name || activeProfile.bankName || regForm.bankName,
         accountNumber: activeProfile.account_number || activeProfile.accountNumber || regForm.accountNumber,
         accountName: activeProfile.account_name || activeProfile.accountName || regForm.accountName,

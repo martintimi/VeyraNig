@@ -10,9 +10,11 @@ import {
 import MobileVendorReports from '@/components/vendor/MobileVendorReports';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
+import { isBoutiqueVendor } from '@/types';
+
 export default function VendorReportsPage() {
   const { vendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = isBoutiqueVendor(vendorProfile);
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);

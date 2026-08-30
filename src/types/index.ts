@@ -127,12 +127,22 @@ export interface VendorProfile {
   email: string;
   phone: string;
   location: string;
-  vendorType: 'fashion_designer' | 'boutique_seller';
+  vendorType: 'fashion_designer' | 'boutique_seller' | 'boutique_merchant' | string;
   bankName: string;
   accountNumber: string;
   accountName: string;
   instagram: string;
   bio: string;
+  subaccountId?: string;
+}
+
+export function isBoutiqueVendor(vendorOrType: any): boolean {
+  if (!vendorOrType) return false;
+  const t = typeof vendorOrType === 'string'
+    ? vendorOrType
+    : (vendorOrType.vendorType || vendorOrType.vendor_type || '');
+  const lower = String(t).toLowerCase().trim();
+  return lower === 'boutique_seller' || lower === 'boutique_merchant' || lower === 'boutique' || lower.includes('boutique');
 }
 
 export interface ActiveOutfit {

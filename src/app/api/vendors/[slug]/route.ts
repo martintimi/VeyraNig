@@ -62,7 +62,8 @@ export async function GET(
     }
 
     if (!bioText) {
-      bioText = resolvedVendor?.vendor_type === 'boutique_seller'
+      const isBoutiqueType = resolvedVendor?.vendor_type === 'boutique_seller' || resolvedVendor?.vendor_type === 'boutique_merchant' || String(resolvedVendor?.vendor_type || '').includes('boutique');
+      bioText = isBoutiqueType
         ? 'Contemporary Nigerian ready-to-wear streetwear and boutique fashion drops.'
         : 'Master bespoke tailoring and luxury artisanal apparel.';
     }

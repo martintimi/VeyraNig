@@ -15,6 +15,8 @@ import {
 import VendorNotificationBell from '@/components/vendor/VendorNotificationBell';
 import Image from 'next/image';
 
+import { isBoutiqueVendor } from '@/types';
+
 export default function VendorPortalLayout({
   children,
 }: {
@@ -25,6 +27,7 @@ export default function VendorPortalLayout({
   const {
     vendorLogout,
     vendorProfile,
+    setVendorProfile,
     theme,
     toggleTheme
   } = useStore();
@@ -50,23 +53,39 @@ export default function VendorPortalLayout({
         const res = await vendorFetch('/api/vendor/profile');
         const data = await res.json();
         if (res.ok && data.success && data.vendor) {
-          const verified = !!data.vendor.is_verified || !!data.vendor.isVerified;
+          const v = data.vendor;
+          const verified = !!v.is_verified || !!v.isVerified;
           setLiveStatus({
             isVerified: verified,
-            approvalStatus: verified ? 'approved' : (data.vendor.approvalStatus || 'pending')
+            approvalStatus: verified ? 'approved' : (v.approvalStatus || 'pending')
+          });
+          const normalizedType = isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer';
+          setVendorProfile({
+            brandName: v.brandName || v.brand_name || vendorProfile.brandName || 'My Brand',
+            designerName: v.designerName || v.designer_name || v.contact_person || vendorProfile.designerName || 'Manager',
+            contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || vendorProfile.contactPerson,
+            email: v.email || vendorProfile.email,
+            phone: v.phone || vendorProfile.phone,
+            location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || 'Lagos, Nigeria',
+            vendorType: normalizedType,
+            bankName: v.bankName || v.bank_name || vendorProfile.bankName,
+            accountNumber: v.accountNumber || v.account_number || vendorProfile.accountNumber,
+            accountName: v.accountName || v.account_name || vendorProfile.accountName,
+            instagram: v.instagram || vendorProfile.instagram,
+            bio: v.bio || vendorProfile.bio
           });
         }
       } catch (e) {}
     }
     checkVendorStatus();
-  }, [pathname]);
+  }, [pathname, setVendorProfile]);
 
   // If on the auth page, render without the dashboard shell
   if (pathname === '/vendor-portal/auth') {
     return <>{children}</>;
   }
 
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const isBoutique = isBoutiqueVendor(vendorProfile);
 
   const navItems = [
     {
@@ -82,7 +101,7 @@ export default function VendorPortalLayout({
       active: pathname === '/vendor-portal/publish'
     },
     {
-      label: 'Post Drop Story ✨',
+      label: 'Post Drop Story',
       href: '/vendor-portal/stories',
       icon: Sparkles,
       active: pathname === '/vendor-portal/stories'

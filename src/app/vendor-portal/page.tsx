@@ -14,10 +14,11 @@ import {
 } from 'lucide-react';
 import MobileVendorOverview from '@/components/vendor/MobileVendorOverview';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
+import { isBoutiqueVendor } from '@/types';
 
 export default function VendorOverviewPage() {
-  const { vendorProfile } = useStore();
-  const isBoutique = vendorProfile.vendorType === 'boutique_seller';
+  const { vendorProfile, setVendorProfile } = useStore();
+  const isBoutique = isBoutiqueVendor(vendorProfile);
 
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -38,15 +39,32 @@ export default function VendorOverviewPage() {
         const currentBrandName = (vendorProfile.brandName || '').toLowerCase().trim();
 
         // 1. Fetch live vendor profile status from DB for THIS specific vendor
-        const resProf = await fetch(`/api/vendor/profile?id=${encodeURIComponent(currentVendorId)}`);
+        const resProf = await vendorFetch('/api/vendor/profile');
         const profData = await resProf.json();
-
         if (resProf.ok && profData.success && profData.vendor) {
+          const v = profData.vendor;
+          const verified = !!v.is_verified || !!v.isVerified;
           setProfileStatus({
-            isProfileSaved: !!profData.vendor.isProfileSaved,
-            isVerified: !!profData.vendor.isVerified,
-            approvalStatus: profData.vendor.approvalStatus || (profData.vendor.isVerified ? 'approved' : 'pending'),
-            rejectionReason: profData.vendor.rejectionReason || ''
+            isProfileSaved: !!v.isProfileSaved,
+            isVerified: verified,
+            approvalStatus: verified ? 'approved' : (v.approvalStatus || 'pending'),
+            rejectionReason: v.rejectionReason || ''
+          });
+
+          // Sync normalized vendor profile to Zustand
+          const normalizedType = isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer';
+          setVendorProfile({
+            brandName: v.brandName || v.brand_name || vendorProfile.brandName || 'My Brand',
+            designerName: v.designerName || v.designer_name || v.contact_person || vendorProfile.designerName || 'Manager',
+            contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || vendorProfile.contactPerson,
+            email: v.email || vendorProfile.email,
+            phone: v.phone || vendorProfile.phone,
+            location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || 'Lagos, Nigeria',
+            vendorType: normalizedType,
+            bankName: v.bankName || v.bank_name || vendorProfile.bankName,
+            accountNumber: v.accountNumber || v.account_number || vendorProfile.accountNumber,
+            accountName: v.accountName || v.account_name || vendorProfile.accountName,
+            bio: v.bio || vendorProfile.bio
           });
         }
 

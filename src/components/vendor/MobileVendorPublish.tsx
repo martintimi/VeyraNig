@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GarmentCategory, GenderTarget } from '@/types';
+import { GarmentCategory, GenderTarget, isBoutiqueVendor } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2,
   Tag, ArrowRight, Loader2, X, Palette,
@@ -210,8 +210,8 @@ export default function MobileVendorPublish({
         sizes: sizeStock,
         vendorId: activeVendorId,
         vendorName: vendorProfile.brandName || 'Atelier',
-        isBoutique: vendorProfile.vendorType === 'boutique_seller',
-        garmentOriginType: vendorProfile.vendorType === 'boutique_seller' ? 'boutique_ready_to_wear' : 'bespoke_atelier',
+        isBoutique: isBoutiqueVendor(vendorProfile),
+        garmentOriginType: isBoutiqueVendor(vendorProfile) ? 'boutique_ready_to_wear' : 'bespoke_atelier',
       };
 
       const res = await fetch('/api/products', {
