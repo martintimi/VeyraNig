@@ -87,6 +87,22 @@ export default function TrackOrderPage() {
     fetchOrderFromDb(searchQuery);
   };
 
+  // Helper to find vendor package record reliably
+  const getVendorPackageRecord = (orderVendorPackages: any, vId: string, vName?: string) => {
+    if (!orderVendorPackages || typeof orderVendorPackages !== 'object') return null;
+    if (orderVendorPackages[vId]) return orderVendorPackages[vId];
+    const cleanId = (vId || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    const cleanName = (vName || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+
+    for (const [k, v] of Object.entries(orderVendorPackages)) {
+      const cleanK = k.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+      if (cleanK === cleanId || (cleanName && cleanK === cleanName) || cleanK.includes(cleanId) || cleanId.includes(cleanK)) {
+        return v as any;
+      }
+    }
+    return null;
+  };
+
   // Group items by vendor into dedicated package shipments
   const vendorPackages = useMemo(() => {
     if (!searchedOrder) return [];
@@ -106,31 +122,40 @@ export default function TrackOrderPage() {
     const orderVendorPackages = searchedOrder.vendorPackages || searchedOrder.customer_measurements?.vendorPackages || {};
 
     items.forEach((item: any) => {
-      const vId = item.vendorId || 'moji-wears';
+      const vId = (item.vendorId || item.vendor_id || 'vendor').toLowerCase().trim();
       const vName = item.vendorName || (vId.replace(/-/g, ' ').toUpperCase());
-      const pkgInfo = orderVendorPackages[vId] || {};
+      const pkgInfo = getVendorPackageRecord(orderVendorPackages, vId, vName);
 
       const itemQty = Number(item.quantity || 1);
       const itemPrice = Number(item.price || 0);
 
       if (!vMap.has(vId)) {
-        // Stage precedence: vendorPackages[vId] -> item.status -> master status
-        const pkgStage = Number(pkgInfo.trackingStage || (
-          pkgInfo.status === 'delivered' ? 4 :
-          pkgInfo.status === 'dispatched' ? 3 :
-          pkgInfo.status === 'packing' ? 2 :
-          (item.status === 'delivered' ? 4 : item.status === 'dispatched' ? 3 : item.status === 'packing' ? 2 : searchedOrder.trackingStage || 1)
-        ));
+        // Individual package stage calculation: strictly isolated per vendor!
+        let pkgStage = 1;
+        let pkgStatus = 'escrow_secured';
+
+        if (pkgInfo) {
+          if (pkgInfo.trackingStage !== undefined && Number(pkgInfo.trackingStage) > 0) {
+            pkgStage = Number(pkgInfo.trackingStage);
+            pkgStatus = pkgInfo.status || (pkgStage === 4 ? 'delivered' : pkgStage === 3 ? 'dispatched' : pkgStage === 2 ? 'packing' : 'escrow_secured');
+          } else if (pkgInfo.status) {
+            pkgStatus = pkgInfo.status;
+            pkgStage = pkgStatus === 'delivered' ? 4 : pkgStatus === 'dispatched' ? 3 : (pkgStatus === 'packing' || pkgStatus === 'ready') ? 2 : 1;
+          }
+        } else if (item.status && item.status !== 'escrow_secured') {
+          pkgStatus = item.status;
+          pkgStage = pkgStatus === 'delivered' ? 4 : pkgStatus === 'dispatched' ? 3 : (pkgStatus === 'packing' || pkgStatus === 'ready') ? 2 : 1;
+        }
 
         vMap.set(vId, {
           vendorId: vId,
           vendorName: vName,
           items: [],
           packageStage: pkgStage,
-          packageStatus: pkgInfo.status || item.status || searchedOrder.status || 'escrow_secured',
-          driverPhone: pkgInfo.driverPhone || searchedOrder.trackingDetails?.driverPhone || '',
-          waybillNumber: pkgInfo.waybillNumber || searchedOrder.trackingDetails?.waybillNumber || '',
-          lastUpdated: pkgInfo.lastUpdated || '',
+          packageStatus: pkgStatus,
+          driverPhone: pkgInfo?.driverPhone || '',
+          waybillNumber: pkgInfo?.waybillNumber || '',
+          lastUpdated: pkgInfo?.lastUpdated || '',
           subtotal: 0,
         });
       }

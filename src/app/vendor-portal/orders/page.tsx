@@ -115,25 +115,26 @@ export default function VendorOrdersPage() {
   const handlePackReady = async (ord: any) => {
     setIsUpdatingStatus(true);
     const activeVendorId = getActiveVendorId();
+    const targetVendorId = ord.items?.[0]?.vendorId || activeVendorId;
     try {
       const res = await fetch('/api/orders', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-vendor-id': activeVendorId
+          'x-vendor-id': targetVendorId
         },
         body: JSON.stringify({
           orderNumber: ord.orderNumber,
           orderId: ord.id,
           status: 'packing',
           trackingStage: 2,
-          vendorId: activeVendorId
+          vendorId: targetVendorId
         })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        updateOrderStatus(ord.orderNumber, 'packing', 2);
+        updateOrderStatus(ord.orderNumber, 'packing', 2, targetVendorId);
         setDbOrders(prev => prev.map(o => (o.orderNumber === ord.orderNumber || o.id === ord.id) ? { ...o, status: 'packing', trackingStage: 2 } : o));
         confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
       }
@@ -158,12 +159,13 @@ export default function VendorOrdersPage() {
 
     setIsUpdatingStatus(true);
     const activeVendorId = getActiveVendorId();
+    const targetVendorId = dispatchModalOrder.items?.[0]?.vendorId || activeVendorId;
     try {
       const res = await fetch('/api/orders', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-vendor-id': activeVendorId
+          'x-vendor-id': targetVendorId
         },
         body: JSON.stringify({
           orderNumber: dispatchModalOrder.orderNumber,
@@ -172,13 +174,13 @@ export default function VendorOrdersPage() {
           trackingStage: 3,
           waybillNumber: waybillInput.trim() || `WB-${Math.floor(10000 + Math.random() * 90000)}`,
           driverPhone: driverPhoneInput.trim(),
-          vendorId: activeVendorId
+          vendorId: targetVendorId
         })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        updateOrderStatus(dispatchModalOrder.orderNumber, 'dispatched', 3);
+        updateOrderStatus(dispatchModalOrder.orderNumber, 'dispatched', 3, targetVendorId);
         setDbOrders(prev => prev.map(o => (o.orderNumber === dispatchModalOrder.orderNumber || o.id === dispatchModalOrder.id) ? {
           ...o,
           status: 'dispatched',
@@ -202,12 +204,13 @@ export default function VendorOrdersPage() {
   const handleMobileConfirmDispatch = async (ord: any, waybill: string, driverPhone: string) => {
     setIsUpdatingStatus(true);
     const activeVendorId = getActiveVendorId();
+    const targetVendorId = ord.items?.[0]?.vendorId || activeVendorId;
     try {
       const res = await fetch('/api/orders', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-vendor-id': activeVendorId
+          'x-vendor-id': targetVendorId
         },
         body: JSON.stringify({
           orderNumber: ord.orderNumber,
@@ -216,13 +219,13 @@ export default function VendorOrdersPage() {
           trackingStage: 3,
           waybillNumber: waybill.trim() || `WB-${Math.floor(10000 + Math.random() * 90000)}`,
           driverPhone: driverPhone.trim(),
-          vendorId: activeVendorId
+          vendorId: targetVendorId
         })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        updateOrderStatus(ord.orderNumber, 'dispatched', 3);
+        updateOrderStatus(ord.orderNumber, 'dispatched', 3, targetVendorId);
         setDbOrders(prev => prev.map(o => (o.orderNumber === ord.orderNumber || o.id === ord.id) ? {
           ...o,
           status: 'dispatched',

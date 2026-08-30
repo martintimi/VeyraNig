@@ -176,11 +176,31 @@ export async function POST(request: Request) {
     const orderNumber = body.orderNumber || `#VY-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
     const orderId = body.id || `ord-${Date.now()}`;
 
+    // Initialize explicit per-vendor packages for every item's vendor in the order
+    const initialVendorPackages: Record<string, any> = { ...(body.vendorPackages || {}) };
+    if (body.items && Array.isArray(body.items)) {
+      body.items.forEach((item: any) => {
+        const vId = (item.vendorId || item.vendor_id || 'vendor').toLowerCase().trim();
+        if (!initialVendorPackages[vId]) {
+          initialVendorPackages[vId] = {
+            vendorId: vId,
+            vendorName: item.vendorName || vId.replace(/-/g, ' ').toUpperCase(),
+            status: 'escrow_secured',
+            trackingStage: 1,
+            waybillNumber: '',
+            driverPhone: '',
+            driverName: '',
+            lastUpdated: new Date().toISOString()
+          };
+        }
+      });
+    }
+
     // Package metadata with per-vendor delivery fee allocations
     const measurementsData = {
       ...(body.customerMeasurements || {}),
       items: body.items || [],
-      vendorPackages: body.vendorPackages || {},
+      vendorPackages: initialVendorPackages,
       trackingDetails: {}
     };
 
@@ -215,7 +235,7 @@ export async function POST(request: Request) {
         return {
           order_id: orderId,
           product_id: item.productId || item.id || `item-${Date.now()}`,
-          vendor_id: item.vendorId || 'moji-wears',
+          vendor_id: (item.vendorId || item.vendor_id || 'vendor').toLowerCase().trim(),
           product_name: item.productName || item.name || 'Garment',
           price: itemPrice,
           size: item.size || item.selectedSize || 'M',
@@ -246,14 +266,14 @@ export async function POST(request: Request) {
       }).catch(e => console.error('Email error:', e));
 
       // Notify each unique vendor
-      const uniqueVendorIds = Array.from(new Set((body.items || []).map((i: any) => i.vendorId || 'moji-wears')));
+      const uniqueVendorIds = Array.from(new Set((body.items || []).map((i: any) => (i.vendorId || i.vendor_id || 'vendor').toLowerCase().trim())));
       uniqueVendorIds.forEach(vId => {
         sendVendorNewOrderEmail(`${vId}@merchants.veyra.ng`, {
           orderNumber,
           customerName: body.customerName,
           customerEmail: body.customerEmail || 'buyer@veyra.ng',
           deliveryAddress: body.deliveryAddress,
-          items: (body.items || []).filter((i: any) => (i.vendorId || 'moji-wears') === vId),
+          items: (body.items || []).filter((i: any) => (i.vendorId || i.vendor_id || 'vendor').toLowerCase().trim() === vId),
           totalAmount: Number(body.totalAmount || 0),
           shippingFee: Number(body.shippingFee || 0)
         }).catch(e => console.error('Vendor email error:', e));
@@ -306,22 +326,71 @@ export async function PATCH(request: Request) {
     const existingMeasurements = existingOrder.customer_measurements || {};
     const existingVendorPackages = { ...(existingMeasurements.vendorPackages || {}) };
 
+    // Fetch order items to discover all vendor IDs in this order
+    const sourceItems = (existingMeasurements.items && Array.isArray(existingMeasurements.items))
+      ? existingMeasurements.items
+      : [];
+    const { data: dbItems } = await supabase.from('order_items').select('id, vendor_id').eq('order_id', existingOrder.id);
+
+    const allVendorIds = new Set<string>();
+    if (dbItems && Array.isArray(dbItems)) {
+      dbItems.forEach(i => {
+        if (i.vendor_id) allVendorIds.add(i.vendor_id.toLowerCase().trim());
+      });
+    }
+    sourceItems.forEach((i: any) => {
+      const vid = (i.vendorId || i.vendor_id || '').toLowerCase().trim();
+      if (vid) allVendorIds.add(vid);
+    });
+
+    // Ensure all vendors in this order are initialized with their existing or default stage 1
+    allVendorIds.forEach(vId => {
+      if (!existingVendorPackages[vId]) {
+        existingVendorPackages[vId] = {
+          vendorId: vId,
+          status: 'escrow_secured',
+          trackingStage: 1,
+          waybillNumber: '',
+          driverPhone: '',
+          driverName: '',
+          lastUpdated: existingOrder.created_at || new Date().toISOString()
+        };
+      }
+    });
+
     if (targetVendorId && targetVendorId !== 'all') {
-      // 1. Update specifically this vendor's package
-      existingVendorPackages[targetVendorId] = {
+      // Find matching vendor key among known vendors
+      let matchedVendorKey = targetVendorId;
+      const cleanTarget = targetVendorId.replace(/[^a-z0-9]/g, '');
+
+      for (const vId of allVendorIds) {
+        const cleanV = vId.replace(/[^a-z0-9]/g, '');
+        if (cleanV === cleanTarget || cleanV.includes(cleanTarget) || cleanTarget.includes(cleanV)) {
+          matchedVendorKey = vId;
+          break;
+        }
+      }
+
+      // 1. Update ONLY this vendor's package
+      existingVendorPackages[matchedVendorKey] = {
+        ...(existingVendorPackages[matchedVendorKey] || {}),
         status,
         trackingStage: Number(trackingStage || 1),
-        waybillNumber: waybillNumber !== undefined ? waybillNumber : (existingVendorPackages[targetVendorId]?.waybillNumber || ''),
-        driverPhone: driverPhone !== undefined ? driverPhone : (existingVendorPackages[targetVendorId]?.driverPhone || ''),
-        driverName: driverName !== undefined ? driverName : (existingVendorPackages[targetVendorId]?.driverName || ''),
+        waybillNumber: waybillNumber !== undefined ? waybillNumber : (existingVendorPackages[matchedVendorKey]?.waybillNumber || ''),
+        driverPhone: driverPhone !== undefined ? driverPhone : (existingVendorPackages[matchedVendorKey]?.driverPhone || ''),
+        driverName: driverName !== undefined ? driverName : (existingVendorPackages[matchedVendorKey]?.driverName || ''),
         lastUpdated: new Date().toISOString()
       };
+
+      if (matchedVendorKey !== targetVendorId) {
+        existingVendorPackages[targetVendorId] = existingVendorPackages[matchedVendorKey];
+      }
 
       // Update order_items strictly for this vendor
       await supabase.from('order_items')
         .update({ status })
         .eq('order_id', existingOrder.id)
-        .eq('vendor_id', targetVendorId);
+        .ilike('vendor_id', `%${matchedVendorKey}%`);
     } else {
       // Global update (e.g. buyer confirms whole order)
       await supabase.from('order_items')

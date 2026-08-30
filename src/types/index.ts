@@ -211,6 +211,9 @@ export interface Order {
   isRated?: boolean;
   rating?: number;
   reviewComment?: string;
+  trackingStage?: number;
+  vendorPackages?: Record<string, any>;
+  trackingDetails?: any;
 }
 
 export interface NotificationItem {

@@ -41,7 +41,7 @@ interface VeyraState {
   userOrders: Order[];
   createNewOrder: (order: Omit<Order, 'id'>) => Order;
   rateOrder: (orderId: string, rating: number, comment: string) => void;
-  updateOrderStatus: (orderNumber: string, status: string, trackingStage: number) => void;
+  updateOrderStatus: (orderNumber: string, status: string, trackingStage: number, vendorId?: string) => void;
 
   // Notifications Management
   userNotifications: NotificationItem[];
@@ -454,13 +454,28 @@ export const useStore = create<VeyraState>()(
         }));
         return newOrder;
       },
-      updateOrderStatus: (orderNumber: string, status: string, trackingStage: number) => {
+      updateOrderStatus: (orderNumber: string, status: string, trackingStage: number, vendorId?: string) => {
         set((state) => ({
-          userOrders: state.userOrders.map((ord) =>
-            ord.orderNumber === orderNumber || ord.id === orderNumber
-              ? { ...ord, status: status as any, trackingStage }
-              : ord
-          )
+          userOrders: state.userOrders.map((ord) => {
+            if (ord.orderNumber === orderNumber || ord.id === orderNumber) {
+              const existingPkgs = { ...((ord as any).vendorPackages || {}) };
+              if (vendorId) {
+                existingPkgs[vendorId] = {
+                  ...(existingPkgs[vendorId] || {}),
+                  status,
+                  trackingStage,
+                  lastUpdated: new Date().toISOString()
+                };
+              }
+              return {
+                ...ord,
+                vendorPackages: existingPkgs,
+                status: vendorId ? ord.status : (status as any),
+                trackingStage: vendorId ? ord.trackingStage : trackingStage
+              };
+            }
+            return ord;
+          })
         }));
       },
       rateOrder: (orderId, rating, comment) => {
