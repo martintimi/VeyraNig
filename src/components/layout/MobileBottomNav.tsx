@@ -20,6 +20,7 @@ export default function MobileBottomNav() {
     pathname.startsWith('/auth') ||
     pathname.startsWith('/vendor') ||
     pathname.startsWith('/admin') ||
+    pathname.startsWith('/checkout') ||
     // Hide on individual product pages — too much overlap with buy buttons
     (pathname.startsWith('/shop/') && pathname.split('/').length >= 3 && pathname.split('/')[2] !== '');
 
