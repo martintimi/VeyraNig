@@ -376,7 +376,7 @@ function AuthPageContent() {
       </div>
 
       {/* RIGHT COLUMN: Independently scrollable form */}
-      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-start bg-[var(--bg-primary)]">
+      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-start lg:justify-center bg-[var(--bg-primary)]">
         
         {/* Mobile-only top bar with logo + back */}
         <div className="lg:hidden flex items-center justify-between px-5 pt-10 pb-6 border-b border-[var(--border-subtle)]">
@@ -388,7 +388,7 @@ function AuthPageContent() {
           <span className="w-10" />
         </div>
 
-        <div className="w-full max-w-md mx-auto space-y-6 px-5 lg:px-14 pt-8 pb-24">
+        <div className="w-full max-w-lg mx-auto space-y-6 px-6 sm:px-8 lg:px-14 pt-8 pb-24">
           
           {/* Header */}
           <div className="space-y-1.5">
