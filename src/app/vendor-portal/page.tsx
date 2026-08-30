@@ -13,6 +13,7 @@ import {
   ShoppingBag, Scissors, Layers, Loader2, Clock, AlertTriangle, AlertCircle, ArrowRight, Store
 } from 'lucide-react';
 import MobileVendorOverview from '@/components/vendor/MobileVendorOverview';
+import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 export default function VendorOverviewPage() {
   const { vendorProfile } = useStore();
@@ -90,28 +91,9 @@ export default function VendorOverviewPage() {
     return acc + 10;
   }, 0);
 
-  // If data is still loading from the API, render clean skeleton to prevent flashing fake mock data
+  // If data is still loading from the API, render clean luxury loader
   if (loadingData) {
-    return (
-      <div className="space-y-8 animate-fadeIn max-w-7xl pb-16">
-        <div className="p-8 rounded-3xl surface-card border border-[var(--border-subtle)] flex items-center justify-center min-h-[220px]">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin" />
-            <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading boutique dashboard intelligence...</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 animate-pulse">
-              <div className="h-3 w-20 bg-[var(--bg-secondary)] rounded" />
-              <div className="h-8 w-32 bg-[var(--bg-secondary)] rounded" />
-              <div className="h-3 w-24 bg-[var(--bg-secondary)] rounded" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <VendorLuxuryLoader label="Loading Boutique Dashboard Intelligence..." />;
   }
 
   return (

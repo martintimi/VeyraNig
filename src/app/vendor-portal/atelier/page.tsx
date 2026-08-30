@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import MobileVendorAtelier from '@/components/vendor/MobileVendorAtelier';
+import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 const NIGERIAN_STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
@@ -159,16 +161,28 @@ export default function VendorAtelierProfilePage() {
   const isFieldsDisabled = isProfileSaved && approvalStatus !== 'rejected';
 
   if (isLoadingProfile) {
-    return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-6 space-y-4 animate-fadeIn">
-        <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin" />
-        <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading store profile from database...</p>
-      </div>
-    );
+    return <VendorLuxuryLoader label="Loading Store Profile from Database..." />;
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl pb-20">
+    <>
+      {/* 1. DEDICATED MOBILE ATELIER PROFILE */}
+      <div className="block md:hidden">
+        <MobileVendorAtelier
+          form={form}
+          setForm={setForm}
+          handleSave={handleSave}
+          isSaving={isSaving}
+          isProfileSaved={isProfileSaved}
+          approvalStatus={approvalStatus}
+          rejectionReason={rejectionReason}
+          isLoadingProfile={isLoadingProfile}
+          isBoutique={isBoutique}
+        />
+      </div>
+
+      {/* 2. DESKTOP LUXURY ATELIER PROFILE */}
+      <div className="hidden md:block space-y-8 animate-fadeIn max-w-7xl pb-20">
       
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -658,6 +672,7 @@ export default function VendorAtelierProfilePage() {
 
       </div>
 
-    </div>
+      </div>
+    </>
   );
 }

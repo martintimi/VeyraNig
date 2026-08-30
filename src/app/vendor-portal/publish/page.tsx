@@ -349,7 +349,7 @@ export default function PublishGarmentPage() {
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            <span>👨 Men's Wears</span>
+            <span>Men</span>
           </button>
 
           <button
@@ -361,7 +361,7 @@ export default function PublishGarmentPage() {
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            <span>👩 Women's Wears</span>
+            <span>Women</span>
           </button>
 
           <button
@@ -373,7 +373,7 @@ export default function PublishGarmentPage() {
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
-            <span>⚧ Unisex / All</span>
+            <span>Unisex</span>
           </button>
         </div>
       </div>

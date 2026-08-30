@@ -9,8 +9,9 @@ import {
   Ruler, Sparkles, ChevronRight, Check, AlertCircle, Package,
   Send, Loader2, X, Navigation, RefreshCw, Star
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import MobileVendorOrders from '@/components/vendor/MobileVendorOrders';
+import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
+import confetti from 'canvas-confetti';
 
 export default function VendorOrdersPage() {
   const { vendorProfile, updateOrderStatus } = useStore();
@@ -307,10 +308,7 @@ export default function VendorOrdersPage() {
       </div>
 
       {isLoading ? (
-        <div className="p-16 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
-          <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin mx-auto" />
-          <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading your store orders...</p>
-        </div>
+        <VendorLuxuryLoader label="Retrieving incoming orders from PostgreSQL..." />
       ) : filteredOrders.length === 0 ? (
         <div className="p-16 rounded-3xl surface-card text-center space-y-4 border border-[var(--border-subtle)]">
           <Package className="h-10 w-10 text-[var(--gold-accent)] mx-auto opacity-70" />

@@ -10,10 +10,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Sparkles, Download, Copy, Check, Send,
-  CheckCircle2, Loader2, ShoppingBag,
+  CheckCircle2, ShoppingBag, Loader2,
   Search, EyeOff, Tag, Plus
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import MobileVendorDirectSales from '@/components/vendor/MobileVendorDirectSales';
+import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 export default function DirectSalesAssistantPage() {
   const { vendorProfile } = useStore();
@@ -260,7 +262,35 @@ export default function DirectSalesAssistantPage() {
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl pb-20">
+    <>
+      {/* 1. DEDICATED MOBILE DIRECT SALES SUITE */}
+      <div className="block md:hidden">
+        <MobileVendorDirectSales
+          vendorProducts={vendorProducts}
+          isLoadingProducts={isLoadingProducts}
+          selectedProductId={selectedProductId}
+          setSelectedProductId={setSelectedProductId}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          includePrice={includePrice}
+          setIncludePrice={setIncludePrice}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          customNote={customNote}
+          setCustomNote={setCustomNote}
+          downloadBrandedCard={downloadBrandedCard}
+          isDownloading={isDownloading}
+          downloadToast={downloadToast}
+          productLink={productLink}
+          activeProduct={activeProduct}
+          generatedMessage={generatedMessage}
+        />
+      </div>
+
+      {/* 2. DESKTOP LUXURY DIRECT SALES SUITE */}
+      <div className="hidden md:block space-y-8 animate-fadeIn max-w-7xl pb-20">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-5">
@@ -606,6 +636,7 @@ export default function DirectSalesAssistantPage() {
         </div>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

@@ -8,6 +8,7 @@ import {
   X, Check, Star, AlertCircle, ChevronRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import VendorLuxuryLoader from './VendorLuxuryLoader';
 
 interface MobileVendorOrdersProps {
   vendorOrders: any[];
@@ -109,10 +110,7 @@ export default function MobileVendorOrders({
 
       {/* 3. Orders List */}
       {isLoading ? (
-        <div className="p-12 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
-          <Loader2 className="h-7 w-7 text-[var(--gold-accent)] animate-spin mx-auto" />
-          <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading customer orders...</p>
-        </div>
+        <VendorLuxuryLoader label="Loading Customer Orders..." />
       ) : filteredOrders.length === 0 ? (
         <div className="p-12 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
           <Package className="h-8 w-8 text-[var(--gold-accent)] mx-auto opacity-50" />

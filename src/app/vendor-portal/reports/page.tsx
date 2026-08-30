@@ -5,8 +5,10 @@ import { useStore } from '@/lib/store/useStore';
 import { vendorFetch, getActiveVendorId } from '@/lib/services/apiClient';
 import {
   TrendingUp, BarChart3, PieChart, FileText,
-  Download, ArrowUpRight, DollarSign, Users, Award, Loader2, Package
+  Download, ArrowUpRight, DollarSign, Users, Award, Package
 } from 'lucide-react';
+import MobileVendorReports from '@/components/vendor/MobileVendorReports';
+import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 export default function VendorReportsPage() {
   const { vendorProfile } = useStore();
@@ -55,33 +57,44 @@ export default function VendorReportsPage() {
   const averageOrderValue = orders.length > 0 ? Math.round(totalRevenue / orders.length) : 0;
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl pb-20">
-      
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-            Sales Reports & Store Analytics
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-            Real-time breakdown of native garment sales, customer sizing satisfaction, and revenue trends.
-          </p>
-        </div>
-
-        <button
-          onClick={() => alert('Financial ledger report exported to CSV!')}
-          className="px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all flex items-center gap-2 cursor-pointer"
-        >
-          <Download className="h-4 w-4 text-[var(--gold-accent)]" />
-          <span>Export Monthly Statement</span>
-        </button>
+    <>
+      {/* 1. DEDICATED MOBILE REPORTS */}
+      <div className="block md:hidden">
+        <MobileVendorReports
+          orders={orders}
+          products={products}
+          isLoading={isLoading}
+          totalRevenue={totalRevenue}
+          totalPiecesSold={totalPiecesSold}
+          averageOrderValue={averageOrderValue}
+        />
       </div>
 
-      {isLoading ? (
-        <div className="p-16 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
-          <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin mx-auto" />
-          <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading store analytics...</p>
+      {/* 2. DESKTOP LUXURY REPORTS */}
+      <div className="hidden md:block space-y-8 animate-fadeIn max-w-7xl pb-20">
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+              Sales Reports & Store Analytics
+            </h1>
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+              Real-time breakdown of native garment sales, customer sizing satisfaction, and revenue trends.
+            </p>
+          </div>
+
+          <button
+            onClick={() => alert('Financial ledger report exported to CSV!')}
+            className="px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Download className="h-4 w-4 text-[var(--gold-accent)]" />
+            <span>Export Monthly Statement</span>
+          </button>
         </div>
-      ) : (
+
+        {isLoading ? (
+          <VendorLuxuryLoader label="Loading store financial analytics..." />
+        ) : (
         <>
           {/* 3 Metric Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -168,6 +181,7 @@ export default function VendorReportsPage() {
         </>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

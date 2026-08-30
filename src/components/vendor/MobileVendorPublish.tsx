@@ -243,7 +243,7 @@ export default function MobileVendorPublish({
           <Check className="h-8 w-8 stroke-[3]" />
         </div>
         <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
-          Piece Published Successfully!
+          Piece Published Successfully
         </h3>
         <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-xs mx-auto">
           Your product is now live on your verified storefront and available for instant 3D digital fitting.
@@ -257,13 +257,13 @@ export default function MobileVendorPublish({
               setRawPrice('');
               setImagePreview(null);
             }}
-            className="w-full py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold shadow-md"
+            className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold shadow-md cursor-pointer"
           >
             + Add Another Piece
           </button>
           <Link
             href="/vendor-portal"
-            className="w-full py-3 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] font-mono-luxury uppercase text-xs font-bold text-[var(--text-primary)]"
+            className="w-full py-3.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] font-mono-luxury uppercase text-xs font-bold text-[var(--text-primary)] text-center"
           >
             Go to Overview
           </Link>
@@ -277,8 +277,7 @@ export default function MobileVendorPublish({
       
       {/* 1. Top Header */}
       <div>
-        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[9px] font-mono-luxury uppercase font-bold border border-emerald-500/20 mb-1">
-          <Sparkles className="h-3 w-3" />
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20 mb-1">
           <span>Live Catalog Publisher</span>
         </div>
         <h2 className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-tight">
@@ -291,18 +290,18 @@ export default function MobileVendorPublish({
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono-luxury flex items-center gap-2 animate-shake">
+        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono-luxury flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* 2. Department Selector Pills */}
-      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] font-mono-luxury text-xs font-bold">
+      {/* 2. Department Selector Pills (No emojis) */}
+      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] font-mono-luxury text-xs font-bold uppercase">
         {[
-          { id: 'male', label: '👨 Men' },
-          { id: 'female', label: '👩 Women' },
-          { id: 'unisex', label: '👕 Unisex' },
+          { id: 'male', label: 'Men' },
+          { id: 'female', label: 'Women' },
+          { id: 'unisex', label: 'Unisex' },
         ].map((d) => {
           const isChosen = genderTarget === d.id;
           return (
@@ -310,7 +309,7 @@ export default function MobileVendorPublish({
               key={d.id}
               type="button"
               onClick={() => setGenderTarget(d.id as GenderTarget)}
-              className={`py-2 rounded-xl transition-all cursor-pointer ${
+              className={`py-2.5 rounded-xl transition-all cursor-pointer text-center ${
                 isChosen
                   ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -352,7 +351,7 @@ export default function MobileVendorPublish({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 py-2 px-3 rounded-xl bg-black/80 backdrop-blur-md text-white text-[10px] font-mono-luxury uppercase font-bold border border-white/20 flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 px-3 rounded-xl bg-black/80 backdrop-blur-md text-white text-[10px] font-mono-luxury uppercase font-bold border border-white/20 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Camera className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
                 <span>Replace Photo</span>
@@ -360,7 +359,7 @@ export default function MobileVendorPublish({
               <button
                 type="button"
                 onClick={() => setImagePreview(null)}
-                className="p-2 rounded-xl bg-rose-500/80 text-white backdrop-blur-md text-[10px] font-mono-luxury"
+                className="p-2 rounded-xl bg-rose-500/80 text-white backdrop-blur-md text-[10px] font-mono-luxury cursor-pointer"
                 title="Remove"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -381,7 +380,7 @@ export default function MobileVendorPublish({
                 Tap to Upload Photo
               </span>
               <span className="text-[10px] text-[var(--text-secondary)] font-mono-luxury">
-                Studio lookbook or mannequin shot
+                Lookbook image or mannequin shot
               </span>
             </div>
           </button>
@@ -457,7 +456,7 @@ export default function MobileVendorPublish({
           <button
             type="button"
             onClick={() => setShowCustomColor(!showCustomColor)}
-            className="text-[10px] text-[var(--gold-accent)] uppercase font-bold underline"
+            className="text-[10px] text-[var(--gold-accent)] uppercase font-bold underline cursor-pointer"
           >
             {showCustomColor ? 'Cancel' : '+ Custom Color'}
           </button>
@@ -482,7 +481,7 @@ export default function MobileVendorPublish({
               <button
                 type="button"
                 onClick={handleAddCustomColor}
-                className="px-3 py-1.5 rounded-lg bg-[var(--gold-accent)] text-black text-xs font-bold"
+                className="px-3 py-1.5 rounded-lg bg-[var(--gold-accent)] text-black text-xs font-bold cursor-pointer"
               >
                 Add
               </button>
@@ -554,7 +553,7 @@ export default function MobileVendorPublish({
                       <button
                         type="button"
                         onClick={() => handleAdjustQty(sz, -1)}
-                        className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)]"
+                        className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
@@ -564,7 +563,7 @@ export default function MobileVendorPublish({
                       <button
                         type="button"
                         onClick={() => handleAdjustQty(sz, 1)}
-                        className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)]"
+                        className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
@@ -574,7 +573,7 @@ export default function MobileVendorPublish({
                   <button
                     type="button"
                     onClick={() => handleToggleSize(sz)}
-                    className="text-[10px] text-[var(--text-muted)] uppercase hover:underline"
+                    className="text-[10px] text-[var(--text-muted)] uppercase hover:underline cursor-pointer"
                   >
                     + Enable Size
                   </button>
@@ -585,12 +584,12 @@ export default function MobileVendorPublish({
         </div>
       </div>
 
-      {/* 7. Full-Width Sticky/Floating Publish Button */}
+      {/* 7. Clean Luxury Full-Width Publish Button */}
       <div className="pt-2">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-4 rounded-full bg-gradient-to-r from-[var(--gold-accent)] to-amber-600 text-black font-mono-luxury uppercase text-xs font-bold shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+          className="w-full py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold shadow-xl hover:opacity-90 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
         >
           {isSubmitting ? (
             <>
