@@ -42,7 +42,7 @@ html {
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-plus-jakarta), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -63,12 +63,12 @@ button:active, a:active {
 }
 
 .font-editorial {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-cormorant), 'Cormorant Garamond', Georgia, serif;
   letter-spacing: -0.01em;
 }
 
 .font-mono-luxury {
-  font-family: 'Space Grotesk', monospace;
+  font-family: var(--font-space-grotesk), 'Space Grotesk', monospace;
 }
 
 /* Luxury Glass & Surface Utility */

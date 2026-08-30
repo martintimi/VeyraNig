@@ -121,7 +121,7 @@ export default function HeroSection() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--text-primary)] leading-[1.1]">
+            <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-[var(--text-primary)] leading-[1.1]">
               Mix Nigerian Brands.<br />
               <span className="italic font-normal shimmer-gold">See It On Your Body.</span><br />
               Order in 1 Single Delivery.
