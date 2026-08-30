@@ -280,10 +280,20 @@ export default function AuthModal() {
           {/* Submit Action */}
           <button
             type="submit"
-            className="w-full py-3.5 mt-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="w-full py-3.5 mt-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <span>{mode === 'signup' ? 'Create Account & Digital Twin' : 'Sign In'}</span>
-            <ArrowRight className="h-4 w-4" />
+            {isSubmitting ? (
+              <>
+                <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                <span>{mode === 'signup' ? 'Create Account & Digital Twin' : 'Sign In'}</span>
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         </form>
 

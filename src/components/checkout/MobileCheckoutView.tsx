@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   ShieldCheck, Truck, Lock, CreditCard, CheckCircle2,
   ArrowRight, ArrowLeft, Phone, MapPin, Store,
-  Building, Home, Clock, Check, Loader2
+  Building, Home, Clock, Check, Loader2, Sparkles
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -564,7 +564,7 @@ export default function MobileCheckoutView() {
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin text-black" />
+                    <Sparkles className="h-4 w-4 animate-spin text-black" />
                     <span>Securing...</span>
                   </>
                 ) : (

@@ -406,7 +406,7 @@ export default function SuperAdminPage() {
               >
                 {isAuthenticating ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
                     <span>Verifying Executive Session...</span>
                   </>
                 ) : (
@@ -1134,7 +1134,7 @@ export default function SuperAdminPage() {
                                   disabled={isActioning}
                                   className="px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
                                 >
-                                  {isActioning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                                  {isActioning ? <Sparkles className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                                   <span>Approve Brand</span>
                                 </button>
 
@@ -1317,7 +1317,7 @@ export default function SuperAdminPage() {
                   disabled={actionLoadingId === rejectionModalVendor.id}
                   className="px-6 py-2.5 rounded-full bg-rose-500 text-white text-xs font-mono-luxury uppercase font-bold hover:bg-rose-600 transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {actionLoadingId === rejectionModalVendor.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
+                  {actionLoadingId === rejectionModalVendor.id ? <Sparkles className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
                   <span>Return to Vendor</span>
                 </button>
               </div>

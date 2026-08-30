@@ -5,7 +5,7 @@ import Image from 'next/image';
 import {
   PackageCheck, Truck, CheckCircle2, ShieldCheck,
   Phone, User, Package, RefreshCw, Send, Loader2,
-  X, Check, Star, AlertCircle, ChevronRight
+  X, Check, Star, AlertCircle, ChevronRight, Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import VendorLuxuryLoader from './VendorLuxuryLoader';
@@ -367,7 +367,7 @@ export default function MobileVendorOrders({
                   disabled={isUpdatingStatus}
                   className="flex-1 py-3 rounded-full bg-[var(--gold-accent)] text-black uppercase font-bold shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {isUpdatingStatus ? <Sparkles className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   <span>Confirm</span>
                 </button>
               </div>

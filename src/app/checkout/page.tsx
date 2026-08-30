@@ -832,7 +832,7 @@ export default function CheckoutPage() {
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Sparkles className="h-4 w-4 animate-spin" />
                     <span>Confirming Escrow Payment...</span>
                   </>
                 ) : (

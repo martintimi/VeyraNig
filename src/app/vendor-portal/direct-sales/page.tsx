@@ -519,7 +519,7 @@ export default function DirectSalesAssistantPage() {
               >
                 {isDownloading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
                     <span>Generating Card...</span>
                   </>
                 ) : (

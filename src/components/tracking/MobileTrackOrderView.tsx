@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   Search, ShieldCheck, CheckCircle2, Truck, Phone,
   Clock, ArrowLeft, RefreshCw, AlertCircle, Loader2, Star, Send,
-  Package, Check, Store, X
+  Package, Check, Store, X, Sparkles
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -331,7 +331,7 @@ export default function MobileTrackOrderView() {
               disabled={isSearching}
               className="px-4 py-2.5 rounded-2xl bg-[var(--gold-accent)] text-black font-mono-luxury uppercase text-xs font-bold shadow-md flex items-center gap-1 cursor-pointer disabled:opacity-50"
             >
-              {isSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <span>Track</span>}
+              {isSearching ? <Sparkles className="h-3.5 w-3.5 animate-spin text-black" /> : <span>Track</span>}
             </button>
           </div>
         </form>
@@ -624,7 +624,7 @@ export default function MobileTrackOrderView() {
                   disabled={isSubmittingReview}
                   className="py-3 rounded-2xl bg-[var(--gold-accent)] text-black uppercase font-bold hover:bg-[#d8b357] shadow-xl flex items-center justify-center gap-1 disabled:opacity-50"
                 >
-                  {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {isSubmittingReview ? <Sparkles className="h-4 w-4 animate-spin text-black" /> : <Send className="h-4 w-4" />}
                   <span>Submit</span>
                 </button>
               </div>

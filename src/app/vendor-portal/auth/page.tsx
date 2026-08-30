@@ -517,7 +517,7 @@ export default function VendorAuthPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
                     <span>Verifying Atelier...</span>
                   </>
                 ) : (
@@ -613,8 +613,17 @@ export default function VendorAuthPage() {
                 disabled={isSubmitting}
                 className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
               >
-                <span>{isSubmitting ? 'Authenticating Atelier...' : 'Sign In to Merchant Portal'}</span>
-                <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? (
+                  <>
+                    <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
+                    <span>Authenticating Atelier...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In to Merchant Portal</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
 
               <div className="text-center pt-4">
@@ -847,8 +856,17 @@ export default function VendorAuthPage() {
                 disabled={isSubmitting}
                 className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
               >
-                <span>{isSubmitting ? 'Submitting Application...' : 'Register Atelier & Receive Code'}</span>
-                <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? (
+                  <>
+                    <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
+                    <span>Submitting Application...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Register Atelier & Receive Code</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
 
               <div className="text-center pt-3">

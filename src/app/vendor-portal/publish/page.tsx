@@ -812,7 +812,7 @@ export default function PublishGarmentPage() {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-[var(--bg-primary)]" />
+                  <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
                   <span>Publishing to Storefront...</span>
                 </>
               ) : (

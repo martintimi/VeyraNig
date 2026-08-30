@@ -569,7 +569,7 @@ export default function VendorOrdersPage() {
                   disabled={isUpdatingStatus}
                   className="flex-1 py-3 rounded-full bg-[var(--gold-accent)] text-white uppercase font-bold hover:bg-[#d8b357] transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
+                  {isUpdatingStatus ? <Sparkles className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
                   <span>Confirm Dispatch</span>
                 </button>
               </div>

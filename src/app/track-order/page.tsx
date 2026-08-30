@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   Search, ShieldCheck, CheckCircle2, Truck, PackageCheck,
   Phone, Clock, ArrowLeft, RefreshCw, AlertCircle, Loader2, Star, Send,
-  Package, ChevronRight
+  Package, ChevronRight, Sparkles
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -343,7 +343,7 @@ export default function TrackOrderPage() {
             disabled={isSearching}
             className="px-6 py-3 rounded-2xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md shrink-0 flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>Track</span>}
+            {isSearching ? <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" /> : <span>Track</span>}
           </button>
         </div>
       </form>
@@ -762,7 +762,7 @@ export default function TrackOrderPage() {
                   disabled={isSubmittingReview}
                   className="flex-1 py-3 rounded-full bg-[var(--gold-accent)] text-white uppercase font-bold hover:bg-[#d8b357] transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
+                  {isSubmittingReview ? <Sparkles className="h-4 w-4 animate-spin text-white" /> : <Send className="h-4 w-4 text-white" />}
                   <span>Submit Review</span>
                 </button>
               </div>
