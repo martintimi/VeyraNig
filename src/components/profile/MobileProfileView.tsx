@@ -503,14 +503,21 @@ export default function MobileProfileView() {
                         <span className="font-bold text-[var(--text-primary)]">₦{Number(order.totalAmount || 0).toLocaleString()}</span>
                       </div>
 
-                      <Link
-                        href={`/track-order?orderNumber=${encodeURIComponent(order.orderNumber || order.id)}`}
-                        className="px-3 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-[10px] font-mono-luxury uppercase font-bold flex items-center gap-1 shadow-md active:scale-95 transition-transform"
-                      >
-                        <Truck className="h-3 w-3" />
-                        <span>Track Order</span>
-                        <ChevronRight className="h-3 w-3" />
-                      </Link>
+                      {order.status?.toLowerCase() !== 'delivered' && (order.trackingStage ?? 1) < 4 ? (
+                        <Link
+                          href={`/track-order?orderNumber=${encodeURIComponent(order.orderNumber || order.id)}`}
+                          className="px-3 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-[10px] font-mono-luxury uppercase font-bold flex items-center gap-1 shadow-md active:scale-95 transition-transform"
+                        >
+                          <Truck className="h-3 w-3" />
+                          <span>Track Order</span>
+                          <ChevronRight className="h-3 w-3" />
+                        </Link>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold uppercase flex items-center gap-1">
+                          <Check className="h-3 w-3" />
+                          <span>Delivered</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}

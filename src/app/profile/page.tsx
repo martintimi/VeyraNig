@@ -331,13 +331,20 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <Link
-                      href={`/track-order?orderNumber=${encodeURIComponent(order.orderNumber)}`}
-                      className="px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury font-bold uppercase transition-all inline-flex items-center gap-1.5"
-                    >
-                      <Truck className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-                      <span>Track Order</span>
-                    </Link>
+                    {order.status?.toLowerCase() !== 'delivered' && (order.trackingStage ?? 1) < 4 ? (
+                      <Link
+                        href={`/track-order?orderNumber=${encodeURIComponent(order.orderNumber)}`}
+                        className="px-4 py-2 rounded-full surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury font-bold uppercase transition-all inline-flex items-center gap-1.5"
+                      >
+                        <Truck className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                        <span>Track Order</span>
+                      </Link>
+                    ) : (
+                      <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono-luxury font-bold uppercase flex items-center gap-1">
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Delivered</span>
+                      </span>
+                    )}
 
                     <div className="text-left sm:text-right">
                       <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Total Amount</span>
