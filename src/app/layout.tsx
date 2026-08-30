@@ -3,6 +3,8 @@ import './globals.css';
 import AppLayoutWrapper from '@/components/layout/AppLayoutWrapper';
 import NextTopLoader from 'nextjs-toploader';
 
+
+
 export const metadata: Metadata = {
   title: 'VEYRA Nigeria | Multi-Brand Virtual Dressing Room',
   description: 'Style Senator sets, handmade Ankara gowns, streetwear hoodies, and Kano leather slides from top Nigerian fashion designers on your digital body twin.',

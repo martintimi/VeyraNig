@@ -2,6 +2,8 @@ import React from 'react';
 import MarketplaceGrid from '@/components/shop/MarketplaceGrid';
 import MobileShopView from '@/components/shop/MobileShopView';
 
+
+
 export default function ShopPage() {
   return (
     <>
