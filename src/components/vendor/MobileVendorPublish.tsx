@@ -105,7 +105,8 @@ export default function MobileVendorPublish({
           category: subCategory,
           genderTarget,
           vendorType: vendorProfile.vendorType,
-          brandName: vendorProfile.brandName
+          brandName: vendorProfile.brandName,
+          imageUrl: imagePreview || null
         })
       });
 
@@ -165,6 +166,13 @@ export default function MobileVendorPublish({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Auto-scroll to top when error occurs so vendor sees it immediately
+  useEffect(() => {
+    if (errorMessage) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [errorMessage]);
 
   // Update categories when gender changes
   useEffect(() => {

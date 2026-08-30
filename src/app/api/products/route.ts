@@ -173,6 +173,14 @@ export async function POST(request: Request) {
 
     const productId = `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+    const colorsList = Array.isArray(colors)
+      ? colors.map((c: any) => typeof c === 'string' ? c : (c.name || c.hex || 'Black'))
+      : [];
+
+    const tagsList = Array.isArray(tags)
+      ? tags.map((t: any) => typeof t === 'string' ? t.replace(/^#/, '') : String(t))
+      : [];
+
     const { data, error } = await supabase.from('products').insert({
       id: productId,
       name,
@@ -182,19 +190,37 @@ export async function POST(request: Request) {
       garment_origin_type: garmentOriginType || 'ready_made_boutique',
       image_url: imageUrl,
       description: description || name,
-      tags: tags || [],
-      colors: colors || [],
-      sizes: sizes || ['S', 'M', 'L', 'XL'],
-      size_stock: sizeStock || {},
-      stock_quantity: stockQuantity ? Number(stockQuantity) : 10,
-      is_customizable: garmentOriginType === 'bespoke_atelier',
-      tailoring_specs: tailoringSpecs || null,
+      tags: tagsList,
+      colors: colorsList,
       vendor_id: vendorId,
       is_published: true,
     }).select().single();
 
     if (error) {
+      console.error('Error inserting into products table:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Optionally insert size variants into product_variants if available
+    try {
+      if (sizeStock && typeof sizeStock === 'object') {
+        const variantsToInsert: any[] = [];
+        Object.entries(sizeStock).forEach(([sz, val]: [string, any]) => {
+          if (val && (val.enabled || val.quantity > 0)) {
+            variantsToInsert.push({
+              product_id: productId,
+              size: sz,
+              color: colorsList[0] || 'Default',
+              stock_quantity: Number(val.quantity || 10),
+            });
+          }
+        });
+        if (variantsToInsert.length > 0) {
+          await supabase.from('product_variants').insert(variantsToInsert);
+        }
+      }
+    } catch (variantErr) {
+      console.warn('Optional product_variants insert skipped:', variantErr);
     }
 
     return NextResponse.json({
@@ -203,6 +229,7 @@ export async function POST(request: Request) {
       product: data,
     });
   } catch (error: any) {
+    console.error('Products POST error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -108,7 +108,8 @@ export default function PublishGarmentPage() {
           category: subCategory,
           genderTarget,
           vendorType: vendorProfile.vendorType,
-          brandName: vendorProfile.brandName
+          brandName: vendorProfile.brandName,
+          imageUrl: imagePreview || null
         })
       });
 
@@ -163,6 +164,13 @@ export default function PublishGarmentPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdProductId, setCreatedProductId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Auto-scroll to top whenever an error is encountered so user sees it instantly
+  useEffect(() => {
+    if (errorMessage) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [errorMessage]);
 
   // Update categories when genderTarget changes
   useEffect(() => {

@@ -2,76 +2,183 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { title, category, vendorType, genderTarget, brandName } = await request.json();
+    const { title, category, vendorType, genderTarget, brandName, imageUrl } = await request.json();
 
     const cleanTitle = (title || '').trim();
     const lower = cleanTitle.toLowerCase();
     const isBoutique = vendorType === 'boutique_seller' || vendorType === 'boutique_merchant';
-    const brand = brandName || 'Atelier';
+    const brand = brandName || 'Veyra Partner';
+    const cat = (category || '').toLowerCase();
+    const gender = (genderTarget || 'unisex').toLowerCase();
 
+    // 0. Optional Gemini Vision integration if API Key is configured in environment
+    const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    if (geminiApiKey && imageUrl) {
+      try {
+        let imagePart: any = null;
+        if (imageUrl.startsWith('data:image')) {
+          const [mimeTypePart, base64Data] = imageUrl.split(';base64,');
+          const mimeType = mimeTypePart.replace('data:', '');
+          imagePart = { inlineData: { mimeType, data: base64Data } };
+        } else if (imageUrl.startsWith('http')) {
+          const imgRes = await fetch(imageUrl);
+          const buf = await imgRes.arrayBuffer();
+          const base64 = Buffer.from(buf).toString('base64');
+          const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+          imagePart = { inlineData: { mimeType: contentType, data: base64 } };
+        }
+
+        if (imagePart) {
+          const prompt = `You are a luxury Nigerian fashion and streetwear merchandise copywriter for Veyra Store.
+Analyze this garment photo and details:
+Piece Title: "${cleanTitle || 'Garment'}"
+Category: "${category || 'Ready-to-Wear'}"
+Department: "${genderTarget || 'Unisex'}"
+Brand: "${brand}"
+Vendor Type: "${vendorType || 'boutique_merchant'}"
+
+RULES:
+1. Write a concise, punchy 2-sentence luxury product description highlighting the exact garment cut, silhouette, textures, and occasions.
+2. If vendorType is boutique or ready-to-wear, NEVER use the words "tailored" or "tailoring". Use words like "designed by", "styled by", "crafted with", "features".
+3. Append two short bullet points for "• Fabric: ..." and "• Care: ...".
+4. Provide 5-6 relevant hashtags (without #).
+5. Provide a realistic suggested retail price in Nigerian Naira (e.g. 25000, 35000, 65000).
+
+Return ONLY valid JSON matching this schema:
+{
+  "description": "2-sentence description\\n\\n• Fabric: ...\\n• Care: ...",
+  "tags": ["tag1", "tag2", "tag3"],
+  "suggestedPrice": 35000
+}`;
+
+          const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  imagePart
+                ]
+              }],
+              generationConfig: {
+                responseMimeType: 'application/json'
+              }
+            })
+          });
+
+          if (geminiRes.ok) {
+            const geminiData = await geminiRes.json();
+            const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              const parsed = JSON.parse(rawText);
+              return NextResponse.json({
+                success: true,
+                description: parsed.description,
+                tags: parsed.tags || [],
+                suggestedPrice: parsed.suggestedPrice || 35000,
+                category: category || 'tops'
+              });
+            }
+          }
+        }
+      } catch (geminiErr) {
+        console.warn('Gemini vision generation fallback to high-precision rules:', geminiErr);
+      }
+    }
+
+    // High-Precision Rule Synthesis Engine (Contextual by Piece, Category, and Gender)
     let description = '';
     let tags: string[] = [];
-    let suggestedPrice = 35000;
-    let fabricComposition = '';
-    let careInstructions = 'Dry clean recommended or gentle hand wash with cold water. Iron on low heat inside out. Do not bleach.';
+    let suggestedPrice = 30000;
 
-    // 1. AGBADA & ROYAL CEREMONIAL WEAR
-    if (lower.includes('agbada') || lower.includes('grand boubou') || lower.includes('royal')) {
-      description = `Signature 3-piece ceremonial Agbada tailored from premium high-density imported fabric. Featuring intricate precision-embroidered geometric chest paneling, a flowing royal drape, matching tailored long-sleeve inner tunic, and tapered drawstring trousers. Designed for weddings, chieftancy celebrations, and prestigious red-carpet occasions.\n\n• Fabric: Super 160s Poly-Wool & Silk Thread Embroidery\n• Silhouette: Flowing Royal Majestic Cut\n• Care: Professional dry clean only. Steam iron on reverse.`;
-      tags = ['Agbada', 'Ceremonial', 'Owambe', 'BespokeNative', 'GoldEmbroidery', 'NigerianRoyalty'];
-      suggestedPrice = 95000;
+    // 1. LACE / CORSET / HALTER / CROP TOPS / BRALETTES (WOMEN / FEMALE)
+    if (
+      lower.includes('lace') ||
+      lower.includes('corset') ||
+      lower.includes('halter') ||
+      lower.includes('crop') ||
+      lower.includes('bralette') ||
+      lower.includes('bustier') ||
+      lower.includes('ruched') ||
+      cat.includes('corset') ||
+      (cat.includes('tops') && gender === 'female')
+    ) {
+      description = `Statement ${lower.includes('lace') ? 'lace ' : ''}${lower.includes('corset') ? 'corset ' : 'crop '}top styled by ${brand} with a flattering sweetheart neckline, intricate textured overlay, and a figure-sculpting ruched silhouette. Designed for standout nightlife glamour, festival aesthetics, and effortless elevated layering.\n\n• Fabric: Floral Embroidered Lace & Breathable Stretch Spandex\n• Care: Gentle cold hand wash. Lay flat to dry. Do not tumble dry.`;
+      tags = ['LaceTop', 'CorsetTop', 'HalterTop', 'NightlifeGlam', 'WomensFashion', 'BoutiqueDrop'];
+      suggestedPrice = 22000;
     }
-    // 2. SENATOR WEAR & KAFTAN SETS
-    else if (lower.includes('senator') || lower.includes('kaftan') || lower.includes('dashiki') || lower.includes('native') || lower.includes('senate') || lower.includes('two-piece') || lower.includes('2 piece')) {
-      description = `Impeccably tailored 2-piece modern Senator suit featuring a clean concealed-button placket, structured military collar, precision shoulder line, and matching tapered slim-fit trousers with side adjusters. Cut from breathable, wrinkle-resistant cashmere wool blend.\n\n• Fabric: Premium Cashmere Wool & Cotton Blend\n• Silhouette: Tailored Nigerian Slim-Fit\n• Care: Gentle hand wash or dry clean. Iron on medium heat with a pressing cloth.`;
-      tags = ['SenatorSuit', 'BespokeKaftan', 'ModernNative', 'OwambeStyle', 'NigerianFashion', 'TailoredSet'];
-      suggestedPrice = 65000;
-    }
-    // 3. BOUBOU, MAXI GOWN & CORSET DRESS (WOMEN)
-    else if (lower.includes('boubou') || lower.includes('bubu') || lower.includes('gown') || lower.includes('dress') || lower.includes('corset') || lower.includes('kimono') || lower.includes('silk')) {
-      description = `Luxurious flowing Boubou gown tailored from lustrous rich silk blend with hand-embellished neckline detailing, fluid graceful drape, and generous side slits. Designed for effortless glamour from festive celebrations to VIP evening galas.\n\n• Fabric: 100% Pure Silk Crepe & Satin Sheen\n• Silhouette: Fluid Oversized Relaxed Fit with Tailored Neck\n• Care: Hand wash cold with mild detergent. Hang to dry in shade. Cool iron.`;
-      tags = ['SilkBoubou', 'MaxiGown', 'LagosLuxury', 'OccasionWear', 'ResortWear', 'WomenFashion'];
-      suggestedPrice = 55000;
-    }
-    // 4. STREETWEAR HOODIE & SWEATSHIRTS
-    else if (lower.includes('hoodie') || lower.includes('sweat') || lower.includes('pullover') || lower.includes('fleece')) {
-      description = `Heavyweight 450 GSM luxury brushed French terry cotton hoodie. Features a double-layered structured hood with no drawstrings for a sleek minimalist aesthetic, relaxed drop-shoulder cut, kangaroo pocket, and heavy 2x2 ribbed cuffs and hem. Pre-shrunk for an enduring boxy drape.\n\n• Fabric: 100% Organic Heavyweight French Terry Cotton (450 GSM)\n• Fit: Boxy Drop-Shoulder Silhouette\n• Care: Machine wash cold inside out with like colors. Tumble dry low or air dry to preserve fabric density.`;
-      tags = ['Streetwear', 'HeavyweightHoodie', '450GSM', 'LagosStreetwear', 'OversizedFit', 'UrbanDrop'];
+    // 2. DRESSES / GOWNS / MAXIS / BODYCON (WOMEN)
+    else if (
+      lower.includes('gown') ||
+      lower.includes('dress') ||
+      lower.includes('maxi') ||
+      lower.includes('bodycon') ||
+      lower.includes('mini dress') ||
+      cat.includes('dresses') ||
+      cat.includes('gowns')
+    ) {
+      description = `Alluring feminine silhouette dress styled by ${brand} featuring fluid contour lines, flattering drape, and sophisticated finishing. Perfect for cocktail evenings, festive galas, and VIP celebrations.\n\n• Fabric: Lustrous Silk Crepe & Stretch Satin Sheen\n• Care: Hand wash cold or dry clean. Cool iron inside out.`;
+      tags = ['MaxiDress', 'CocktailDress', 'EveningGown', 'OccasionWear', 'Womenswear', 'LagosLuxury'];
       suggestedPrice = 45000;
     }
-    // 5. DENIM & UTILITY CARGO PANTS
-    else if (lower.includes('denim') || lower.includes('jean') || lower.includes('cargo') || lower.includes('pant') || lower.includes('trouser')) {
-      description = `Heavy-duty 14.5oz rigid raw selvedge denim engineered with reinforced multi-pocket utility detailing, durable contrast stitching, antique brass hardware, and a relaxed wide-leg skater silhouette.\n\n• Fabric: 100% Raw Selvedge Cotton Denim (14.5oz)\n• Fit: Relaxed Straight / Wide-Leg\n• Care: Wash sparingly inside out in cold water. Hang dry to maintain authentic raw indigo fading.`;
-      tags = ['RawDenim', 'CargoPants', 'StreetwearJeans', 'WideLeg', 'SelvedgeDenim', 'UrbanStyle'];
+    // 3. SILK BOUBOU / KAFTANS / ABAYAS
+    else if (lower.includes('boubou') || lower.includes('bubu') || lower.includes('abaya') || cat.includes('boubou')) {
+      description = `Regal flowing Boubou gown crafted by ${brand} from lustrous pure silk crepe, accentuated by hand-embellished neckline detailing and a graceful silhouette for festive celebrations.\n\n• Fabric: 100% Pure Silk Crepe\n• Care: Gentle hand wash in cold water with mild soap. Cool iron.`;
+      tags = ['SilkBoubou', 'Abaya', 'OwambeStyle', 'RegalNative', 'LagosLuxury', 'WomenFashion'];
+      suggestedPrice = 55000;
+    }
+    // 4. SKIRTS & CO-ORD SETS
+    else if (lower.includes('skirt') || lower.includes('co-ord') || lower.includes('two piece') || lower.includes('2 piece') || cat.includes('skirts') || cat.includes('two_piece')) {
+      description = `Chic modern two-piece coordinate set crafted by ${brand} featuring clean contour lines and effortless comfort, styled seamlessly from daytime brunch to evening cocktails.\n\n• Fabric: Premium Structured Cotton-Spandex Blend\n• Care: Machine wash cold with like colors. Line dry.`;
+      tags = ['CoordSet', 'TwoPiece', 'ChicStyle', 'Womenswear', 'BoutiqueDrop'];
+      suggestedPrice = 32000;
+    }
+    // 5. AGBADA (ROYAL CEREMONIAL BESPOKE)
+    else if (lower.includes('agbada') || cat.includes('agbada')) {
+      description = `Signature 3-piece ceremonial Agbada tailored from premium high-density fabric, featuring precision-embroidered geometric chest paneling and a majestic royal drape for landmark celebrations.\n\n• Fabric: Super 160s Poly-Wool & Silk Thread\n• Care: Professional dry clean only. Steam iron on reverse.`;
+      tags = ['Agbada', 'Ceremonial', 'Owambe', 'BespokeNative', 'RoyalWear', 'NigerianFashion'];
+      suggestedPrice = 95000;
+    }
+    // 6. SENATOR WEAR & MALE KAFTAN SETS
+    else if (lower.includes('senator') || lower.includes('kaftan') || lower.includes('dashiki') || cat.includes('senator')) {
+      description = `Sharp 2-piece modern Senator suit tailored from breathable, wrinkle-resistant cashmere wool blend with a minimalist concealed placket and tapered slim-fit trousers.\n\n• Fabric: Premium Cashmere Wool Blend\n• Care: Dry clean or gentle hand wash. Medium iron with pressing cloth.`;
+      tags = ['SenatorSuit', 'BespokeKaftan', 'ModernNative', 'OwambeStyle', 'NigerianFashion'];
+      suggestedPrice = 65000;
+    }
+    // 7. STREETWEAR HOODIES & SWEATSHIRTS
+    else if (lower.includes('hoodie') || lower.includes('sweat') || lower.includes('fleece') || cat.includes('hoodie')) {
+      description = `Heavyweight 450 GSM luxury brushed French terry cotton hoodie by ${brand} featuring a structured double-layer hood, relaxed drop-shoulder cut, and snug ribbed cuffs.\n\n• Fabric: 100% Organic Heavyweight French Terry (450 GSM)\n• Care: Machine wash cold inside out. Tumble dry low or air dry.`;
+      tags = ['Streetwear', 'HeavyweightHoodie', '450GSM', 'OversizedFit', 'LagosDrop'];
+      suggestedPrice = 45000;
+    }
+    // 8. DENIM JEANS & CARGO PANTS
+    else if (lower.includes('denim') || lower.includes('jean') || lower.includes('cargo') || cat.includes('denim') || cat.includes('jeans')) {
+      description = `Heavy-duty 14.5oz raw rigid denim pants engineered by ${brand} with multi-pocket utility detailing and a relaxed wide-leg profile.\n\n• Fabric: 100% Raw Selvedge Cotton Denim (14.5oz)\n• Care: Wash sparingly inside out in cold water. Hang dry.`;
+      tags = ['RawDenim', 'CargoPants', 'WideLeg', 'StreetwearJeans', 'UrbanDrop'];
       suggestedPrice = 42000;
     }
-    // 6. GRAPHIC TEE & OVERSIZED TOPS
-    else if (lower.includes('tee') || lower.includes('shirt') || lower.includes('top') || lower.includes('jersey')) {
-      description = `Premium 300 GSM heavyweight combed cotton t-shirt featuring high-density archival screen printing, double-needle collar ribbing, and a signature boxy drop-shoulder cut. Crafted to maintain shape and vibrant color wash after wash.\n\n• Fabric: 100% Combed Compact Cotton (300 GSM)\n• Fit: Boxy Streetwear Relaxed Cut\n• Care: Machine wash cold inside out. Iron print inside out. Do not tumble dry on high heat.`;
-      tags = ['GraphicTee', 'HeavyweightTee', 'BoxyFit', 'StreetwearDrop', 'PremiumCotton', 'LagosStyle'];
+    // 9. GRAPHIC TEES & OVERSIZED TOPS
+    else if (lower.includes('tee') || lower.includes('shirt') || lower.includes('jersey') || cat.includes('tees')) {
+      description = `Premium 300 GSM combed cotton t-shirt styled by ${brand} with high-density archival screen printing and a signature boxy drop-shoulder cut.\n\n• Fabric: 100% Combed Compact Cotton (300 GSM)\n• Care: Machine wash cold inside out. Iron print inside out.`;
+      tags = ['GraphicTee', 'HeavyweightTee', 'BoxyFit', 'StreetwearDrop', 'LagosStyle'];
       suggestedPrice = 28000;
     }
-    // 7. FOOTWEAR & LEATHER SLIDES
-    else if (lower.includes('slide') || lower.includes('shoe') || lower.includes('footwear') || lower.includes('leather') || lower.includes('loafer') || lower.includes('sandal') || lower.includes('mule')) {
-      description = `Handcrafted genuine full-grain calfskin leather slides designed with ergonomic contoured footbed, plush memory foam cushioning, and shock-absorbing non-slip rubber tread. Finished with artisanal hand-stitched borders.\n\n• Material: 100% Genuine Full-Grain Calfskin Leather & Vibram Rubber Sole\n• Fit: True to Nigerian size standards\n• Care: Clean with a soft damp cloth. Condition regularly with neutral leather balm. Avoid prolonged water soaking.`;
-      tags = ['Footwear', 'LeatherSlides', 'HandcraftedShoes', 'LuxuryLoungewear', 'HandmadeNigeria', 'Calfskin'];
+    // 10. FOOTWEAR & LEATHER SLIDES
+    else if (lower.includes('slide') || lower.includes('shoe') || lower.includes('heel') || lower.includes('mule') || lower.includes('loafer') || cat.includes('footwear')) {
+      description = `Handcrafted genuine full-grain leather footwear designed by ${brand} with an ergonomic cushioned footbed and durable anti-slip outsoles.\n\n• Material: 100% Genuine Full-Grain Leather & Shock-Absorbing Rubber\n• Care: Wipe clean with a soft damp cloth. Condition with neutral leather balm.`;
+      tags = ['Footwear', 'LeatherSlides', 'Handcrafted', 'LuxuryFootwear', 'LagosFashion'];
       suggestedPrice = 38000;
     }
-    // 8. CAPS & ACCESSORIES
-    else if (lower.includes('cap') || lower.includes('hat') || lower.includes('beanie') || lower.includes('tote') || lower.includes('bag') || lower.includes('belt')) {
-      description = `Structured 6-panel heavy cotton twill accessory featuring precision 3D puff embroidery, tonal ventilation eyelets, and customized brass buckle adjustable strap for all-day comfort.\n\n• Material: 100% Heavy Cotton Twill & Custom Metal Hardware\n• Fit: Universal adjustable one-size\n• Care: Spot clean with a damp sponge and mild soap. Air dry.`;
-      tags = ['Accessories', 'StreetwearCap', 'CustomHardware', 'Headwear', 'LagosFashion'];
-      suggestedPrice = 18000;
-    }
-    // 9. GENERAL FALLBACK (CONTEXTUAL TO BOUTIQUE VS ATELIER)
+    // 11. GENERAL FALLBACK (STRICTLY NO "TAILORING" FOR BOUTIQUE)
     else {
       if (isBoutique) {
-        description = `Contemporary ready-to-wear piece tailored by ${brand} from premium breathable textiles. Featuring refined minimalist tailoring, durable reinforced seams, and modern urban comfort suited for versatile day-to-night styling.\n\n• Fabric: Premium Blended Natural Fiber\n• Fit: Modern Contemporary Tailored Silhouette\n• Care: Machine wash cold with similar colors or gentle hand wash. Cool iron.`;
-        tags = ['ReadyToWear', 'ContemporaryFashion', 'BoutiqueDrop', 'LagosStreetwear', 'UrbanLuxury'];
-        suggestedPrice = 35000;
+        description = `Contemporary ready-to-wear piece styled by ${brand} from lightweight breathable textiles, designed for effortless elegance and versatile day-to-night wear.\n\n• Fabric: Premium Natural Textile Blend\n• Care: Machine wash cold on gentle cycle or hand wash. Cool iron.`;
+        tags = ['ReadyToWear', 'ContemporaryFashion', 'BoutiqueDrop', 'LagosStyle', 'UrbanLuxury'];
+        suggestedPrice = 30000;
       } else {
-        description = `Handcrafted luxury garment custom-tailored by ${brand}. Constructed with artisanal precision, bespoke internal structuring, and clean hand-finished seams designed to accentuate traditional elegance.\n\n• Fabric: Imported Luxury Textile Blend\n• Fit: Precision Bespoke Tailored Cut\n• Care: Dry clean or delicate hand wash in cold water. Iron on medium heat with pressing cloth.`;
-        tags = ['BespokeTailoring', 'ArtisanalWear', 'CustomGarment', 'NigerianFashion', 'TraditionalElegance'];
+        description = `Handcrafted bespoke garment custom-tailored by ${brand} with precision seamwork, internal structuring, and clean hand-finished hems.\n\n• Fabric: Premium Imported Textile Blend\n• Care: Dry clean or delicate cold hand wash. Medium iron with pressing cloth.`;
+        tags = ['BespokeTailoring', 'CustomGarment', 'NigerianFashion', 'TraditionalElegance'];
         suggestedPrice = 60000;
       }
     }
