@@ -12,6 +12,7 @@ import {
   ArrowUpRight, Plus, ExternalLink, ShieldCheck, CheckCircle2,
   ShoppingBag, Scissors, Layers, Loader2, Clock, AlertTriangle, AlertCircle, ArrowRight, Store
 } from 'lucide-react';
+import MobileVendorOverview from '@/components/vendor/MobileVendorOverview';
 
 export default function VendorOverviewPage() {
   const { vendorProfile } = useStore();
@@ -114,7 +115,20 @@ export default function VendorOverviewPage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn max-w-7xl pb-16">
+    <>
+      {/* 1. DEDICATED MOBILE VENDOR OVERVIEW */}
+      <div className="block md:hidden">
+        <MobileVendorOverview
+          vendorProfile={vendorProfile}
+          dbProducts={dbProducts}
+          totalLiveInventory={totalLiveInventory}
+          profileStatus={profileStatus}
+          pendingOrdersCount={0}
+        />
+      </div>
+
+      {/* 2. DESKTOP LUXURY VENDOR OVERVIEW */}
+      <div className="hidden md:block space-y-6 sm:space-y-8 animate-fadeIn max-w-7xl pb-16">
       
       {/* ======================================================== */}
       {/* STATUS NOTIFICATION BANNER (ONLY SHOWN IF UNVERIFIED / PENDING / REJECTED) */}
@@ -405,11 +419,12 @@ export default function VendorOverviewPage() {
               <span>Preview Live Storefront</span>
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
+            </div>
           </div>
+
         </div>
 
       </div>
-
-    </div>
+    </>
   );
 }

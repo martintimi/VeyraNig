@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
+import MobileVendorPublish from '@/components/vendor/MobileVendorPublish';
 
 // Standard Apparel Colors Palette for Boutiques & Designers
 const STANDARD_COLORS = [
@@ -305,7 +306,20 @@ export default function PublishGarmentPage() {
     .reduce((sum, s) => sum + Number(s.quantity || 0), 0);
 
   return (
-    <div className="p-6 sm:p-10 max-w-5xl mx-auto space-y-8 animate-fadeIn pb-24">
+    <>
+      {/* 1. DEDICATED MOBILE VENDOR PUBLISH */}
+      <div className="block md:hidden">
+        <MobileVendorPublish
+          onPublishSuccess={(productId) => {
+            setCreatedProductId(productId);
+          }}
+          vendorProfile={vendorProfile}
+          getActiveVendorId={getActiveVendorId}
+        />
+      </div>
+
+      {/* 2. DESKTOP LUXURY VENDOR PUBLISH */}
+      <div className="hidden md:block p-6 sm:p-10 max-w-5xl mx-auto space-y-8 animate-fadeIn pb-24">
       
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-6">
@@ -739,6 +753,7 @@ export default function PublishGarmentPage() {
         </form>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

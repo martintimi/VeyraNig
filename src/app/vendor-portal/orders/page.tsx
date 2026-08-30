@@ -10,6 +10,7 @@ import {
   Send, Loader2, X, Navigation, RefreshCw, Star
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import MobileVendorOrders from '@/components/vendor/MobileVendorOrders';
 
 export default function VendorOrdersPage() {
   const { vendorProfile, updateOrderStatus } = useStore();
@@ -195,8 +196,65 @@ export default function VendorOrdersPage() {
     }
   };
 
+  const handleMobileConfirmDispatch = async (ord: any, waybill: string, driverPhone: string) => {
+    setIsUpdatingStatus(true);
+    const activeVendorId = getActiveVendorId();
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-vendor-id': activeVendorId
+        },
+        body: JSON.stringify({
+          orderNumber: ord.orderNumber,
+          orderId: ord.id,
+          status: 'dispatched',
+          trackingStage: 3,
+          waybillNumber: waybill.trim() || `WB-${Math.floor(10000 + Math.random() * 90000)}`,
+          driverPhone: driverPhone.trim(),
+          vendorId: activeVendorId
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        updateOrderStatus(ord.orderNumber, 'dispatched', 3);
+        setDbOrders(prev => prev.map(o => (o.orderNumber === ord.orderNumber || o.id === ord.id) ? {
+          ...o,
+          status: 'dispatched',
+          trackingStage: 3,
+          trackingDetails: {
+            waybillNumber: waybill.trim(),
+            driverPhone: driverPhone.trim()
+          }
+        } : o));
+
+        confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+      }
+    } catch (e) {
+      console.error('Failed to update dispatch status:', e);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl pb-20">
+    <>
+      {/* 1. DEDICATED MOBILE VENDOR ORDERS */}
+      <div className="block md:hidden">
+        <MobileVendorOrders
+          vendorOrders={vendorOrders}
+          isLoading={isLoading}
+          onRefresh={loadVendorDbOrders}
+          onPackReady={handlePackReady}
+          onConfirmDispatch={handleMobileConfirmDispatch}
+          isUpdatingStatus={isUpdatingStatus}
+        />
+      </div>
+
+      {/* 2. DESKTOP LUXURY VENDOR ORDERS */}
+      <div className="hidden md:block space-y-8 animate-fadeIn max-w-7xl pb-20">
       
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -517,6 +575,7 @@ export default function VendorOrdersPage() {
         </div>
       )}
 
-    </div>
+      </div>
+    </>
   );
 }

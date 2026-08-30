@@ -136,40 +136,40 @@ export default function VendorPortalLayout({
       {/* ======================================================== */}
       {/* 1. TOP HEADER (FULL-WIDTH LUXURY BAR) */}
       {/* ======================================================== */}
-      <header className="sticky top-0 z-30 w-full border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-md px-6 sm:px-10 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-30 w-full border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/95 backdrop-blur-md px-3.5 sm:px-10 py-2.5 sm:py-3.5 flex items-center justify-between">
         
         {/* Left: Menu Toggle + Brand Identity */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] transition-all"
+            className="md:hidden p-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] transition-all cursor-pointer shrink-0"
             title="Toggle menu"
+            aria-label="Toggle vendor menu"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? <X className="h-5 w-5 text-[var(--gold-accent)]" /> : <Menu className="h-5 w-5" />}
           </button>
           
-          <Link href="/vendor-portal" className="flex items-center gap-3 group">
+          <Link href="/vendor-portal" className="flex items-center gap-2 sm:gap-3 group shrink-0">
             <Image
               src="/images/logo/veyra-logo-horizontal.png"
               alt="Veyra"
-              width={160}
-              height={45}
-              className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
+              width={140}
+              height={38}
+              className="h-8 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105"
             />
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20">
               {isBoutique ? 'Boutique Merchant' : 'Bespoke Atelier'}
             </span>
           </Link>
 
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
-            <span className={`h-2 w-2 rounded-full ${liveStatus.isVerified ? 'bg-emerald-500 animate-pulse' : liveStatus.approvalStatus === 'rejected' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'}`} />
-            <span className="font-bold text-[var(--text-primary)]">{vendorProfile.brandName}</span>
-            <span className="text-[var(--text-muted)]">({vendorProfile.location})</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[11px] font-mono-luxury truncate">
+            <span className={`h-2 w-2 rounded-full shrink-0 ${liveStatus.isVerified ? 'bg-emerald-500 animate-pulse' : liveStatus.approvalStatus === 'rejected' ? 'bg-rose-500' : 'bg-amber-500 animate-pulse'}`} />
+            <span className="font-bold text-[var(--text-primary)] truncate max-w-[100px] sm:max-w-[180px]">{vendorProfile.brandName}</span>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           
           {/* In-App Live Notification Bell */}
           <VendorNotificationBell />
@@ -177,16 +177,17 @@ export default function VendorPortalLayout({
           <Link
             href={`/brand/${encodeURIComponent(vendorProfile.brandName)}`}
             target="_blank"
-            className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--bg-surface)] hover:bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] transition-all"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--bg-surface)] hover:bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] transition-all"
           >
-            <span>{isBoutique ? 'View Boutique Link' : 'View Atelier Link'}</span>
+            <span>{isBoutique ? 'View Boutique' : 'View Atelier'}</span>
             <ExternalLink className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
           </Link>
 
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
+            className="p-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
             title="Toggle theme"
+            aria-label="Toggle color theme"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
@@ -211,33 +212,54 @@ export default function VendorPortalLayout({
         {/* Mobile Overlay Backdrop */}
         {mobileMenuOpen && (
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 md:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden animate-fadeIn"
             onClick={() => setMobileMenuOpen(false)}
           />
         )}
         
         {/* Left Sidebar - Desktop Fixed | Mobile Drawer */}
         <aside className={`
-          w-64 lg:w-72 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)]
+          w-72 max-w-[85vw] border-r border-[var(--border-subtle)] bg-[var(--bg-surface)]
           flex flex-col justify-between p-4 sm:p-6 shrink-0 
-          transition-all duration-300 ease-in-out
+          transition-all duration-300 ease-in-out shadow-2xl md:shadow-none
           
-          md:relative md:flex md:sticky md:top-[65px] md:h-[calc(100vh-65px)] md:self-start md:overflow-y-auto
+          md:relative md:flex md:sticky md:top-[60px] md:h-[calc(100vh-60px)] md:self-start md:overflow-y-auto
           
-          fixed inset-y-0 left-0 top-[65px] h-[calc(100vh-65px)] z-20
+          fixed inset-y-0 left-0 top-0 h-full z-50 overflow-y-auto
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
         `}>
           
-          <div className="space-y-6">
+          <div className="space-y-5">
             
+            {/* Mobile Drawer Top Header (Close button & Logo) */}
+            <div className="flex items-center justify-between md:hidden pb-3 border-b border-[var(--border-subtle)]">
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/images/logo/veyra-logo-horizontal.png"
+                  alt="Veyra"
+                  width={110}
+                  height={30}
+                  className="h-7 w-auto object-contain"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-white"
+                aria-label="Close menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
             {/* Store / Atelier Card */}
-            <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
+            <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-[var(--gold-accent)]/15 text-[var(--gold-accent)] flex items-center justify-center font-editorial font-bold text-lg shrink-0">
                   {isBoutique ? <ShoppingBag className="h-5 w-5" /> : <Scissors className="h-5 w-5" />}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="font-bold text-xs text-[var(--text-primary)] truncate font-editorial">
                     {vendorProfile.brandName}
                   </div>
@@ -248,28 +270,29 @@ export default function VendorPortalLayout({
               </div>
 
               <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-mono-luxury">
-                <span className="text-[var(--text-muted)]">Category:</span>
-                <span className="text-[var(--gold-accent)] font-bold">
-                  {isBoutique ? 'Ready-Made Boutique' : 'Bespoke Tailoring Atelier'}
+                <span className="text-[var(--text-muted)]">Type:</span>
+                <span className="text-[var(--gold-accent)] font-bold truncate">
+                  {isBoutique ? 'Ready-Made Boutique' : 'Bespoke Atelier'}
                 </span>
               </div>
             </div>
 
             {/* Navigation Menu */}
-            <nav className="space-y-1.5 font-mono-luxury text-xs uppercase tracking-wider">
+            <nav className="space-y-1 font-mono-luxury text-xs uppercase tracking-wider">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold ${
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all font-bold ${
                       item.active
                         ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
-                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'
                     }`}
                   >
-                    <Icon className={`h-4 w-4 ${item.active ? '' : 'text-[var(--gold-accent)]'}`} />
+                    <Icon className={`h-4 w-4 shrink-0 ${item.active ? '' : 'text-[var(--gold-accent)]'}`} />
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );
@@ -279,14 +302,14 @@ export default function VendorPortalLayout({
           </div>
 
           {/* Bottom Info & Logout */}
-          <div className="pt-4 border-t border-[var(--border-subtle)] space-y-3">
+          <div className="pt-4 border-t border-[var(--border-subtle)] space-y-3 mt-6">
             <div className="text-[11px] font-mono-luxury text-[var(--text-muted)] space-y-1">
               <div className="flex items-center justify-between">
                 <span>Settlement Escrow:</span>
                 <strong className="text-emerald-500">Active</strong>
               </div>
               <div className="flex items-center justify-between">
-                <span>Storefront Status:</span>
+                <span>Status:</span>
                 <strong className={liveStatus.isVerified ? 'text-emerald-500' : liveStatus.approvalStatus === 'rejected' ? 'text-rose-400' : 'text-amber-400'}>
                   {liveStatus.isVerified ? 'Verified' : liveStatus.approvalStatus === 'rejected' ? 'Action Needed' : 'Pending Review'}
                 </strong>
@@ -296,7 +319,7 @@ export default function VendorPortalLayout({
             {/* Mobile Logout Button */}
             <button
               onClick={handleLogout}
-              className="md:hidden w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-mono-luxury uppercase font-bold transition-all"
+              className="md:hidden w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer"
               title="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -307,7 +330,7 @@ export default function VendorPortalLayout({
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 sm:p-10 lg:p-12 overflow-y-auto">
+        <main className="flex-1 p-3.5 sm:p-8 lg:p-12 overflow-y-auto min-w-0">
           {children}
         </main>
 
