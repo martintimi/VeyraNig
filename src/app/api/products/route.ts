@@ -114,6 +114,7 @@ export async function GET(request: Request) {
         ? p.image_url
         : getSmartFallbackImage(p.name, p.category);
 
+      const isAccessory = p.category === 'accessories';
       return {
         id: p.id,
         name: p.name,
@@ -125,9 +126,11 @@ export async function GET(request: Request) {
         image_url: resolvedImg,
         description: p.description,
         tags: p.tags || [],
-        colors: p.colors || [],
-        sizes: p.sizes || ['S', 'M', 'L', 'XL'],
-        sizeStock: p.size_stock || {},
+        colors: isAccessory ? [] : (p.colors || []),
+        sizes: isAccessory ? ['One Size'] : (p.sizes || ['S', 'M', 'L', 'XL']),
+        sizeStock: isAccessory 
+          ? { 'One Size': typeof p.size_stock?.['One Size'] === 'object' ? p.size_stock['One Size'] : { enabled: true, quantity: p.stock_quantity || 20 } }
+          : (p.size_stock || {}),
         stockQuantity: p.stock_quantity || 10,
         isCustomizable: p.is_customizable,
         tailoringSpecs: p.tailoring_specs,

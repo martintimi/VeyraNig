@@ -391,17 +391,21 @@ export default function MarketplaceGrid() {
                     </span>
                   </div>
 
-                  {/* Ready-to-Wear Stock & Sizes Pill */}
+                  {/* Stock & Sizes Pill */}
                   <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between z-10 shadow-md">
                     <div className="flex items-center gap-1.5">
                       <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-400" />
                       <span className="text-[9px] sm:text-[11px] font-mono-luxury text-emerald-400 font-bold uppercase tracking-wider">
-                        In Stock · RTW
+                        {product.category === 'accessories' ? 'In Stock' : 'In Stock · RTW'}
                       </span>
                     </div>
 
                     <span className="text-[9px] sm:text-[11px] font-mono-luxury text-white font-bold bg-white/10 px-2 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg border border-white/15">
-                      {(product.sizes || ['S', 'M', 'L', 'XL']).slice(0, 3).join(' · ')}{(product.sizes || []).length > 3 ? '+' : ''}
+                      {product.category === 'accessories'
+                        ? 'One Size'
+                        : product.category === 'footwear'
+                        ? (product.sizes || []).slice(0, 3).map((s: string) => `EU ${s}`).join(' · ') + ((product.sizes || []).length > 3 ? '+' : '')
+                        : (product.sizes || ['S', 'M', 'L']).slice(0, 3).join(' · ') + ((product.sizes || []).length > 3 ? '+' : '')}
                     </span>
                   </div>
                 </div>

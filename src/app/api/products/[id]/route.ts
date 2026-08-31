@@ -112,6 +112,7 @@ export async function GET(
       normalizedColors = [{ name: 'As Pictured', hex: '#111111' }];
     }
 
+    const isAccessory = product.category === 'accessories';
     const formattedProduct = {
       id: product.id,
       vendorId: product.vendor_id,
@@ -129,14 +130,16 @@ export async function GET(
       garmentOriginType: product.garment_origin_type || 'ready_made_boutique',
       imageUrl: product.image_url || '/images/products/BlackTrapStarHoodie.jpg',
       tags: Array.isArray(product.tags) && product.tags.length > 0 ? product.tags : ['Ready-to-Wear'],
-      colors: normalizedColors,
-      sizes: Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL'],
-      sizeStock: product.size_stock || { S: 10, M: 25, L: 30, XL: 15, XXL: 5 },
-      stockQuantity: product.stock_quantity || 85,
+      colors: isAccessory ? [] : normalizedColors,
+      sizes: isAccessory ? ['One Size'] : (Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL']),
+      sizeStock: isAccessory 
+        ? { 'One Size': typeof product.size_stock?.['One Size'] === 'object' ? product.size_stock['One Size'] : { enabled: true, quantity: product.stock_quantity || 20 } }
+        : (product.size_stock || { S: 10, M: 25, L: 30, XL: 15, XXL: 5 }),
+      stockQuantity: product.stock_quantity || 20,
       rating: 5.0,
-      reviewCount: 18,
+      reviewCount: 0,
       createdAt: product.created_at,
-      badge: 'Ready-to-Wear'
+      badge: isAccessory ? 'Jewelry & Accessories' : 'Ready-to-Wear'
     };
 
     return NextResponse.json({
