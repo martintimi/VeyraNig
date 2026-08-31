@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Building, User, Mail, Phone, MapPin, Check,
   ShieldCheck, ExternalLink, Sparkles, Store, Loader2,
   Clock, AlertCircle, CheckCircle2, Truck, Navigation, Save
 } from 'lucide-react';
 import Link from 'next/link';
-import confetti from 'canvas-confetti';
 import VendorLuxuryLoader from './VendorLuxuryLoader';
 
 const NIGERIAN_STATES = [
@@ -32,6 +31,7 @@ interface MobileVendorAtelierProps {
   setErrorMessage?: (msg: string) => void;
   successMessage?: string;
   setSuccessMessage?: (msg: string) => void;
+  isFieldsDisabled?: boolean;
 }
 
 export default function MobileVendorAtelier({
@@ -47,7 +47,8 @@ export default function MobileVendorAtelier({
   errorMessage,
   setErrorMessage,
   successMessage,
-  setSuccessMessage
+  setSuccessMessage,
+  isFieldsDisabled
 }: MobileVendorAtelierProps) {
   if (isLoadingProfile) {
     return <VendorLuxuryLoader label="Loading Store Profile from Database..." />;
@@ -136,12 +137,12 @@ export default function MobileVendorAtelier({
             {rejectionReason || 'Please review contact numbers and store address.'}
           </p>
         </div>
-      ) : (
+      ) : isProfileSaved ? (
         <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2.5 text-xs font-mono-luxury text-amber-400">
           <Clock className="h-4 w-4 animate-pulse shrink-0" />
           <span>Pending Super Admin Verification</span>
         </div>
-      )}
+      ) : null}
 
       {/* 3. Store Identity & Contacts */}
       <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
@@ -156,23 +157,40 @@ export default function MobileVendorAtelier({
           <input
             type="text"
             required
+            disabled={isFieldsDisabled}
             value={form.brandName}
             onChange={(e) => setForm({ ...form, brandName: e.target.value })}
             placeholder="e.g. Moji Wears"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
           />
         </div>
 
         <div>
           <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-            Contact Person / Manager
+            {isBoutique ? 'Store Manager / Contact Person' : 'Lead Designer / Tailor'}
           </label>
           <input
             type="text"
+            disabled={isFieldsDisabled}
             value={form.designerName}
             onChange={(e) => setForm({ ...form, designerName: e.target.value })}
-            placeholder="e.g. Mojisola"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+            placeholder="e.g. Full Name"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+          />
+        </div>
+
+        <div>
+          <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
+            Business Email
+          </label>
+          <input
+            type="email"
+            required
+            disabled={isFieldsDisabled}
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            placeholder="store@example.com"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -183,10 +201,11 @@ export default function MobileVendorAtelier({
           <input
             type="tel"
             required
+            disabled={isFieldsDisabled}
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             placeholder="e.g. 08012345678"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -196,9 +215,10 @@ export default function MobileVendorAtelier({
               State
             </label>
             <select
+              disabled={isFieldsDisabled}
               value={form.state}
               onChange={(e) => setForm({ ...form, state: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+              className="w-full px-3 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <option value="">Select State</option>
               {NIGERIAN_STATES.map((st) => (
@@ -215,10 +235,11 @@ export default function MobileVendorAtelier({
             </label>
             <input
               type="text"
+              disabled={isFieldsDisabled}
               value={form.city}
               onChange={(e) => setForm({ ...form, city: e.target.value })}
               placeholder="e.g. Ikeja"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -229,10 +250,11 @@ export default function MobileVendorAtelier({
           </label>
           <textarea
             rows={2}
+            disabled={isFieldsDisabled}
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
             placeholder="e.g. Luxury bespoke tailoring and modern Nigerian streetwear."
-            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed"
           />
         </div>
       </div>
@@ -248,11 +270,14 @@ export default function MobileVendorAtelier({
             Dispatch Turnaround Time
           </label>
           <select
+            disabled={isFieldsDisabled}
             value={form.dispatchDays}
             onChange={(e) => setForm({ ...form, dispatchDays: e.target.value })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
           >
+            <option value="Same-day / 1 day">Same-day / 1 business day</option>
             <option value="1-2 business days">1-2 business days (In Stock / Ready)</option>
+            <option value="2-3 business days">2-3 business days</option>
             <option value="3-5 business days">3-5 business days (Custom Cut)</option>
             <option value="5-7 business days">5-7 business days (Handmade Bespoke)</option>
           </select>
@@ -265,9 +290,10 @@ export default function MobileVendorAtelier({
             </label>
             <input
               type="number"
+              disabled={isFieldsDisabled}
               value={form.sameCityFee}
               onChange={(e) => setForm({ ...form, sameCityFee: Number(e.target.value) })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -277,9 +303,10 @@ export default function MobileVendorAtelier({
             </label>
             <input
               type="number"
+              disabled={isFieldsDisabled}
               value={form.interstateFee}
               onChange={(e) => setForm({ ...form, interstateFee: Number(e.target.value) })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -289,9 +316,10 @@ export default function MobileVendorAtelier({
             </label>
             <input
               type="number"
+              disabled={isFieldsDisabled}
               value={form.parkPickupFee}
               onChange={(e) => setForm({ ...form, parkPickupFee: Number(e.target.value) })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -301,18 +329,35 @@ export default function MobileVendorAtelier({
       <div className="pt-2">
         <button
           type="submit"
-          disabled={isSaving}
+          disabled={isSaving || isFieldsDisabled}
           className="w-full py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold shadow-xl hover:opacity-90 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
         >
           {isSaving ? (
             <>
               <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
-              <span>Saving Profile...</span>
+              <span>Submitting Profile...</span>
+            </>
+          ) : isFieldsDisabled ? (
+            approvalStatus === 'approved' ? (
+              <>
+                <Check className="h-4 w-4 text-emerald-400" />
+                <span>Store Profile Verified & Active</span>
+              </>
+            ) : (
+              <>
+                <Clock className="h-4 w-4 text-amber-400" />
+                <span>Submitted & Awaiting Super Admin Review</span>
+              </>
+            )
+          ) : approvalStatus === 'rejected' ? (
+            <>
+              <Sparkles className="h-4 w-4" />
+              <span>Resubmit Store Profile for Review</span>
             </>
           ) : (
             <>
               <Save className="h-4 w-4 stroke-[2.5]" />
-              <span>Save Store Profile</span>
+              <span>Save & Submit Store Profile</span>
             </>
           )}
         </button>

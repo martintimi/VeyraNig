@@ -170,7 +170,7 @@ export default function VendorAtelierProfilePage() {
           parkPickup: Number(form.parkPickupFee) || 1500,
           parkPickupEnabled: !!form.parkPickupEnabled,
         },
-        approvalStatus: 'approved'
+        approvalStatus: 'pending'
       };
 
       const res = await vendorFetch('/api/vendor/profile', {
@@ -190,8 +190,8 @@ export default function VendorAtelierProfilePage() {
 
       setVendorProfile(payload as any);
       setIsProfileSaved(true);
-      setApprovalStatus('approved');
-      setSuccessMessage('Store profile, delivery zone rates, and social channels saved successfully!');
+      setApprovalStatus('pending');
+      setSuccessMessage('Store profile and delivery zone rates submitted for Super Admin verification!');
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -206,6 +206,9 @@ export default function VendorAtelierProfilePage() {
       setIsSaving(false);
     }
   };
+
+  // Lock fields when profile is saved and awaiting review or approved. Only unlock when admin rejects!
+  const isFieldsDisabled = isProfileSaved && approvalStatus !== 'rejected';
 
   if (isLoadingProfile) {
     return <VendorLuxuryLoader label="Loading Store Profile from Database..." />;
@@ -229,6 +232,7 @@ export default function VendorAtelierProfilePage() {
           setErrorMessage={setErrorMessage}
           successMessage={successMessage}
           setSuccessMessage={setSuccessMessage}
+          isFieldsDisabled={isFieldsDisabled}
         />
       </div>
 
@@ -305,7 +309,7 @@ export default function VendorAtelierProfilePage() {
                   Store Profile Approved & Verified
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">
-                  Your store profile and delivery rates are live across the Veyra storefront.
+                  Your store profile and delivery rates are verified and live across the Veyra storefront.
                 </div>
               </div>
             </div>
@@ -319,7 +323,7 @@ export default function VendorAtelierProfilePage() {
                   Store Profile Under Super Admin Review
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">
-                  Your store details and delivery rates have been submitted for admin verification.
+                  Your store details and delivery rates have been submitted for admin verification. Fields are locked until verified.
                 </div>
               </div>
             </div>
@@ -353,10 +357,11 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="text"
                   required
+                  disabled={isFieldsDisabled}
                   value={form.brandName}
                   onChange={(e) => setForm({ ...form, brandName: e.target.value })}
                   placeholder="e.g. Your Brand Name"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -366,10 +371,11 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="text"
+                  disabled={isFieldsDisabled}
                   value={form.designerName}
                   onChange={(e) => setForm({ ...form, designerName: e.target.value })}
                   placeholder="e.g. Lead Tailor or Store Manager"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -382,10 +388,11 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="email"
                   required
+                  disabled={isFieldsDisabled}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="store@example.com"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -396,10 +403,11 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="tel"
                   required
+                  disabled={isFieldsDisabled}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+234 800 000 0000"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -427,10 +435,11 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="text"
                   required
+                  disabled={isFieldsDisabled}
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   placeholder="e.g. Ikeja, Yaba, Ibadan, etc."
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -440,9 +449,10 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <select
                   required
+                  disabled={isFieldsDisabled}
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold cursor-pointer"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="">-- Select State --</option>
                   {NIGERIAN_STATES.map((st) => (
@@ -456,9 +466,10 @@ export default function VendorAtelierProfilePage() {
                   Dispatches In
                 </label>
                 <select
+                  disabled={isFieldsDisabled}
                   value={form.dispatchDays}
                   onChange={(e) => setForm({ ...form, dispatchDays: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="Same-day / 1 day">Same-day / 1 business day</option>
                   <option value="1-2 business days">1-2 business days</option>
@@ -483,9 +494,10 @@ export default function VendorAtelierProfilePage() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                     <input
                       type="number"
+                      disabled={isFieldsDisabled}
                       value={form.sameCityFee}
                       onChange={(e) => setForm({ ...form, sameCityFee: Number(e.target.value) })}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                   <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Direct local rider</span>
@@ -499,9 +511,10 @@ export default function VendorAtelierProfilePage() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                     <input
                       type="number"
+                      disabled={isFieldsDisabled}
                       value={form.closeHubFee}
                       onChange={(e) => setForm({ ...form, closeHubFee: Number(e.target.value) })}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                   <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Within state / nearby hub</span>
@@ -515,9 +528,10 @@ export default function VendorAtelierProfilePage() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                     <input
                       type="number"
+                      disabled={isFieldsDisabled}
                       value={form.interstateFee}
                       onChange={(e) => setForm({ ...form, interstateFee: Number(e.target.value) })}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                   <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Other Nigerian states</span>
@@ -529,9 +543,10 @@ export default function VendorAtelierProfilePage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
+                    disabled={isFieldsDisabled}
                     checked={form.parkPickupEnabled}
                     onChange={(e) => setForm({ ...form, parkPickupEnabled: e.target.checked })}
-                    className="rounded border-[var(--border-subtle)] text-[var(--gold-accent)] cursor-pointer"
+                    className="rounded border-[var(--border-subtle)] text-[var(--gold-accent)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   <span className="text-xs font-mono-luxury text-[var(--text-primary)]">
                     Allow Park / Hub Waybill Pickup Option
@@ -545,9 +560,10 @@ export default function VendorAtelierProfilePage() {
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                       <input
                         type="number"
+                        disabled={isFieldsDisabled}
                         value={form.parkPickupFee}
                         onChange={(e) => setForm({ ...form, parkPickupFee: Number(e.target.value) })}
-                        className="w-full pl-6 pr-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold"
+                        className="w-full pl-6 pr-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold disabled:opacity-60 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -576,10 +592,11 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="text"
+                  disabled={isFieldsDisabled}
                   value={form.instagram}
                   onChange={(e) => setForm({ ...form, instagram: e.target.value })}
                   placeholder="@your_brand"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-pink-500 focus:outline-none"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-pink-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -590,10 +607,11 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="text"
+                  disabled={isFieldsDisabled}
                   value={form.tiktok}
                   onChange={(e) => setForm({ ...form, tiktok: e.target.value })}
                   placeholder="@your_tiktok"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-cyan-400 focus:outline-none"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-cyan-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -604,10 +622,11 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="text"
+                  disabled={isFieldsDisabled}
                   value={form.snapchat}
                   onChange={(e) => setForm({ ...form, snapchat: e.target.value })}
                   placeholder="@your_snapchat"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-amber-300 focus:outline-none"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-amber-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -618,10 +637,11 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="tel"
+                  disabled={isFieldsDisabled}
                   value={form.whatsapp}
                   onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
                   placeholder="+234 800 000 0000"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-emerald-500 focus:outline-none font-bold"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-emerald-500 focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -631,18 +651,35 @@ export default function VendorAtelierProfilePage() {
           <div className="pt-4 border-t border-[var(--border-subtle)]">
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || isFieldsDisabled}
               className="w-full py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? (
                 <>
                   <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
-                  <span>Saving Store Profile...</span>
+                  <span>Submitting Store Profile...</span>
+                </>
+              ) : isFieldsDisabled ? (
+                approvalStatus === 'approved' ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-400" />
+                    <span>Store Profile Verified & Active</span>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-4 w-4 text-amber-400" />
+                    <span>Profile Submitted & Awaiting Super Admin Review</span>
+                  </>
+                )
+              ) : approvalStatus === 'rejected' ? (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  <span>Resubmit Store Profile for Review</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  <span>Save Store Profile & Delivery Rates</span>
+                  <span>Save & Submit Store Profile for Review</span>
                 </>
               )}
             </button>
@@ -661,8 +698,12 @@ export default function VendorAtelierProfilePage() {
               <div className="h-12 w-12 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 flex items-center justify-center text-lg font-editorial font-bold text-[var(--gold-accent)]">
                 {(form.brandName || 'V').charAt(0)}
               </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">
-                {isBoutique ? 'Verified Boutique' : 'Verified Atelier'}
+              <span className={`px-3 py-1 rounded-full text-[10px] font-mono-luxury font-bold border ${
+                approvalStatus === 'approved'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              }`}>
+                {approvalStatus === 'approved' ? (isBoutique ? 'Verified Boutique' : 'Verified Atelier') : 'Pending Verification'}
               </span>
             </div>
 

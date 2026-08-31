@@ -137,7 +137,7 @@ export async function POST(request: Request) {
         parkPickupEnabled: true,
       },
       isProfileSaved: true,
-      approvalStatus: 'approved'
+      approvalStatus: 'pending'
     });
 
     const { data: updated, error } = await supabase
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
         account_number: body.accountNumber,
         account_name: body.accountName,
         bio: bioPayload,
-        is_verified: true,
+        is_verified: false,
       })
       .or(`id.eq.${vendorId},email.eq.${vendorId}`)
       .select()
