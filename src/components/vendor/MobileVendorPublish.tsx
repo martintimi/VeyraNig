@@ -552,11 +552,11 @@ export default function MobileVendorPublish({
           )}
 
           <textarea
-            rows={2}
+            rows={5}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Fabric specs, tailoring notes, occasion..."
-            className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none"
+            className="w-full px-3.5 py-2.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none min-h-[120px] leading-relaxed resize-y overflow-y-auto text-xs"
           />
         </div>
       </div>

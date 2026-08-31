@@ -878,11 +878,11 @@ export default function PublishGarmentPage() {
               )}
 
               <textarea
-                rows={3}
+                rows={6}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe material quality, leather grade, metal type, occasion, and care instructions..."
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none leading-relaxed"
+                className="w-full px-4 py-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none min-h-[140px] leading-relaxed resize-y overflow-y-auto"
               />
             </div>
 
