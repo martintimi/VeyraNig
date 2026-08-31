@@ -250,9 +250,11 @@ export default function BrandStorefrontPage() {
                 </span>
               </div>
               
-              <p className="text-xs text-[var(--text-secondary)] font-light max-w-xl leading-relaxed">
-                {vendor.bio}
-              </p>
+              {vendor.bio && (
+                <p className="text-xs text-[var(--text-secondary)] font-light max-w-xl leading-relaxed">
+                  {vendor.bio}
+                </p>
+              )}
 
               <div className="flex items-center gap-4 text-[11px] font-mono-luxury text-[var(--text-muted)] pt-1 flex-wrap">
                 <span className="flex items-center gap-1">

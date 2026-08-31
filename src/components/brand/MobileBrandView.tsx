@@ -137,6 +137,11 @@ export default function MobileBrandView({
               <span>·</span>
               <span className="text-emerald-400 font-bold">{dispatchDays}</span>
             </p>
+            {vendorProfile?.bio && (
+              <p className="text-xs text-[var(--text-secondary)] font-light mt-1.5 line-clamp-2">
+                {vendorProfile.bio}
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -411,6 +411,20 @@ export default function VendorAtelierProfilePage() {
                 />
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+                Brand Bio / Store Tagline
+              </label>
+              <textarea
+                rows={3}
+                disabled={isFieldsDisabled}
+                value={form.bio}
+                onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                placeholder="e.g. Luxury bespoke tailoring, ready-to-wear streetwear drops, and artisanal Nigerian fashion."
+                className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+              />
+            </div>
           </div>
 
           {/* 2. Store Location & Delivery Zone Rates */}
@@ -717,6 +731,11 @@ export default function VendorAtelierProfilePage() {
                   {form.city && form.state ? `${form.city}, ${form.state}` : form.location || 'Victoria Island, Lagos'}
                 </span>
               </p>
+              {form.bio && (
+                <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed mt-2 pt-2 border-t border-[var(--border-subtle)]">
+                  {form.bio}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[var(--border-subtle)] text-xs font-mono-luxury">

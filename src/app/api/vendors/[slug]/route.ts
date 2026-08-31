@@ -25,12 +25,15 @@ export async function GET(
     let resolvedVendor = vendorList?.find((v: any) => 
       v.id?.toLowerCase() === decodedSlug ||
       v.id?.toLowerCase().replace(/-/g, ' ') === cleanBrandName ||
+      v.id?.toLowerCase().replace(/[-_\s]/g, '') === decodedSlug.replace(/[-_\s]/g, '') ||
       v.brand_name?.toLowerCase() === cleanBrandName ||
-      v.brand_name?.toLowerCase() === decodedSlug
+      v.brand_name?.toLowerCase() === decodedSlug ||
+      v.brand_name?.toLowerCase().replace(/\s+/g, '-') === decodedSlug ||
+      v.email?.toLowerCase() === decodedSlug
     );
 
-    if (!resolvedVendor && vendorList && vendorList.length > 0) {
-      resolvedVendor = vendorList[0];
+    if (!resolvedVendor) {
+      return NextResponse.json({ error: `Brand storefront for "${slug}" not found` }, { status: 404 });
     }
 
     const vendorId = resolvedVendor?.id || decodedSlug.replace(/\s+/g, '-');
@@ -61,12 +64,8 @@ export async function GET(
       } catch (e) {}
     }
 
-    if (!bioText) {
-      const isBoutiqueType = resolvedVendor?.vendor_type === 'boutique_seller' || resolvedVendor?.vendor_type === 'boutique_merchant' || String(resolvedVendor?.vendor_type || '').includes('boutique');
-      bioText = isBoutiqueType
-        ? 'Contemporary Nigerian ready-to-wear streetwear and boutique fashion drops.'
-        : 'Master bespoke tailoring and luxury artisanal apparel.';
-    }
+    // Return exact bio without mock fallbacks
+    bioText = typeof bioText === 'string' ? bioText.trim() : '';
 
     const locationDisplay = resolvedVendor?.location || (city && state ? `${city}, ${state}` : city || state || 'Nigeria');
 
