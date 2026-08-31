@@ -43,12 +43,12 @@ export default function MarketplaceGrid() {
   const [quickLookProduct, setQuickLookProduct] = useState<any>(null);
 
   const categories: { id: GarmentCategory | 'all'; label: string }[] = [
-    { id: 'all', label: 'All Garments' },
-    { id: 'tops', label: selectedGender === 'female' ? 'Ankara & Silk Tops' : 'Senator & Tops' },
-    { id: 'bottoms', label: 'Trousers & Denim' },
-    { id: 'outerwear', label: 'Agbada & Robes' },
-    { id: 'footwear', label: 'Shoes & Slides' },
-    { id: 'accessories', label: 'Fila Caps' },
+    { id: 'all', label: 'All Items & Drops' },
+    { id: 'tops', label: selectedGender === 'female' ? 'Dresses & Tops' : 'Senator & Tops' },
+    { id: 'outerwear', label: selectedGender === 'female' ? 'Boubou & Robes' : 'Agbada & Hoodies' },
+    { id: 'bottoms', label: 'Trousers & Jeans' },
+    { id: 'footwear', label: 'Slides, Palms & Shoes' },
+    { id: 'accessories', label: 'Caps, Jewelry & Bags' },
   ];
 
   const brandOptions = useMemo(() => {

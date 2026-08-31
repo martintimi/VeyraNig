@@ -329,11 +329,17 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-[var(--text-primary)]">5.0</span>
-                <span className="text-[var(--text-muted)]">(18 verified orders)</span>
-              </div>
+              {reviewsData.count > 0 ? (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <span className="font-bold text-[var(--text-primary)]">{reviewsData.averageRating.toFixed(1)}</span>
+                  <span className="text-[var(--text-muted)]">({reviewsData.count} {reviewsData.count === 1 ? 'review' : 'reviews'})</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
+                  <span className="text-[var(--gold-accent)] font-bold">Verified Drop</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -385,7 +391,9 @@ export default function ProductDetailPage() {
           {/* 2. Size Selector */}
           <div className="p-5 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
             <div className="flex items-center justify-between text-xs font-mono-luxury">
-              <span className="text-[var(--text-secondary)] uppercase font-bold">Select Size:</span>
+              <span className="text-[var(--text-secondary)] uppercase font-bold">
+                {product.category === 'footwear' ? 'Select Shoe Size (EU):' : product.category === 'accessories' ? 'Size / Standard:' : 'Select Size:'}
+              </span>
               {isOutOfStock ? (
                 <span className="text-rose-400 font-bold">Out of Stock</span>
               ) : currentSizeStock <= 5 ? (
@@ -395,7 +403,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-5 gap-2.5 font-mono-luxury text-xs pt-1">
+            <div className="flex flex-wrap gap-2.5 font-mono-luxury text-xs pt-1">
               {(product.sizes || ['S', 'M', 'L', 'XL', 'XXL']).map((size: string) => {
                 const isChosen = size === selectedSize;
                 const szStock = product.sizeStock?.[size];
@@ -407,7 +415,7 @@ export default function ProductDetailPage() {
                     type="button"
                     disabled={szOutOfStock}
                     onClick={() => setSelectedSize(size)}
-                    className={`py-3.5 rounded-2xl border transition-all text-center flex items-center justify-center font-bold cursor-pointer ${
+                    className={`min-w-[48px] px-4 py-3 rounded-2xl border transition-all text-center flex items-center justify-center font-bold cursor-pointer ${
                       szOutOfStock
                         ? 'opacity-40 line-through cursor-not-allowed bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
                         : isChosen

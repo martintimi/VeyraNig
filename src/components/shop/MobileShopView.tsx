@@ -45,11 +45,11 @@ export default function MobileShopView() {
 
   const categories: { id: GarmentCategory | 'all'; label: string }[] = [
     { id: 'all', label: 'All' },
-    { id: 'tops', label: 'Tops' },
-    { id: 'outerwear', label: 'Outerwear' },
+    { id: 'tops', label: 'Tops & Kaftans' },
+    { id: 'outerwear', label: 'Boubou & Robes' },
     { id: 'bottoms', label: 'Trousers' },
-    { id: 'footwear', label: 'Footwear' },
-    { id: 'accessories', label: 'Accessories' },
+    { id: 'footwear', label: 'Slides & Shoes' },
+    { id: 'accessories', label: 'Caps & Jewelry' },
   ];
 
   const filteredProducts = useMemo(() => {

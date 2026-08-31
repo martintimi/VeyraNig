@@ -186,11 +186,17 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
             </div>
           </Link>
 
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[11px] font-mono-luxury">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            <span className="font-bold text-[var(--text-primary)]">5.0</span>
-            <span className="text-[var(--text-muted)]">({reviewsData.count || 12})</span>
-          </div>
+          {reviewsData.count > 0 ? (
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[11px] font-mono-luxury">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span className="font-bold text-[var(--text-primary)]">{reviewsData.averageRating.toFixed(1)}</span>
+              <span className="text-[var(--text-muted)]">({reviewsData.count})</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[10px] font-mono-luxury">
+              <span className="text-[var(--gold-accent)] font-bold">Verified Drop</span>
+            </div>
+          )}
         </div>
 
         {/* Title & Price */}
@@ -270,11 +276,13 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         {/* 5. 1-TAP SIZE SELECTOR */}
         <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
           <div className="flex items-center justify-between text-xs font-mono-luxury">
-            <span className="text-[var(--text-secondary)] uppercase font-bold">Select Size:</span>
-            <span className="text-[var(--gold-accent)] font-bold">Size: {selectedSize}</span>
+            <span className="text-[var(--text-secondary)] uppercase font-bold">
+              {product.category === 'footwear' ? 'Shoe Size (EU):' : product.category === 'accessories' ? 'Size / Standard:' : 'Select Size:'}
+            </span>
+            <span className="text-[var(--gold-accent)] font-bold">{selectedSize}</span>
           </div>
 
-          <div className="grid grid-cols-5 gap-2 font-mono-luxury text-xs">
+          <div className="flex flex-wrap gap-2 font-mono-luxury text-xs">
             {availableSizes.map((size: string) => {
               const isChosen = size === selectedSize;
               const szStock = product.sizeStock?.[size];
@@ -286,11 +294,11 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                   type="button"
                   disabled={szOutOfStock}
                   onClick={() => setSelectedSize(size)}
-                  className={`py-3 rounded-xl border transition-all text-center flex items-center justify-center font-bold cursor-pointer ${
+                  className={`min-w-[44px] px-3.5 py-2.5 rounded-xl border transition-all text-center flex items-center justify-center font-bold cursor-pointer ${
                     szOutOfStock
                       ? 'opacity-30 line-through cursor-not-allowed bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
                       : isChosen
-                      ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md'
+                      ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md font-extrabold'
                       : 'surface-card border-[var(--border-subtle)] text-[var(--text-primary)]'
                   }`}
                 >
