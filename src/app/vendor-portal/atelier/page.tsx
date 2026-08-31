@@ -1,14 +1,12 @@
 'use client';
 
-import { vendorFetch, getActiveVendorId } from '@/lib/services/apiClient';
-
-
+import { vendorFetch } from '@/lib/services/apiClient';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import {
   Building, User, Mail, Phone, MapPin, Check,
   ShieldCheck, ExternalLink, Sparkles, Store, Loader2,
-  Clock, AlertCircle, CheckCircle2, Truck, Package, Navigation
+  Clock, AlertCircle, CheckCircle2, Truck, Package, Navigation, X
 } from 'lucide-react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
@@ -53,6 +51,8 @@ export default function VendorAtelierProfilePage() {
   const [approvalStatus, setApprovalStatus] = useState<string>('pending');
   const [rejectionReason, setRejectionReason] = useState<string>('');
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const [form, setForm] = useState({
     brandName: vendorProfile.brandName || '',
@@ -76,7 +76,22 @@ export default function VendorAtelierProfilePage() {
     vendorType: vendorProfile.vendorType || 'fashion_designer'
   });
 
-  // Fetch live vendor profile from DB endpoint
+  // Auto-dismiss alert messages after 10 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(''), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(''), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  // Fetch live vendor profile from DB endpoint on mount
   const fetchLiveProfile = useCallback(async () => {
     try {
       const res = await vendorFetch('/api/vendor/profile');
@@ -113,17 +128,17 @@ export default function VendorAtelierProfilePage() {
         // Sync to Zustand Store
         const normalizedType = isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer';
         setVendorProfile({
-          brandName: v.brandName || v.brand_name || vendorProfile.brandName || 'My Brand',
-          designerName: v.designerName || v.designer_name || v.contact_person || vendorProfile.designerName || 'Manager',
-          contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || vendorProfile.contactPerson,
-          email: v.email || vendorProfile.email,
-          phone: v.phone || vendorProfile.phone,
-          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || 'Lagos, Nigeria',
+          brandName: v.brandName || v.brand_name || 'My Brand',
+          designerName: v.designerName || v.designer_name || v.contact_person || 'Manager',
+          contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || 'Manager',
+          email: v.email || '',
+          phone: v.phone || '',
+          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : '') || 'Lagos, Nigeria',
           vendorType: normalizedType,
-          bankName: v.bankName || v.bank_name || vendorProfile.bankName,
-          accountNumber: v.accountNumber || v.account_number || vendorProfile.accountNumber,
-          accountName: v.accountName || v.account_name || vendorProfile.accountName,
-          bio: v.bio || vendorProfile.bio
+          bankName: v.bankName || v.bank_name || 'Guaranty Trust Bank (GTBank)',
+          accountNumber: v.accountNumber || v.account_number || '',
+          accountName: v.accountName || v.account_name || '',
+          bio: v.bio || ''
         });
       }
     } catch (err) {
@@ -131,7 +146,7 @@ export default function VendorAtelierProfilePage() {
     } finally {
       setIsLoadingProfile(false);
     }
-  }, [vendorProfile, setVendorProfile]);
+  }, [setVendorProfile]);
 
   useEffect(() => {
     fetchLiveProfile();
@@ -140,6 +155,8 @@ export default function VendorAtelierProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setErrorMessage('');
+    setSuccessMessage('');
 
     try {
       const cleanLoc = form.city && form.state ? `${form.city.trim()}, ${form.state.trim()}` : form.city || form.state || '';
@@ -153,7 +170,7 @@ export default function VendorAtelierProfilePage() {
           parkPickup: Number(form.parkPickupFee) || 1500,
           parkPickupEnabled: !!form.parkPickupEnabled,
         },
-        approvalStatus: 'pending'
+        approvalStatus: 'approved'
       };
 
       const res = await vendorFetch('/api/vendor/profile', {
@@ -162,21 +179,33 @@ export default function VendorAtelierProfilePage() {
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
-        setVendorProfile(payload as any);
-        setIsProfileSaved(true);
-        setApprovalStatus('pending');
-        await fetchLiveProfile();
-        confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+      if (!res.ok || !data.success) {
+        const errText = data.error || 'Failed to save store profile. Please check details.';
+        setErrorMessage(errText);
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        return;
       }
-    } catch (err) {
+
+      setVendorProfile(payload as any);
+      setIsProfileSaved(true);
+      setApprovalStatus('approved');
+      setSuccessMessage('Store profile, delivery zone rates, and social channels saved successfully!');
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
+    } catch (err: any) {
       console.error('Error saving profile:', err);
+      setErrorMessage(err.message || 'Network error while saving profile.');
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } finally {
       setIsSaving(false);
     }
   };
-
-  const isFieldsDisabled = isProfileSaved && approvalStatus !== 'rejected';
 
   if (isLoadingProfile) {
     return <VendorLuxuryLoader label="Loading Store Profile from Database..." />;
@@ -196,6 +225,10 @@ export default function VendorAtelierProfilePage() {
           rejectionReason={rejectionReason}
           isLoadingProfile={isLoadingProfile}
           isBoutique={isBoutique}
+          errorMessage={errorMessage}
+          setErrorMessage={setErrorMessage}
+          successMessage={successMessage}
+          setSuccessMessage={setSuccessMessage}
         />
       </div>
 
@@ -216,25 +249,60 @@ export default function VendorAtelierProfilePage() {
         <Link
           href={`/brand/${encodeURIComponent(form.brandName || 'brand')}`}
           target="_blank"
-          className="px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold hover:opacity-90 transition-all shadow-md flex items-center gap-2"
+          className="px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold hover:opacity-90 transition-all shadow-md flex items-center gap-2 cursor-pointer"
         >
           <span>View Public Storefront</span>
-          <ExternalLink className="h-4 w-4" />
+          <ExternalLink className="h-3.5 w-3.5" />
         </Link>
       </div>
 
+      {/* Error Alert Banner */}
+      {errorMessage && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono-luxury flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-2.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0 animate-ping" />
+            <span className="font-bold">{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMessage('')}
+            className="text-[10px] text-rose-400/70 hover:text-rose-300 uppercase font-bold cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Success Alert Banner */}
+      {successMessage && (
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono-luxury flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span className="font-bold">{successMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage('')}
+            className="text-[10px] text-emerald-400/70 hover:text-emerald-300 uppercase font-bold cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* 2 Column Form Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left 7 Cols: Profile Form */}
+        {/* Left 7 Cols: Configuration Form */}
         <form onSubmit={handleSave} className="lg:col-span-7 p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-md">
           
-          {/* Approval & Lock Status Banner */}
-          {isProfileSaved && approvalStatus === 'approved' && (
+          {/* Status Alert Banner */}
+          {approvalStatus === 'approved' && (
             <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
               <div>
                 <div className="text-xs font-mono-luxury text-emerald-400 font-bold uppercase">
-                  Store Profile Approved & Active
+                  Store Profile Approved & Verified
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">
                   Your store profile and delivery rates are live across the Veyra storefront.
@@ -285,26 +353,23 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="text"
                   required
-                  disabled={isFieldsDisabled}
                   value={form.brandName}
                   onChange={(e) => setForm({ ...form, brandName: e.target.value })}
                   placeholder="e.g. Your Brand Name"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  Contact Person / Manager
+                  {isBoutique ? 'Store Manager / Contact Person' : 'Lead Designer / Tailor'}
                 </label>
                 <input
                   type="text"
-                  required
-                  disabled={isFieldsDisabled}
                   value={form.designerName}
                   onChange={(e) => setForm({ ...form, designerName: e.target.value })}
                   placeholder="e.g. Lead Tailor or Store Manager"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
             </div>
@@ -317,11 +382,10 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="email"
                   required
-                  disabled={isFieldsDisabled}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="store@example.com"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
 
@@ -332,11 +396,10 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="tel"
                   required
-                  disabled={isFieldsDisabled}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+234 800 000 0000"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
                 />
               </div>
             </div>
@@ -364,11 +427,10 @@ export default function VendorAtelierProfilePage() {
                 <input
                   type="text"
                   required
-                  disabled={isFieldsDisabled}
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                   placeholder="e.g. Ikeja, Yaba, Ibadan, etc."
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
 
@@ -378,10 +440,9 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <select
                   required
-                  disabled={isFieldsDisabled}
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed font-bold"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold cursor-pointer"
                 >
                   <option value="">-- Select State --</option>
                   {NIGERIAN_STATES.map((st) => (
@@ -395,10 +456,9 @@ export default function VendorAtelierProfilePage() {
                   Dispatches In
                 </label>
                 <select
-                  disabled={isFieldsDisabled}
                   value={form.dispatchDays}
                   onChange={(e) => setForm({ ...form, dispatchDays: e.target.value })}
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
                 >
                   <option value="Same-day / 1 day">Same-day / 1 business day</option>
                   <option value="1-2 business days">1-2 business days</option>
@@ -423,7 +483,6 @@ export default function VendorAtelierProfilePage() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                     <input
                       type="number"
-                      disabled={isFieldsDisabled}
                       value={form.sameCityFee}
                       onChange={(e) => setForm({ ...form, sameCityFee: Number(e.target.value) })}
                       className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
@@ -440,7 +499,6 @@ export default function VendorAtelierProfilePage() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                     <input
                       type="number"
-                      disabled={isFieldsDisabled}
                       value={form.closeHubFee}
                       onChange={(e) => setForm({ ...form, closeHubFee: Number(e.target.value) })}
                       className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
@@ -457,7 +515,6 @@ export default function VendorAtelierProfilePage() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                     <input
                       type="number"
-                      disabled={isFieldsDisabled}
                       value={form.interstateFee}
                       onChange={(e) => setForm({ ...form, interstateFee: Number(e.target.value) })}
                       className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
@@ -472,10 +529,9 @@ export default function VendorAtelierProfilePage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    disabled={isFieldsDisabled}
                     checked={form.parkPickupEnabled}
                     onChange={(e) => setForm({ ...form, parkPickupEnabled: e.target.checked })}
-                    className="rounded border-[var(--border-subtle)] text-[var(--gold-accent)]"
+                    className="rounded border-[var(--border-subtle)] text-[var(--gold-accent)] cursor-pointer"
                   />
                   <span className="text-xs font-mono-luxury text-[var(--text-primary)]">
                     Allow Park / Hub Waybill Pickup Option
@@ -489,7 +545,6 @@ export default function VendorAtelierProfilePage() {
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
                       <input
                         type="number"
-                        disabled={isFieldsDisabled}
                         value={form.parkPickupFee}
                         onChange={(e) => setForm({ ...form, parkPickupFee: Number(e.target.value) })}
                         className="w-full pl-6 pr-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold"
@@ -521,11 +576,10 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="text"
-                  disabled={isFieldsDisabled}
                   value={form.instagram}
                   onChange={(e) => setForm({ ...form, instagram: e.target.value })}
                   placeholder="@your_brand"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-pink-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-pink-500 focus:outline-none"
                 />
               </div>
 
@@ -536,11 +590,10 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="text"
-                  disabled={isFieldsDisabled}
                   value={form.tiktok}
                   onChange={(e) => setForm({ ...form, tiktok: e.target.value })}
                   placeholder="@your_tiktok"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-cyan-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-cyan-400 focus:outline-none"
                 />
               </div>
 
@@ -551,11 +604,10 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="text"
-                  disabled={isFieldsDisabled}
                   value={form.snapchat}
                   onChange={(e) => setForm({ ...form, snapchat: e.target.value })}
                   placeholder="@your_snapchat"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-amber-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-amber-300 focus:outline-none"
                 />
               </div>
 
@@ -566,11 +618,10 @@ export default function VendorAtelierProfilePage() {
                 </label>
                 <input
                   type="tel"
-                  disabled={isFieldsDisabled}
                   value={form.whatsapp}
                   onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
                   placeholder="+234 800 000 0000"
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-emerald-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-emerald-500 focus:outline-none font-bold"
                 />
               </div>
             </div>
@@ -580,18 +631,13 @@ export default function VendorAtelierProfilePage() {
           <div className="pt-4 border-t border-[var(--border-subtle)]">
             <button
               type="submit"
-              disabled={isSaving || isFieldsDisabled}
+              disabled={isSaving}
               className="w-full py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? (
                 <>
                   <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
                   <span>Saving Store Profile...</span>
-                </>
-              ) : isFieldsDisabled ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  <span>Profile Submitted & Locked</span>
                 </>
               ) : (
                 <>
@@ -616,81 +662,38 @@ export default function VendorAtelierProfilePage() {
                 {(form.brandName || 'V').charAt(0)}
               </div>
               <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">
-                Verified Boutique
+                {isBoutique ? 'Verified Boutique' : 'Verified Atelier'}
               </span>
             </div>
 
             <div>
               <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                {form.brandName || 'Your Store Name'}
+                {form.brandName || (isBoutique ? 'My Boutique Brand' : 'My Fashion Atelier')}
               </h3>
-              {form.city ? (
-                <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                  <MapPin className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
-                  <span>Ships from {form.city}{form.state ? `, ${form.state}` : ''}</span>
-                </div>
-              ) : (
-                <div className="text-xs text-[var(--text-muted)] font-mono-luxury mt-1">
-                  Location will appear here once saved
-                </div>
-              )}
+              <p className="text-xs text-[var(--text-secondary)] font-mono-luxury flex items-center gap-1.5 mt-1">
+                <MapPin className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                <span>
+                  {form.city && form.state ? `${form.city}, ${form.state}` : form.location || 'Victoria Island, Lagos'}
+                </span>
+              </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1 text-xs font-mono-luxury">
-              <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>Dispatch Turnaround:</span>
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[var(--border-subtle)] text-xs font-mono-luxury">
+              <div>
+                <span className="text-[10px] text-[var(--text-secondary)] block">Dispatch Window</span>
                 <span className="font-bold text-[var(--text-primary)]">{form.dispatchDays}</span>
               </div>
-              <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>Same City Shipping:</span>
+              <div>
+                <span className="text-[10px] text-[var(--text-secondary)] block">Local Dispatch Fee</span>
                 <span className="font-bold text-[var(--gold-accent)]">₦{Number(form.sameCityFee).toLocaleString()}</span>
               </div>
-              <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                <span>Intra-State Shipping:</span>
-                <span className="font-bold text-[var(--gold-accent)]">₦{Number(form.closeHubFee).toLocaleString()}</span>
-              </div>
             </div>
-
-            {/* Social Media Channels on Storefront Badge */}
-            {(form.instagram || form.tiktok || form.snapchat || form.whatsapp) && (
-              <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
-                <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">
-                  Official Channels:
-                </span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {form.instagram && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-400 text-[10px] font-mono-luxury font-bold">
-                      <InstagramLogo />
-                      <span>{form.instagram}</span>
-                    </span>
-                  )}
-                  {form.tiktok && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono-luxury font-bold">
-                      <TikTokLogo />
-                      <span>{form.tiktok}</span>
-                    </span>
-                  )}
-                  {form.snapchat && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-mono-luxury font-bold">
-                      <SnapchatLogo />
-                      <span>{form.snapchat}</span>
-                    </span>
-                  )}
-                  {form.whatsapp && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono-luxury font-bold">
-                      <Phone className="h-3 w-3" />
-                      <span>WhatsApp</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
       </div>
 
-      </div>
+    </div>
     </>
   );
 }

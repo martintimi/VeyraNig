@@ -28,6 +28,10 @@ interface MobileVendorAtelierProps {
   rejectionReason: string;
   isLoadingProfile: boolean;
   isBoutique: boolean;
+  errorMessage?: string;
+  setErrorMessage?: (msg: string) => void;
+  successMessage?: string;
+  setSuccessMessage?: (msg: string) => void;
 }
 
 export default function MobileVendorAtelier({
@@ -39,7 +43,11 @@ export default function MobileVendorAtelier({
   approvalStatus,
   rejectionReason,
   isLoadingProfile,
-  isBoutique
+  isBoutique,
+  errorMessage,
+  setErrorMessage,
+  successMessage,
+  setSuccessMessage
 }: MobileVendorAtelierProps) {
   if (isLoadingProfile) {
     return <VendorLuxuryLoader label="Loading Store Profile from Database..." />;
@@ -51,6 +59,44 @@ export default function MobileVendorAtelier({
   return (
     <form onSubmit={handleSave} className="space-y-4 animate-fadeIn pb-20 select-none">
       
+      {/* Top Error Alert Banner */}
+      {errorMessage && (
+        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono-luxury flex items-center justify-between gap-2.5 animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-rose-500 shrink-0 animate-ping" />
+            <span className="font-bold">{errorMessage}</span>
+          </div>
+          {setErrorMessage && (
+            <button
+              type="button"
+              onClick={() => setErrorMessage('')}
+              className="text-[10px] text-rose-400/70 hover:text-rose-300 uppercase font-bold cursor-pointer"
+            >
+              Dismiss
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Top Success Alert Banner */}
+      {successMessage && (
+        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono-luxury flex items-center justify-between gap-2.5 animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span className="font-bold">{successMessage}</span>
+          </div>
+          {setSuccessMessage && (
+            <button
+              type="button"
+              onClick={() => setSuccessMessage('')}
+              className="text-[10px] text-emerald-400/70 hover:text-emerald-300 uppercase font-bold cursor-pointer"
+            >
+              Dismiss
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 1. Header */}
       <div>
         <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20 mb-1">

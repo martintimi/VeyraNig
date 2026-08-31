@@ -95,9 +95,12 @@ export default function VendorAuthPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-dismiss error message after 10 seconds
+  // Auto-dismiss error message after 10 seconds and scroll to top
   useEffect(() => {
     if (errorMessage) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       const timer = setTimeout(() => {
         setErrorMessage('');
       }, 10000);
@@ -354,63 +357,63 @@ export default function VendorAuthPage() {
           </div>
         ))}
 
-        {/* Top Left Branding */}
+        {/* Top Floating Badge & Back Link */}
         <div className="relative z-20 flex items-center justify-between">
-          <Link href="/" className="group flex items-center gap-2">
-            <Image
-              src="/images/logo/veyra-logo.png"
-              alt="Veyra Atelier"
-              width={140}
-              height={42}
-              className="h-9 w-auto object-contain"
-            />
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 border border-white/10 text-white/90 hover:text-white text-xs font-mono-luxury uppercase tracking-wider backdrop-blur-md transition-all hover:bg-black/80"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Return to Storefront</span>
           </Link>
-        </div>
 
-        {/* Dynamic Editorial Captions */}
-        <div className="relative z-20 space-y-4 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-accent)]/20 text-[var(--gold-accent)] border border-[var(--gold-accent)]/40 text-xs font-mono-luxury uppercase tracking-wider backdrop-blur-md">
-            <Sparkles className="h-3.5 w-3.5 animate-spin text-[var(--gold-accent)]" />
-            <span>{vendorEditorialSlides[currentSlide].tag}</span>
-          </div>
-
-          <h2 className="font-editorial text-3xl xl:text-5xl text-white font-bold leading-tight">
-            {vendorEditorialSlides[currentSlide].title}
-          </h2>
-
-          <p className="text-sm xl:text-base text-white/80 font-light leading-relaxed">
-            {vendorEditorialSlides[currentSlide].subtitle}
-          </p>
-
-          {/* Dots Indicator */}
-          <div className="flex items-center gap-2 pt-4">
-            {vendorEditorialSlides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentSlide(i)}
-                className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
-                  currentSlide === i ? 'w-8 bg-[var(--gold-accent)]' : 'w-2 bg-white/40 hover:bg-white/70'
-                }`}
-                aria-label={`Slide ${i + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom Guarantee */}
-        <div className="relative z-20 flex items-center justify-between text-xs text-white/60 font-mono-luxury border-t border-white/10 pt-4">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
-            <span>0% Merchant Fee · Verified Bank Escrow</span>
+          <span className="px-3 py-1 rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase tracking-widest font-bold backdrop-blur-md">
+            {vendorEditorialSlides[currentSlide].tag}
           </span>
-          <span>Veyra Partner Infrastructure</span>
+        </div>
+
+        {/* Bottom Section: Caption & Micro Footer anchored to bottom */}
+        <div className="relative z-20 space-y-6 mt-auto">
+          {/* Editorial Story Caption */}
+          <div className="space-y-4 max-w-xl">
+            <div className="flex items-center gap-2">
+              {vendorEditorialSlides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                    currentSlide === i ? 'w-8 bg-[var(--gold-accent)]' : 'w-2 bg-white/40 hover:bg-white/70'
+                  }`}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
+            </div>
+
+            <div className="space-y-1.5">
+              <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-white font-bold leading-tight">
+                {vendorEditorialSlides[currentSlide].title}
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-300 font-light leading-relaxed">
+                {vendorEditorialSlides[currentSlide].subtitle}
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom Micro Footer */}
+          <div className="flex items-center justify-between text-[11px] font-mono-luxury text-zinc-400 border-t border-white/10 pt-4">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <span>0% Merchant Fee · Verified Bank Escrow</span>
+            </span>
+            <span>LAGOS · NIGERIA</span>
+          </div>
         </div>
       </div>
 
       {/* ======================================================== */}
       {/* RIGHT COLUMN: SCROLLABLE AUTH INTERFACE (50% WIDTH) */}
       {/* ======================================================== */}
-      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-14 relative z-20 overflow-y-auto">
+      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 relative z-20 overflow-y-auto">
         
         {/* Top Header */}
         <div className="flex items-center justify-between mb-8">
@@ -442,7 +445,7 @@ export default function VendorAuthPage() {
         </div>
 
         {/* Center Container */}
-        <div className="max-w-md w-full mx-auto space-y-6 my-auto py-6">
+        <div className="w-full max-w-xl xl:max-w-2xl mx-auto space-y-6 my-auto py-6">
           
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold tracking-wider">

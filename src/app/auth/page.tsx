@@ -75,9 +75,12 @@ function AuthPageContent() {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-dismiss error message after 10 seconds
+  // Auto-dismiss error message after 10 seconds and scroll to top
   useEffect(() => {
     if (errorMessage) {
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       const timer = setTimeout(() => {
         setErrorMessage('');
       }, 10000);
@@ -376,9 +379,9 @@ function AuthPageContent() {
       </div>
 
       {/* RIGHT COLUMN: Independently scrollable form */}
-      <div className="w-full lg:w-1/2 min-h-[100dvh] flex flex-col justify-start lg:justify-center bg-[var(--bg-primary)]">
+      <div className="w-full lg:w-1/2 min-h-[100dvh] flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 bg-[var(--bg-primary)] overflow-y-auto">
 
-        <div className="w-full max-w-lg mx-auto space-y-6 px-6 sm:px-8 lg:px-14 pt-12 pb-24">
+        <div className="w-full max-w-xl xl:max-w-2xl mx-auto space-y-6 my-auto pt-6 pb-16">
           
           {/* Header */}
           <div className="space-y-1.5">

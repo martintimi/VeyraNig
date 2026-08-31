@@ -116,9 +116,16 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
+    const socialLinks = {
+      instagram: body.instagram || body.socialLinks?.instagram || '',
+      tiktok: body.tiktok || body.socialLinks?.tiktok || '',
+      snapchat: body.snapchat || body.socialLinks?.snapchat || '',
+      whatsapp: body.whatsapp || body.socialLinks?.whatsapp || body.phone || ''
+    };
+
     const bioPayload = JSON.stringify({
       bio: body.bio || '',
-      socialLinks: body.socialLinks || {},
+      socialLinks,
       city: body.city || '',
       state: body.state || '',
       dispatchDays: body.dispatchDays || '1-2 business days',
@@ -146,7 +153,6 @@ export async function POST(request: Request) {
         account_name: body.accountName,
         bio: bioPayload,
         is_verified: true,
-        updated_at: new Date().toISOString()
       })
       .or(`id.eq.${vendorId},email.eq.${vendorId}`)
       .select()
