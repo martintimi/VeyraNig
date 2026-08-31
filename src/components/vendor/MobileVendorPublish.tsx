@@ -29,43 +29,52 @@ const STANDARD_COLORS = [
 ];
 
 const MALE_CATEGORIES = [
-  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory },
-  { id: 'agbada_robes', label: 'Grand Agbada & 3-Piece Robes', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'tshirts_tees', label: 'T-Shirts & Graphic Tees', generalCat: 'tops' as GarmentCategory },
-  { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory },
-  { id: 'jeans_trousers', label: 'Baggy Jeans, Cargo & Trousers', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'men_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory },
-  { id: 'men_shoes_loafers', label: 'Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory },
-  { id: 'men_caps_fila', label: 'Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory },
-  { id: 'men_jewelry_chains', label: 'Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory },
-  { id: 'men_bags_wallets', label: 'Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory },
+  // Apparel
+  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'agbada_robes', label: 'Grand Agbada & 3-Piece Robes', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'tshirts_tees', label: 'T-Shirts & Graphic Tees', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'jeans_trousers', label: 'Baggy Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
+  // Footwear
+  { id: 'men_slides_palms', label: '👡 Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'men_shoes_loafers', label: '👞 Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  // Accessories & Jewelry
+  { id: 'men_jewelry_chains', label: '💎 Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'men_caps_fila', label: '🧢 Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'men_bags_wallets', label: '👜 Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 const FEMALE_CATEGORIES = [
-  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory },
-  { id: 'boubou_kaftans', label: 'Silk Boubou & Kaftans', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory },
-  { id: 'corsets_tops', label: 'Corsets, Tops & Blouses', generalCat: 'tops' as GarmentCategory },
-  { id: 'female_streetwear', label: 'Female Streetwear & Hoodies', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'women_jeans_trousers', label: 'Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'women_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory },
-  { id: 'women_heels_mules', label: 'Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory },
-  { id: 'women_jewelry', label: 'Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory },
-  { id: 'women_bags', label: 'Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory },
-  { id: 'women_caps_scarves', label: 'Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory },
+  // Apparel
+  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'boubou_kaftans', label: 'Silk Boubou & Kaftans', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'corsets_tops', label: 'Corsets, Tops & Blouses', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'female_streetwear', label: 'Female Streetwear & Hoodies', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'women_jeans_trousers', label: 'Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
+  // Footwear
+  { id: 'women_slides_palms', label: '👡 Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'women_heels_mules', label: '👠 Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  // Accessories & Jewelry
+  { id: 'women_jewelry', label: '💎 Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'women_bags', label: '👜 Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'women_caps_scarves', label: '🧢 Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 const UNISEX_CATEGORIES = [
-  { id: 'unisex_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory },
-  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'unisex_slides_palms', label: 'Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory },
-  { id: 'unisex_sneakers', label: 'Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory },
-  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Bucket Hats', generalCat: 'accessories' as GarmentCategory },
-  { id: 'unisex_jewelry', label: 'Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory },
-  { id: 'unisex_bags', label: 'Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory },
+  // Apparel
+  { id: 'unisex_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
+  // Footwear
+  { id: 'unisex_slides_palms', label: '👡 Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'unisex_sneakers', label: '👟 Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  // Accessories & Jewelry
+  { id: 'unisex_jewelry', label: '💎 Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'unisex_caps_hats', label: '🧢 Caps, Beanies & Hats', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'unisex_bags', label: '🎒 Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 const APPAREL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -84,6 +93,7 @@ export default function MobileVendorPublish({
   getActiveVendorId
 }: MobileVendorPublishProps) {
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
+  const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>('all');
   const [name, setName] = useState('');
   const [subCategory, setSubCategory] = useState(MALE_CATEGORIES[0].id);
   const [category, setCategory] = useState<GarmentCategory>(MALE_CATEGORIES[0].generalCat);
@@ -123,6 +133,9 @@ export default function MobileVendorPublish({
   const [errorMessage, setErrorMessage] = useState('');
 
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
+  const filteredCategoryList = catFilterTab === 'all' 
+    ? currentCategoryList 
+    : currentCategoryList.filter(c => c.group === catFilterTab);
   const currentSizeList = category === 'footwear' ? FOOTWEAR_SIZES : category === 'accessories' ? ACCESSORY_SIZES : APPAREL_SIZES;
 
   const handleCategorySelect = (selectedSubCatId: string, generalCat: GarmentCategory) => {
@@ -443,18 +456,48 @@ export default function MobileVendorPublish({
         </div>
 
         <div>
-          <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-            Category / Piece Type <strong className="text-rose-400">*</strong>
-          </label>
-          <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
-            {currentCategoryList.map((cat) => (
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-[var(--text-secondary)] uppercase font-bold text-[10px]">
+              Category / Piece Type <strong className="text-rose-400">*</strong>
+            </label>
+            <span className="text-[9px] text-[var(--gold-accent)] font-bold uppercase">
+              {category === 'footwear' ? '👟 Shoe Sizing' : category === 'accessories' ? '💎 One-Size Stock' : '👔 Apparel Sizing'}
+            </span>
+          </div>
+
+          {/* Quick Segment Tabs */}
+          <div className="flex items-center gap-1.5 mb-2 overflow-x-auto no-scrollbar pb-0.5">
+            {[
+              { id: 'all', label: 'All Items' },
+              { id: 'apparel', label: '👔 Apparel' },
+              { id: 'footwear', label: '👟 Shoes & Slides' },
+              { id: 'accessories', label: '💎 Jewelry, Caps & Bags' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setCatFilterTab(tab.id as any)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono-luxury font-bold shrink-0 transition-all cursor-pointer ${
+                  catFilterTab === tab.id
+                    ? 'bg-[var(--gold-accent)] text-black shadow-sm'
+                    : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Clean Category Grid (No hidden scroll cut-off!) */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {filteredCategoryList.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => handleCategorySelect(cat.id, cat.generalCat)}
                 className={`p-2.5 rounded-xl border text-left text-[11px] font-mono-luxury transition-all cursor-pointer ${
                   subCategory === cat.id
-                    ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--text-primary)] font-bold'
+                    ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)]'
                     : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'
                 }`}
               >

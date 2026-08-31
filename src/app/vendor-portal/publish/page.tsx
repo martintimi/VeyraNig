@@ -110,6 +110,7 @@ export default function PublishGarmentPage() {
 
   // Department / Gender Filter: male | female | unisex
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
+  const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>('all');
 
   // Core Form State
   const [name, setName] = useState('');
@@ -420,6 +421,9 @@ export default function PublishGarmentPage() {
   };
 
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
+  const filteredCategoryList = catFilterTab === 'all'
+    ? currentCategoryList
+    : currentCategoryList.filter(c => (c.generalCat === 'accessories' && catFilterTab === 'accessories') || (c.generalCat === 'footwear' && catFilterTab === 'footwear') || (c.generalCat !== 'accessories' && c.generalCat !== 'footwear' && catFilterTab === 'apparel'));
   const currentSizeList = category === 'footwear' ? FOOTWEAR_SIZES : category === 'accessories' ? ACCESSORY_SIZES : APPAREL_SIZES;
 
   const totalStockCount = Object.values(sizeStock)
@@ -773,7 +777,7 @@ export default function PublishGarmentPage() {
 
             {/* Department Category Select */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] font-bold">
                   Garment / Accessory Category <strong className="text-rose-400">*</strong>
                 </label>
@@ -781,15 +785,39 @@ export default function PublishGarmentPage() {
                   {category === 'footwear' ? '👟 Footwear Sizing Active' : category === 'accessories' ? '💎 One-Size Inventory Active' : '👔 Apparel Sizing Active'}
                 </span>
               </div>
+
+              {/* Category Segment Tabs */}
+              <div className="flex items-center gap-2 mb-3">
+                {[
+                  { id: 'all', label: 'All Categories' },
+                  { id: 'apparel', label: '👔 Apparel & Sets' },
+                  { id: 'footwear', label: '👟 Footwear & Slides' },
+                  { id: 'accessories', label: '💎 Jewelry, Caps & Bags' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setCatFilterTab(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                      catFilterTab === tab.id
+                        ? 'bg-[var(--gold-accent)] text-black shadow-sm'
+                        : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-white'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                {currentCategoryList.map((cat) => (
+                {filteredCategoryList.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
                     onClick={() => handleCategorySelect(cat.id, cat.generalCat)}
                     className={`p-3 rounded-xl border text-left text-xs font-mono-luxury transition-all cursor-pointer ${
                       subCategory === cat.id
-                        ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--text-primary)] font-bold shadow-sm'
+                        ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--text-primary)] font-bold shadow-sm ring-1 ring-[var(--gold-accent)]'
                         : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--gold-accent)]/50'
                     }`}
                   >
