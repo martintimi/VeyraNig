@@ -48,44 +48,13 @@ export async function GET(request: Request) {
       matchedReviews = matchedReviews.filter(r => (r.vendorId || '').toLowerCase().trim() === cleanVId);
     }
 
-    // If no real reviews found yet for this item/vendor, provide initial verified preview reviews so the UI is active
-    if (matchedReviews.length === 0) {
-      const defaultReviews = [
-        {
-          id: 'rev-def-1',
-          orderNumber: '#VY-ORD-9102',
-          productId: productId || 'prod-default',
-          productName: 'Lookbook Drop Piece',
-          vendorId: vendorId || 'moji-wears',
-          customerName: 'Tunde Adeleke',
-          rating: 5,
-          fitRating: 'true_to_size',
-          comment: 'Incredible silhouette! Fabric has rich weight, stitches are clean and it sits exactly like the photos.',
-          createdAt: '25 Aug 2026'
-        },
-        {
-          id: 'rev-def-2',
-          orderNumber: '#VY-ORD-8841',
-          productId: productId || 'prod-default',
-          productName: 'Lookbook Drop Piece',
-          vendorId: vendorId || 'moji-wears',
-          customerName: 'Chiamaka N.',
-          rating: 5,
-          fitRating: 'true_to_size',
-          comment: 'Fast dispatch from the vendor and zero fit issues. Super comfortable streetwear.',
-          createdAt: '24 Aug 2026'
-        }
-      ];
-      matchedReviews = defaultReviews;
-    }
-
     const totalCount = matchedReviews.length;
     const avgRating = totalCount > 0
       ? Number((matchedReviews.reduce((sum, r) => sum + r.rating, 0) / totalCount).toFixed(1))
-      : 5.0;
+      : 0;
 
     const trueToSizeCount = matchedReviews.filter(r => r.fitRating === 'true_to_size').length;
-    const fitAccuracyPercent = totalCount > 0 ? Math.round((trueToSizeCount / totalCount) * 100) : 100;
+    const fitAccuracyPercent = totalCount > 0 ? Math.round((trueToSizeCount / totalCount) * 100) : 0;
 
     return NextResponse.json({
       success: true,

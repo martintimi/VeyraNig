@@ -175,13 +175,13 @@ export default function VendorOverviewPage() {
         {/* STATUS NOTIFICATION BANNER */}
         {/* ======================================================== */}
         {isRejected && (
-          <div className="p-5 sm:p-6 rounded-3xl surface-card border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fadeIn shadow-md">
+          <div className="p-5 sm:p-6 rounded-3xl surface-card border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fadeIn shadow-md">
             <div className="flex items-start sm:items-center gap-3.5">
-              <div className="h-11 w-11 rounded-2xl bg-[var(--bg-secondary)] text-[var(--gold-accent)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+              <div className="h-11 w-11 rounded-2xl bg-rose-500/15 text-rose-500 border border-rose-500/30 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-mono-luxury font-bold uppercase text-[var(--gold-accent)] tracking-wider">
+                <span className="text-[10px] font-mono-luxury font-bold uppercase text-rose-400 tracking-wider">
                   Action Required · Profile Returned
                 </span>
                 <h3 className="font-editorial text-lg sm:text-xl font-bold text-[var(--text-primary)]">
@@ -195,7 +195,7 @@ export default function VendorOverviewPage() {
 
             <Link
               href="/vendor-portal/atelier"
-              className="px-5 py-2.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all flex items-center gap-2 shrink-0 shadow-md w-fit cursor-pointer"
+              className="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-mono-luxury uppercase text-xs font-bold transition-all flex items-center gap-2 shrink-0 shadow-md w-fit cursor-pointer"
             >
               <span>Update Store Details</span>
               <ArrowRight className="h-3.5 w-3.5" />

@@ -66,17 +66,17 @@ export default function MobileVendorOverview({
       
       {/* 1. Status Notification Alerts if needed */}
       {isRejected && (
-        <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-2">
-          <div className="flex items-center gap-2 text-[var(--gold-accent)]">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span className="text-[11px] font-mono-luxury font-bold uppercase tracking-wider">Profile Returned for Correction</span>
+        <div className="p-4 rounded-2xl surface-card border border-rose-500/30 space-y-2">
+          <div className="flex items-center gap-2 text-rose-400">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />
+            <span className="text-[11px] font-mono-luxury font-bold uppercase tracking-wider text-rose-400">Profile Returned for Correction</span>
           </div>
           <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
             {profileStatus.rejectionReason ? `Admin Feedback: "${profileStatus.rejectionReason}"` : 'Please review your store bio, turnaround times, or delivery zone rates and resubmit.'}
           </p>
           <Link
             href="/vendor-portal/atelier"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-[11px] font-mono-luxury uppercase font-bold mt-1 shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-mono-luxury uppercase font-bold mt-1 shadow-sm"
           >
             <span>Update Store Details</span>
             <ArrowRight className="h-3 w-3" />

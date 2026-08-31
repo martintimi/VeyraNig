@@ -389,13 +389,13 @@ export default function PublishGarmentPage() {
     return (
       <div className="p-6 sm:p-12 max-w-3xl mx-auto space-y-8 animate-fadeIn text-center">
         {isRejected ? (
-          <div className="p-8 sm:p-12 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-xl">
-            <div className="h-16 w-16 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center mx-auto shadow-sm">
-              <AlertTriangle className="h-8 w-8 text-[var(--gold-accent)]" />
+          <div className="p-8 sm:p-12 rounded-3xl surface-card border border-rose-500/30 space-y-6 shadow-xl relative overflow-hidden">
+            <div className="h-16 w-16 rounded-2xl bg-rose-500/15 text-rose-500 border border-rose-500/30 flex items-center justify-center mx-auto shadow-sm">
+              <AlertTriangle className="h-8 w-8 text-rose-500" />
             </div>
 
             <div className="space-y-3 max-w-lg mx-auto">
-              <span className="px-3 py-1 rounded-full bg-[var(--bg-secondary)] text-[var(--gold-accent)] border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
+              <span className="px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
                 Action Required · Store Profile Returned
               </span>
               <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
@@ -403,12 +403,12 @@ export default function PublishGarmentPage() {
               </h1>
               
               {profileStatus?.rejectionReason && (
-                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-left space-y-1 mt-2">
-                  <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] font-bold block">
+                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-rose-500/30 text-left space-y-1 mt-2">
+                  <span className="text-[10px] font-mono-luxury uppercase text-rose-400 font-bold block">
                     Admin Feedback
                   </span>
-                  <p className="text-xs text-[var(--text-primary)] font-mono-luxury leading-relaxed">
-                    {profileStatus.rejectionReason}
+                  <p className="text-xs text-[var(--text-primary)] font-mono-luxury leading-relaxed font-semibold">
+                    "{profileStatus.rejectionReason}"
                   </p>
                 </div>
               )}
@@ -421,7 +421,7 @@ export default function PublishGarmentPage() {
             <div className="pt-2">
               <Link
                 href="/vendor-portal/atelier"
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-mono-luxury uppercase text-xs font-bold transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span>Update Store Profile & Resubmit</span>
                 <ArrowRight className="h-4 w-4" />

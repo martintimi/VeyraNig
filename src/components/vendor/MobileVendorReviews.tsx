@@ -83,14 +83,14 @@ export default function MobileVendorReviews({
           </span>
           <div className="flex items-baseline gap-1.5">
             <span className="font-editorial text-2xl font-bold text-[var(--gold-accent)]">
-              {reviewsData.averageRating.toFixed(1)}
+              {reviewsData.count > 0 ? reviewsData.averageRating.toFixed(1) : '—'}
             </span>
             <div className="flex items-center gap-0.5 text-[var(--gold-accent)]">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
                   className={`h-3 w-3 ${
-                    s <= Math.round(reviewsData.averageRating)
+                    reviewsData.count > 0 && s <= Math.round(reviewsData.averageRating)
                       ? 'fill-current text-[var(--gold-accent)]'
                       : 'text-[var(--border-subtle)]'
                   }`}
@@ -99,7 +99,7 @@ export default function MobileVendorReviews({
             </div>
           </div>
           <p className="text-[9px] font-mono-luxury text-[var(--text-secondary)]">
-            {reviewsData.count} Verified Review(s)
+            {reviewsData.count > 0 ? `${reviewsData.count} Verified Review(s)` : 'No ratings yet'}
           </p>
         </div>
 
@@ -110,14 +110,16 @@ export default function MobileVendorReviews({
           </span>
           <div className="flex items-baseline gap-1.5">
             <span className="font-editorial text-2xl font-bold text-emerald-400">
-              {reviewsData.fitAccuracyPercent}%
+              {reviewsData.count > 0 ? `${reviewsData.fitAccuracyPercent}%` : '—'}
             </span>
-            <span className="text-[9px] text-emerald-400 font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10">
-              True Size
-            </span>
+            {reviewsData.count > 0 && (
+              <span className="text-[9px] text-emerald-400 font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10">
+                True Size
+              </span>
+            )}
           </div>
           <p className="text-[9px] font-mono-luxury text-[var(--text-secondary)]">
-            Matches RTW standard
+            {reviewsData.count > 0 ? 'Matches RTW standard' : 'Awaiting orders'}
           </p>
         </div>
 

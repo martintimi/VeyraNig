@@ -103,14 +103,14 @@ export default function VendorReviewsPage() {
           </span>
           <div className="flex items-baseline gap-3">
             <span className="font-editorial text-4xl font-bold text-[var(--gold-accent)]">
-              {reviewsData.averageRating.toFixed(1)}
+              {reviewsData.count > 0 ? reviewsData.averageRating.toFixed(1) : '—'}
             </span>
             <div className="flex items-center gap-1 text-[var(--gold-accent)]">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
                   className={`h-4 w-4 ${
-                    star <= Math.round(reviewsData.averageRating)
+                    reviewsData.count > 0 && star <= Math.round(reviewsData.averageRating)
                       ? 'fill-current text-[var(--gold-accent)]'
                       : 'text-[var(--border-subtle)]'
                   }`}
@@ -119,7 +119,7 @@ export default function VendorReviewsPage() {
             </div>
           </div>
           <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
-            Based on {reviewsData.count} verified order completion(s)
+            {reviewsData.count > 0 ? `Based on ${reviewsData.count} verified order completion(s)` : 'No buyer ratings recorded yet'}
           </p>
         </div>
 
@@ -130,14 +130,16 @@ export default function VendorReviewsPage() {
           </span>
           <div className="flex items-baseline gap-3">
             <span className="font-editorial text-4xl font-bold text-emerald-400">
-              {reviewsData.fitAccuracyPercent}%
+              {reviewsData.count > 0 ? `${reviewsData.fitAccuracyPercent}%` : '—'}
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono-luxury font-bold">
-              True to Size
-            </span>
+            {reviewsData.count > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono-luxury font-bold">
+                True to Size
+              </span>
+            )}
           </div>
           <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
-            Shoppers report garments match standard ready-to-wear sizing
+            {reviewsData.count > 0 ? 'Shoppers report garments match standard ready-to-wear sizing' : 'Awaiting order completion feedback'}
           </p>
         </div>
 
