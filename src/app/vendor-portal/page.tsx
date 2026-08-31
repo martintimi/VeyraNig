@@ -8,7 +8,7 @@ import Image from 'next/image';
 import {
   TrendingUp, PackageCheck, DollarSign, Sparkles,
   ArrowUpRight, Plus, ExternalLink, ShieldCheck, CheckCircle2,
-  ShoppingBag, Scissors, Layers, Loader2, Clock, AlertTriangle, AlertCircle, ArrowRight, Store, RefreshCw, Star
+  ShoppingBag, Scissors, Layers, Loader2, Clock, AlertTriangle, AlertCircle, ArrowRight, Store, RefreshCw, Star, Lock
 } from 'lucide-react';
 import MobileVendorOverview from '@/components/vendor/MobileVendorOverview';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
@@ -286,13 +286,24 @@ export default function VendorOverviewPage() {
             >
               <RefreshCw className="h-4 w-4" />
             </button>
-            <Link
-              href="/vendor-portal/publish"
-              className="px-5 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{isBoutique ? 'Add New Product Drop' : 'Publish Bespoke Piece'}</span>
-            </Link>
+            {isVerified ? (
+              <Link
+                href="/vendor-portal/publish"
+                className="px-5 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>{isBoutique ? 'Add New Product Drop' : 'Publish Bespoke Piece'}</span>
+              </Link>
+            ) : (
+              <Link
+                href="/vendor-portal/atelier"
+                className="px-5 py-3 rounded-full bg-[var(--bg-secondary)] border border-amber-500/30 text-amber-400 font-mono-luxury uppercase text-xs font-bold tracking-wider hover:bg-amber-500/10 transition-all shadow-md flex items-center gap-2"
+                title="Store verification required before adding drops"
+              >
+                <Lock className="h-3.5 w-3.5 text-amber-400" />
+                <span>Verification Required to Drop</span>
+              </Link>
+            )}
             <Link
               href="/vendor-portal/orders"
               className="px-5 py-3 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-2"

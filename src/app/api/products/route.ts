@@ -190,6 +190,37 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
+    // Check vendor verification status before permitting publication
+    if (vendorId) {
+      const { data: vendorRecord } = await supabase
+        .from('vendors')
+        .select('*')
+        .or(`id.eq.${vendorId},email.eq.${vendorId}`)
+        .maybeSingle();
+
+      if (vendorRecord) {
+        let isApproved = !!vendorRecord.is_verified;
+        let approvalStatus = isApproved ? 'approved' : 'pending';
+
+        if (vendorRecord.bio && vendorRecord.bio.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(vendorRecord.bio);
+            if (parsed.approvalStatus) {
+              approvalStatus = parsed.approvalStatus;
+              isApproved = parsed.approvalStatus === 'approved';
+            }
+          } catch (e) {}
+        }
+
+        if (!isApproved) {
+          const reason = approvalStatus === 'rejected'
+            ? 'Your store profile was returned for correction. Please update your store details and get Super Admin approval before publishing pieces.'
+            : 'Your store profile is under review. Product publishing will be unlocked once approved by Super Admin.';
+          return NextResponse.json({ error: reason }, { status: 403 });
+        }
+      }
+    }
+
     const productId = `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const colorsList = Array.isArray(colors)

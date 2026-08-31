@@ -7,7 +7,7 @@ import {
   TrendingUp, PackageCheck, DollarSign, Sparkles,
   Plus, ExternalLink, ShieldCheck, ShoppingBag,
   Scissors, AlertTriangle, AlertCircle, Clock,
-  ArrowRight, Store, Copy, Check, Share2, Banknote
+  ArrowRight, Store, Copy, Check, Share2, Banknote, Lock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -146,13 +146,23 @@ export default function MobileVendorOverview({
 
         {/* Quick Action Chips */}
         <div className="grid grid-cols-2 gap-2 pt-1 relative z-10">
-          <Link
-            href="/vendor-portal/publish"
-            className="py-2.5 px-3 rounded-2xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-[10px] font-bold shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>+ Add New Drop</span>
-          </Link>
+          {isVerified ? (
+            <Link
+              href="/vendor-portal/publish"
+              className="py-2.5 px-3 rounded-2xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-[10px] font-bold shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>+ Add New Drop</span>
+            </Link>
+          ) : (
+            <Link
+              href="/vendor-portal/atelier"
+              className="py-2.5 px-3 rounded-2xl bg-[var(--bg-secondary)] border border-amber-500/30 text-amber-400 font-mono-luxury uppercase text-[10px] font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+            >
+              <Lock className="h-3 w-3 text-amber-400" />
+              <span>Verify Store to Drop</span>
+            </Link>
+          )}
           <Link
             href="/vendor-portal/orders"
             className="py-2.5 px-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-[10px] font-bold flex items-center justify-center gap-1.5 hover:border-[var(--gold-accent)] active:scale-95 transition-transform"
