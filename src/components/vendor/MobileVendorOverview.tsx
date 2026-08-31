@@ -7,7 +7,7 @@ import {
   TrendingUp, PackageCheck, DollarSign, Sparkles,
   Plus, ExternalLink, ShieldCheck, ShoppingBag,
   Scissors, AlertTriangle, AlertCircle, Clock,
-  ArrowRight, Store, Copy, Check, Share2
+  ArrowRight, Store, Copy, Check, Share2, Banknote
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -22,6 +22,9 @@ interface MobileVendorOverviewProps {
     rejectionReason: string;
   } | null;
   pendingOrdersCount?: number;
+  activeEscrowBalance?: number;
+  settledPayouts?: number;
+  recentOrders?: any[];
 }
 
 import { isBoutiqueVendor } from '@/types';
@@ -31,7 +34,10 @@ export default function MobileVendorOverview({
   dbProducts,
   totalLiveInventory,
   profileStatus,
-  pendingOrdersCount = 0
+  pendingOrdersCount = 0,
+  activeEscrowBalance = 0,
+  settledPayouts = 0,
+  recentOrders = []
 }: MobileVendorOverviewProps) {
   const [copied, setCopied] = useState(false);
   const isBoutique = isBoutiqueVendor(vendorProfile);
@@ -56,7 +62,7 @@ export default function MobileVendorOverview({
   };
 
   return (
-    <div className="space-y-4 animate-fadeIn pb-12 select-none">
+    <div className="space-y-4 animate-fadeIn pb-16 select-none">
       
       {/* 1. Status Notification Alerts if needed */}
       {isRejected && (
@@ -152,7 +158,7 @@ export default function MobileVendorOverview({
             className="py-2.5 px-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-[10px] font-bold flex items-center justify-center gap-1.5 hover:border-[var(--gold-accent)] active:scale-95 transition-transform"
           >
             <PackageCheck className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-            <span>Pack Orders</span>
+            <span>Pack Orders ({pendingOrdersCount})</span>
           </Link>
         </div>
 
@@ -160,7 +166,7 @@ export default function MobileVendorOverview({
         <div className="absolute -right-12 -bottom-12 w-40 h-40 bg-[var(--gold-accent)]/5 rounded-full blur-2xl pointer-events-none" />
       </div>
 
-      {/* 3. 2x2 Compact Metric Grid */}
+      {/* 3. 2x2 Compact Metric Grid Connected to Real Endpoints */}
       <div className="grid grid-cols-2 gap-2.5 font-mono-luxury">
         
         {/* Metric 1: Live Drops */}
@@ -169,7 +175,7 @@ export default function MobileVendorOverview({
           <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)] leading-none">{dbProducts.length}</div>
           <div className="text-[9px] text-emerald-400 flex items-center gap-1 pt-0.5">
             <TrendingUp className="h-2.5 w-2.5" />
-            <span>Active in store</span>
+            <span>Active in catalog</span>
           </div>
         </div>
 
@@ -178,7 +184,7 @@ export default function MobileVendorOverview({
           <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] block">Orders to Pack</span>
           <div className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-none">{pendingOrdersCount}</div>
           <div className="text-[9px] text-[var(--text-secondary)] pt-0.5">
-            {pendingOrdersCount === 0 ? 'Fulfillment up to date' : 'Awaiting dispatch'}
+            {pendingOrdersCount === 0 ? 'Queue is clear' : 'Awaiting dispatch'}
           </div>
         </div>
 
@@ -193,16 +199,70 @@ export default function MobileVendorOverview({
 
         {/* Metric 4: Escrow Settlement */}
         <div className="p-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
-          <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] block">Escrow Balance</span>
-          <div className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-none">₦0</div>
-          <div className="text-[9px] text-[var(--gold-accent)] pt-0.5 font-bold">
-            Bank Payout Active
+          <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] block">Active Escrow</span>
+          <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)] leading-none">
+            ₦{activeEscrowBalance.toLocaleString()}
+          </div>
+          <div className="text-[9px] text-emerald-400 pt-0.5 font-bold">
+            Auto-Settles T+0
           </div>
         </div>
 
       </div>
 
-      {/* 4. Storefront Link Sharing Card */}
+      {/* 4. Live Incoming Orders Section (If Any) */}
+      {recentOrders.length > 0 && (
+        <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+              <PackageCheck className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+              <span>Incoming Patron Orders ({recentOrders.length})</span>
+            </span>
+            <Link
+              href="/vendor-portal/orders"
+              className="text-[10px] text-[var(--gold-accent)] uppercase font-bold hover:underline"
+            >
+              View All
+            </Link>
+          </div>
+
+          <div className="space-y-2">
+            {recentOrders.slice(0, 3).map((ord: any, idx: number) => {
+              const rowSubtotal = (ord.items || []).reduce((s: number, i: any) => s + (Number(i.price) || 0) * (i.quantity || 1), 0);
+              const isSettled = ord.trackingStage >= 4;
+
+              return (
+                <div
+                  key={ord.id || ord.orderNumber || idx}
+                  className="p-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center justify-between"
+                >
+                  <div>
+                    <span className="font-bold text-[var(--gold-accent)] block text-xs">
+                      {ord.orderNumber}
+                    </span>
+                    <span className="text-[10px] text-[var(--text-muted)]">
+                      {ord.customerName} · {ord.date || 'Recent'}
+                    </span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="font-editorial font-bold text-sm text-[var(--text-primary)] block">
+                      ₦{rowSubtotal.toLocaleString()}
+                    </span>
+                    <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded-full inline-block ${
+                      isSettled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                    }`}>
+                      {isSettled ? 'Settled' : 'In Escrow'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 5. Storefront Link Sharing Card */}
       <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -259,7 +319,7 @@ export default function MobileVendorOverview({
         </div>
       </div>
 
-      {/* 5. Live Product Drops List */}
+      {/* 6. Live Product Drops List */}
       <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between">
           <h3 className="font-editorial text-lg font-bold text-[var(--text-primary)]">
