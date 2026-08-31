@@ -3,9 +3,15 @@
 export function getActiveVendorId(): string {
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('veyra_vendor_id');
-    if (stored && stored.trim().length > 0) return stored.trim();
+    if (stored && stored.trim().length > 0 && stored !== 'undefined' && stored !== 'null') {
+      return stored.trim();
+    }
+    const storedEmail = localStorage.getItem('veyra_vendor_email');
+    if (storedEmail && storedEmail.trim().length > 0 && storedEmail !== 'undefined' && storedEmail !== 'null') {
+      return storedEmail.trim();
+    }
   }
-  return 'moji-wears';
+  return '';
 }
 
 export function getActiveVendorToken(): string | null {
@@ -20,10 +26,13 @@ export async function vendorFetch(url: string, options: RequestInit = {}) {
   const token = getActiveVendorToken();
 
   const customHeaders: Record<string, string> = {
-    'x-vendor-id': vendorId,
     'Cache-Control': 'no-cache',
     ...(options.headers as Record<string, string> || {}),
   };
+
+  if (vendorId) {
+    customHeaders['x-vendor-id'] = vendorId;
+  }
 
   if (token) {
     customHeaders['Authorization'] = `Bearer ${token}`;

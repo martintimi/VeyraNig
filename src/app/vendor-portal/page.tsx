@@ -34,7 +34,7 @@ export default function VendorOverviewPage() {
   const loadVendorData = useCallback(async () => {
     try {
       setLoadingData(true);
-      const currentVendorId = vendorProfile.email || 'moji-wears';
+      const currentVendorId = vendorProfile.email || getActiveVendorId();
       const currentBrandName = (vendorProfile.brandName || '').toLowerCase().trim();
 
       // Parallel fetch from all real endpoints
@@ -395,7 +395,7 @@ export default function VendorOverviewPage() {
                     <div className="flex items-center gap-4">
                       <div className="relative h-16 w-14 rounded-xl overflow-hidden bg-black shrink-0">
                         <Image
-                          src={piece.image_url || '/images/products/BlackTrapStarHoodie.jpg'}
+                          src={piece.imageUrl || piece.image_url || '/images/products/BlackTrapStarHoodie.jpg'}
                           alt={piece.name}
                           fill
                           unoptimized

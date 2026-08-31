@@ -360,7 +360,7 @@ export default function MobileVendorOverview({
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="relative h-13 w-12 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--border-subtle)]">
                     <Image
-                      src={piece.image_url || '/images/products/BlackTrapStarHoodie.jpg'}
+                      src={piece.imageUrl || piece.image_url || '/images/products/BlackTrapStarHoodie.jpg'}
                       alt={piece.name}
                       fill
                       unoptimized

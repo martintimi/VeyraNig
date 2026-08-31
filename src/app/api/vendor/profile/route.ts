@@ -13,14 +13,15 @@ export async function GET(request: Request) {
 
     let query = supabase.from('vendors').select('*');
 
-    if (vendorId) {
-      query = query.eq('id', vendorId);
+    if (vendorId && vendorId.trim().length > 0 && vendorId !== 'undefined' && vendorId !== 'null') {
+      const cleanVId = vendorId.trim();
+      query = query.or(`id.eq.${cleanVId},email.eq.${cleanVId}`);
     } else {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         query = query.or(`user_id.eq.${user.id},email.eq.${user.email}`);
       } else {
-        query = query.eq('id', 'moji-wears');
+        return NextResponse.json({ success: false, error: 'No active vendor session' }, { status: 401 });
       }
     }
 
@@ -107,8 +108,11 @@ export async function POST(request: Request) {
     const vendorId = 
       body.vendorId || 
       body.id || 
-      request.headers.get('x-vendor-id') || 
-      'moji-wears';
+      request.headers.get('x-vendor-id');
+
+    if (!vendorId) {
+      return NextResponse.json({ error: 'Vendor ID required' }, { status: 400 });
+    }
 
     const supabase = await createClient();
 
@@ -144,9 +148,9 @@ export async function POST(request: Request) {
         is_verified: true,
         updated_at: new Date().toISOString()
       })
-      .eq('id', vendorId)
+      .or(`id.eq.${vendorId},email.eq.${vendorId}`)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error updating vendor profile in DB:', error);

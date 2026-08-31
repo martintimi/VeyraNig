@@ -190,9 +190,10 @@ export async function verifyOtpCode(email: string, token: string, type: 'signup'
       success: true,
       user: result.user,
       profile: result.profile,
+      vendor: result.vendor,
     };
   } catch (err: any) {
-    return { success: false, error: err.message || 'Network error verifying OTP' };
+    return { success: false, error: err.message || 'Network error' };
   }
 }
 

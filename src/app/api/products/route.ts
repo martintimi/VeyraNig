@@ -8,6 +8,19 @@ const NIGERIAN_STATES = [
   'Kebbi', 'Kogi', 'Nasarawa', 'Niger', 'Plateau', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Bauchi', 'Borno', 'Adamawa'
 ];
 
+export function getSmartFallbackImage(name: string = '', category: string = ''): string {
+  const n = (name || '').toLowerCase();
+  const c = (category || '').toLowerCase();
+  if (n.includes('agbada') || c === 'agbada_robes' || c === 'boubou_kaftans') return '/images/products/BlackAgbada.jpg';
+  if (n.includes('senator') || n.includes('kaftan') || c === 'senator_kaftan') return '/images/products/BlackSenator.jpg';
+  if (n.includes('jean') || n.includes('pant') || n.includes('trouser') || n.includes('cargo') || c === 'jeans_trousers' || c === 'unisex_denim' || c === 'bottoms' || c === 'women_jeans_trousers') return '/images/products/BaggyJean.jpg';
+  if (n.includes('shoe') || n.includes('slide') || n.includes('loafer') || n.includes('sneaker') || n.includes('croc') || n.includes('heel') || n.includes('addidas') || n.includes('adidas') || c === 'footwear' || c === 'men_footwear' || c === 'women_footwear' || c === 'unisex_footwear') return '/images/products/AddidasShoeUnisex.jpg';
+  if (n.includes('cap') || n.includes('beanie') || n.includes('hat') || c === 'accessories' || c === 'men_caps' || c === 'women_bags' || c === 'unisex_accessories') return '/images/products/GucciCap.jpg';
+  if (n.includes('blue') && (n.includes('hoodie') || n.includes('jacket'))) return '/images/products/BlueAndWhiteLosAngelisHoddie.jpg';
+  if (n.includes('brown') || n.includes('white')) return '/images/products/WhiteNdBrownHoodie.jpg';
+  return '/images/products/BlackTrapStarHoodie.jpg';
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,8 +37,8 @@ export async function GET(request: Request) {
 
     let query = supabase.from('products').select('*').order('created_at', { ascending: false }).limit(limit);
 
-    if (vendorId) {
-      query = query.eq('vendor_id', vendorId);
+    if (vendorId && vendorId !== 'all') {
+      query = query.or(`vendor_id.eq.${vendorId},vendor_id.ilike.%${vendorId}%`);
     }
     if (category && category !== 'all') {
       query = query.eq('category', category);
@@ -97,6 +110,10 @@ export async function GET(request: Request) {
 
     const formatted = (products || []).map((p) => {
       const vendorInfo = vendorMap.get(p.vendor_id);
+      const resolvedImg = p.image_url && p.image_url.trim().length > 0 && p.image_url !== '/images/products/BlackTrapStarHoodie.jpg'
+        ? p.image_url
+        : getSmartFallbackImage(p.name, p.category);
+
       return {
         id: p.id,
         name: p.name,
@@ -104,7 +121,8 @@ export async function GET(request: Request) {
         category: p.category,
         genderTarget: p.gender_target,
         garmentOriginType: p.garment_origin_type,
-        imageUrl: p.image_url,
+        imageUrl: resolvedImg,
+        image_url: resolvedImg,
         description: p.description,
         tags: p.tags || [],
         colors: p.colors || [],
@@ -145,7 +163,7 @@ export async function POST(request: Request) {
     const resolvedVendorId = 
       body.vendorId || 
       request.headers.get('x-vendor-id') || 
-      'moji-wears';
+      '';
 
     const {
       name,
@@ -154,6 +172,7 @@ export async function POST(request: Request) {
       genderTarget,
       garmentOriginType,
       imageUrl,
+      image_url,
       description,
       tags,
       colors,
@@ -181,6 +200,8 @@ export async function POST(request: Request) {
       ? tags.map((t: any) => typeof t === 'string' ? t.replace(/^#/, '') : String(t))
       : [];
 
+    const finalImage = imageUrl || image_url || getSmartFallbackImage(name, category);
+
     const { data, error } = await supabase.from('products').insert({
       id: productId,
       name,
@@ -188,7 +209,7 @@ export async function POST(request: Request) {
       category,
       gender_target: genderTarget || 'unisex',
       garment_origin_type: garmentOriginType || 'ready_made_boutique',
-      image_url: imageUrl,
+      image_url: finalImage,
       description: description || name,
       tags: tagsList,
       colors: colorsList,

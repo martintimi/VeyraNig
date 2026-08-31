@@ -34,7 +34,7 @@ export default function VendorOrdersPage() {
       const storedId = localStorage.getItem('veyra_vendor_id');
       if (storedId) return storedId;
     }
-    return vendorProfile.email || 'moji-wears';
+    return vendorProfile.email || '';
   }, [vendorProfile.email]);
 
   // Load orders strictly from live PostgreSQL DB

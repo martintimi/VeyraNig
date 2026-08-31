@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   Building, Scissors, Mail, Phone, Lock, MapPin,
   ShieldCheck, ArrowRight, ArrowLeft, Sparkles, User, Sun, Moon, Loader2,
-  Eye, EyeOff, CheckCircle2, RotateCw
+  Eye, EyeOff, CheckCircle2, RotateCw, Store
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -73,11 +73,13 @@ export default function VendorAuthPage() {
     password: '',
     confirmPassword: '',
     location: 'Victoria Island, Lagos',
-    vendorType: 'fashion_designer' as 'fashion_designer' | 'boutique_seller',
+    vendorType: 'boutique_seller' as 'fashion_designer' | 'boutique_seller',
     bankName: 'Guaranty Trust Bank (GTBank)',
     accountNumber: '',
     accountName: '',
   });
+
+  const isBoutiqueSelected = regForm.vendorType === 'boutique_seller';
 
   // OTP Verification State
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -119,7 +121,7 @@ export default function VendorAuthPage() {
     setErrorMessage('');
 
     try {
-      const res = await signInVendor(loginIdentifier, loginPassword);
+      const res = await signInVendor(loginIdentifier.trim(), loginPassword);
       if (!res.success) {
         setErrorMessage(res.error || 'Invalid business email or password.');
         setIsSubmitting(false);
@@ -127,16 +129,18 @@ export default function VendorAuthPage() {
       }
 
       if (res.vendor) {
+        const vId = res.vendor.id || res.vendor.email || loginIdentifier.trim();
         if (typeof window !== 'undefined') {
-          localStorage.setItem('veyra_vendor_id', res.vendor.id);
-          document.cookie = `veyra_vendor_id=${res.vendor.id}; path=/; max-age=2592000`;
+          localStorage.setItem('veyra_vendor_id', vId);
+          localStorage.setItem('veyra_vendor_email', res.vendor.email || loginIdentifier.trim());
+          document.cookie = `veyra_vendor_id=${vId}; path=/; max-age=2592000`;
         }
 
         setVendorProfile({
           brandName: res.vendor.brand_name || 'My Brand',
           designerName: res.vendor.designer_name || 'Lead Manager',
           contactPerson: res.vendor.contact_person || res.vendor.designer_name,
-          email: res.vendor.email || loginIdentifier,
+          email: res.vendor.email || loginIdentifier.trim(),
           phone: res.vendor.phone || '',
           location: res.vendor.location || 'Lagos, Nigeria',
           vendorType: isBoutiqueVendor(res.vendor) ? 'boutique_seller' : 'fashion_designer',
@@ -168,6 +172,16 @@ export default function VendorAuthPage() {
     setIsSubmitting(true);
     setErrorMessage('');
 
+    if (!regForm.brandName.trim()) {
+      setErrorMessage('Please enter your brand or business name.');
+      setIsSubmitting(false);
+      return;
+    }
+    if (!regForm.designerName.trim()) {
+      setErrorMessage(isBoutiqueSelected ? 'Please enter contact person / store manager name.' : 'Please enter lead designer name.');
+      setIsSubmitting(false);
+      return;
+    }
     if (regForm.password !== regForm.confirmPassword) {
       setErrorMessage('Passwords do not match. Please re-enter your password.');
       setIsSubmitting(false);
@@ -176,16 +190,16 @@ export default function VendorAuthPage() {
 
     try {
       const res = await signUpVendor({
-        email: regForm.email,
+        email: regForm.email.trim(),
         password: regForm.password,
-        brandName: regForm.brandName,
-        designerName: regForm.designerName,
-        phone: regForm.phone,
-        location: regForm.location,
-        vendorType: regForm.vendorType as any,
+        brandName: regForm.brandName.trim(),
+        designerName: regForm.designerName.trim(),
+        phone: regForm.phone.trim(),
+        location: regForm.location.trim(),
+        vendorType: regForm.vendorType,
         bankName: regForm.bankName,
-        accountNumber: regForm.accountNumber,
-        accountName: regForm.accountName,
+        accountNumber: regForm.accountNumber.trim(),
+        accountName: regForm.accountName.trim(),
       });
 
       if (!res.success) {
@@ -195,7 +209,7 @@ export default function VendorAuthPage() {
       }
 
       // Registration successful! Switch to 6-digit OTP verification screen
-      setPendingEmail(regForm.email);
+      setPendingEmail(regForm.email.trim());
       setOtp(['', '', '', '', '', '']);
       setResendTimer(30);
       setAuthMode('verify_otp');
@@ -251,20 +265,28 @@ export default function VendorAuthPage() {
     setErrorMessage('');
 
     try {
-      const res = await verifyOtpCode(pendingEmail || regForm.email, token, 'signup');
+      const emailToVerify = pendingEmail || regForm.email;
+      const res = await verifyOtpCode(emailToVerify, token, 'signup');
       if (!res.success) {
         setErrorMessage(res.error || 'Invalid or expired 6-digit code. Please check your email.');
         setIsSubmitting(false);
         return;
       }
 
-      const activeProfile = res.profile || {};
+      const activeProfile = res.vendor || res.profile || {};
+      const vId = activeProfile.id || res.user?.id || emailToVerify;
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('veyra_vendor_id', vId);
+        localStorage.setItem('veyra_vendor_email', emailToVerify);
+        document.cookie = `veyra_vendor_id=${vId}; path=/; max-age=2592000`;
+      }
 
       setVendorProfile({
         brandName: activeProfile.brand_name || activeProfile.brandName || regForm.brandName,
         designerName: activeProfile.designer_name || activeProfile.designerName || regForm.designerName,
         contactPerson: activeProfile.contact_person || activeProfile.contactPerson || regForm.designerName,
-        email: activeProfile.email || pendingEmail || regForm.email,
+        email: activeProfile.email || emailToVerify,
         phone: activeProfile.phone || regForm.phone,
         location: activeProfile.location || regForm.location,
         vendorType: isBoutiqueVendor(activeProfile) || isBoutiqueVendor(regForm.vendorType) ? 'boutique_seller' : 'fashion_designer',
@@ -348,70 +370,90 @@ export default function VendorAuthPage() {
               className="h-9 w-auto object-contain"
             />
           </Link>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-colors"
-              title="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-zinc-300" />}
-            </button>
-            <span className="px-3 py-1 rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase tracking-widest font-bold backdrop-blur-md">
-              {vendorEditorialSlides[currentSlide].tag}
-            </span>
+        {/* Dynamic Editorial Captions */}
+        <div className="relative z-20 space-y-4 max-w-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-accent)]/20 text-[var(--gold-accent)] border border-[var(--gold-accent)]/40 text-xs font-mono-luxury uppercase tracking-wider backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5 animate-spin text-[var(--gold-accent)]" />
+            <span>{vendorEditorialSlides[currentSlide].tag}</span>
+          </div>
+
+          <h2 className="font-editorial text-3xl xl:text-5xl text-white font-bold leading-tight">
+            {vendorEditorialSlides[currentSlide].title}
+          </h2>
+
+          <p className="text-sm xl:text-base text-white/80 font-light leading-relaxed">
+            {vendorEditorialSlides[currentSlide].subtitle}
+          </p>
+
+          {/* Dots Indicator */}
+          <div className="flex items-center gap-2 pt-4">
+            {vendorEditorialSlides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentSlide(i)}
+                className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                  currentSlide === i ? 'w-8 bg-[var(--gold-accent)]' : 'w-2 bg-white/40 hover:bg-white/70'
+                }`}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Bottom Section: Caption & Micro Footer anchored to bottom */}
-        <div className="relative z-20 space-y-6 mt-auto">
-          {/* Editorial Story Caption */}
-          <div className="space-y-4 max-w-lg">
-            <div className="flex items-center gap-2">
-              {vendorEditorialSlides.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                    currentSlide === idx ? 'w-8 bg-[var(--gold-accent)]' : 'w-2 bg-white/30 hover:bg-white/60'
-                  }`}
-                  aria-label={`Slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-
-            <div className="space-y-1.5">
-              <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-                {vendorEditorialSlides[currentSlide].title}
-              </h2>
-              <p className="text-xs sm:text-sm text-zinc-300 font-light leading-relaxed">
-                {vendorEditorialSlides[currentSlide].subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Bottom Micro Footer */}
-          <div className="flex items-center justify-between text-[11px] font-mono-luxury text-zinc-400 border-t border-white/10 pt-4">
-            <span>ATELIER COMMERCE PORTAL</span>
-            <span>LAGOS · NIGERIA</span>
-          </div>
+        {/* Bottom Guarantee */}
+        <div className="relative z-20 flex items-center justify-between text-xs text-white/60 font-mono-luxury border-t border-white/10 pt-4">
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <span>0% Merchant Fee · Verified Bank Escrow</span>
+          </span>
+          <span>Veyra Partner Infrastructure</span>
         </div>
-
       </div>
 
       {/* ======================================================== */}
-      {/* RIGHT COLUMN: AUTHENTICATION FORM (50% WIDTH) */}
+      {/* RIGHT COLUMN: SCROLLABLE AUTH INTERFACE (50% WIDTH) */}
       {/* ======================================================== */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 overflow-y-auto min-h-screen">
-        <div className="w-full max-w-xl space-y-6 animate-fadeIn py-6">
+      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-14 relative z-20 overflow-y-auto">
+        
+        {/* Top Header */}
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/" className="lg:hidden flex items-center gap-2">
+            <Image
+              src="/images/logo/veyra-logo.png"
+              alt="Veyra Atelier"
+              width={110}
+              height={32}
+              className="h-7 w-auto object-contain dark:invert"
+            />
+          </Link>
           
-          {/* Header */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
+          <div className="flex items-center gap-3 ml-auto">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4 text-[var(--gold-accent)]" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <Link
+              href="/auth"
+              className="text-xs font-mono-luxury text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors underline"
+            >
+              Shopper Login →
+            </Link>
+          </div>
+        </div>
+
+        {/* Center Container */}
+        <div className="max-w-md w-full mx-auto space-y-6 my-auto py-6">
+          
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold tracking-wider">
+              <span>
                 {authMode === 'verify_otp'
-                  ? 'Atelier Verification'
+                  ? 'Verification Required'
                   : authMode === 'register'
                   ? 'Partner Onboarding'
                   : 'Merchant Partner Portal'}
@@ -419,9 +461,9 @@ export default function VendorAuthPage() {
             </div>
             <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
               {authMode === 'verify_otp'
-                ? 'Confirm Atelier Email'
+                ? 'Confirm Email & Activate'
                 : authMode === 'register'
-                ? 'Register Your Store'
+                ? (isBoutiqueSelected ? 'Register Your Boutique' : 'Register Your Atelier')
                 : 'Partner Workspace Login'}
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light">
@@ -429,7 +471,7 @@ export default function VendorAuthPage() {
                 ? `Enter the 6-digit confirmation code sent to ${pendingEmail || regForm.email}.`
                 : authMode === 'register'
                 ? 'Publish your ready-to-wear drops and receive orders from verified shoppers.'
-                : 'Access your atelier orders, inventory management, and settlement banking.'}
+                : 'Access your store orders, catalog inventory, and instant settlement banking.'}
             </p>
           </div>
 
@@ -441,7 +483,7 @@ export default function VendorAuthPage() {
                   setAuthMode('login');
                   setErrorMessage('');
                 }}
-                className={`py-2.5 rounded-xl transition-all font-semibold ${
+                className={`py-2.5 rounded-xl transition-all font-semibold cursor-pointer ${
                   authMode === 'login'
                     ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -454,13 +496,13 @@ export default function VendorAuthPage() {
                   setAuthMode('register');
                   setErrorMessage('');
                 }}
-                className={`py-2.5 rounded-xl transition-all font-semibold ${
+                className={`py-2.5 rounded-xl transition-all font-semibold cursor-pointer ${
                   authMode === 'register'
                     ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                Register Atelier
+                Register Store
               </button>
             </div>
           )}
@@ -475,7 +517,7 @@ export default function VendorAuthPage() {
               <button
                 type="button"
                 onClick={() => setErrorMessage('')}
-                className="text-[10px] text-rose-400/60 hover:text-rose-300 transition-colors uppercase font-bold"
+                className="text-[10px] text-rose-400/60 hover:text-rose-300 transition-colors uppercase font-bold cursor-pointer"
               >
                 Dismiss
               </button>
@@ -489,7 +531,7 @@ export default function VendorAuthPage() {
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-3 text-center">
-                  6-Digit Atelier Confirmation Code
+                  6-Digit Merchant Confirmation Code
                 </label>
                 <div className="flex items-center justify-between gap-2 sm:gap-3">
                   {otp.map((digit, index) => (
@@ -513,12 +555,12 @@ export default function VendorAuthPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || otp.join('').length < 6}
-                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-widest font-bold text-xs hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
                     <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
-                    <span>Verifying Atelier...</span>
+                    <span>Verifying Code & Activating Store...</span>
                   </>
                 ) : (
                   <>
@@ -536,7 +578,7 @@ export default function VendorAuthPage() {
                   className={`inline-flex items-center gap-1.5 ${
                     resendTimer > 0
                       ? 'text-[var(--text-muted)] cursor-not-allowed'
-                      : 'text-[var(--gold-accent)] font-semibold hover:underline'
+                      : 'text-[var(--gold-accent)] font-semibold hover:underline cursor-pointer'
                   }`}
                 >
                   <RotateCw className={`h-3.5 w-3.5 ${isResending ? 'animate-spin' : ''}`} />
@@ -553,7 +595,7 @@ export default function VendorAuthPage() {
                     setAuthMode('register');
                     setErrorMessage('');
                   }}
-                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-1"
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-1 cursor-pointer"
                 >
                   <ArrowLeft className="h-3 w-3" />
                   <span>Edit Registration Details</span>
@@ -611,12 +653,12 @@ export default function VendorAuthPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
                     <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
-                    <span>Authenticating Atelier...</span>
+                    <span>Signing In to Merchant Portal...</span>
                   </>
                 ) : (
                   <>
@@ -645,26 +687,30 @@ export default function VendorAuthPage() {
                 <select
                   value={regForm.vendorType}
                   onChange={(e) => setRegForm({ ...regForm, vendorType: e.target.value as any })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs focus:border-[var(--gold-accent)] focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
                 >
-                  <option value="fashion_designer">🧵 Fashion Designer (Ready-to-Wear / Kaftans / Native Wear)</option>
                   <option value="boutique_seller">🛍️ Boutique Seller (Ready-to-Wear / Streetwear / Footwear)</option>
+                  <option value="fashion_designer">🧵 Fashion Designer (Ready-to-Wear / Kaftans / Native Wear)</option>
                 </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
-                    Atelier / Brand Name
+                    {isBoutiqueSelected ? 'Boutique / Brand Name' : 'Atelier / Brand Name'}
                   </label>
                   <div className="relative">
-                    <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    {isBoutiqueSelected ? (
+                      <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    ) : (
+                      <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    )}
                     <input
                       type="text"
                       required
                       value={regForm.brandName}
                       onChange={(e) => setRegForm({ ...regForm, brandName: e.target.value })}
-                      placeholder="e.g. Deji & Kola"
+                      placeholder={isBoutiqueSelected ? 'e.g. Moji Boutique' : 'e.g. Deji & Kola Atelier'}
                       className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
                     />
                   </div>
@@ -672,10 +718,14 @@ export default function VendorAuthPage() {
 
                 <div>
                   <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
-                    Lead Designer / Contact Person
+                    {isBoutiqueSelected ? 'Store Manager / Contact Person' : 'Lead Designer / Tailor'}
                   </label>
                   <div className="relative">
-                    <Scissors className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    {isBoutiqueSelected ? (
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    ) : (
+                      <Scissors className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                    )}
                     <input
                       type="text"
                       required
@@ -726,7 +776,7 @@ export default function VendorAuthPage() {
 
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
-                  Atelier / Store Address
+                  {isBoutiqueSelected ? 'Boutique / Store Address' : 'Atelier / Workshop Address'}
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
@@ -807,7 +857,7 @@ export default function VendorAuthPage() {
                     <select
                       value={regForm.bankName}
                       onChange={(e) => setRegForm({ ...regForm, bankName: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
                     >
                       <option>Guaranty Trust Bank (GTBank)</option>
                       <option>Zenith Bank</option>
@@ -854,7 +904,7 @@ export default function VendorAuthPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-2 mt-4 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -863,7 +913,7 @@ export default function VendorAuthPage() {
                   </>
                 ) : (
                   <>
-                    <span>Register Atelier & Receive Code</span>
+                    <span>{isBoutiqueSelected ? 'Register Boutique & Receive Code' : 'Register Atelier & Receive Code'}</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}

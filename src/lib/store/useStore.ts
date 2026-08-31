@@ -105,18 +105,18 @@ interface VeyraState {
 }
 
 export const defaultVendorProfile: VendorProfile = {
-  brandName: 'Moji wears',
-  designerName: 'Moji Wears',
-  contactPerson: 'Moji Wears',
-  email: 'brewmarfle@gmail.com',
-  phone: '+234 812 345 6789',
-  location: 'Lagos, Nigeria',
+  brandName: '',
+  designerName: '',
+  contactPerson: '',
+  email: '',
+  phone: '',
+  location: '',
   vendorType: 'boutique_seller',
   bankName: 'Guaranty Trust Bank (GTBank)',
-  accountNumber: '0123456789',
-  accountName: 'KLASSIC WEARS ENTERPRISE',
-  instagram: '@klassic_wears',
-  bio: 'Bespoke Nigerian native wears, hand-cut Senators, and modern traditional sets tailored to perfection.',
+  accountNumber: '',
+  accountName: '',
+  instagram: '',
+  bio: '',
 };
 
 const defaultProfile: BodyProfile = {
@@ -738,14 +738,22 @@ export const useStore = create<VeyraState>()(
       },
 
       // Vendor Portal State
-      isVendorLoggedIn: true,
+      isVendorLoggedIn: false,
       setIsVendorLoggedIn: (loggedIn) => set({ isVendorLoggedIn: loggedIn }),
       vendorProfile: defaultVendorProfile,
       setVendorProfile: (profile) =>
         set((state) => ({
           vendorProfile: { ...state.vendorProfile, ...profile }
         })),
-      vendorLogout: () => set({ isVendorLoggedIn: false }),
+      vendorLogout: () => {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('veyra_vendor_id');
+          localStorage.removeItem('veyra_vendor_token');
+          localStorage.removeItem('veyra_vendor_email');
+          document.cookie = 'veyra_vendor_id=; path=/; max-age=0';
+        }
+        set({ isVendorLoggedIn: false, vendorProfile: defaultVendorProfile });
+      },
 
       // UI Modals
       isProfileWizardOpen: false,
