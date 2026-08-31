@@ -8,7 +8,8 @@ import {
   UploadCloud, CheckCircle2, Sparkles, Plus, Trash2,
   ShoppingBag, Tag, ArrowRight, ExternalLink,
   Loader2, Wand2, X, Palette, Store, Clock,
-  Check, AlertTriangle, ShieldCheck, Shirt, Info, Sparkle, Lock, RotateCcw
+  Check, AlertTriangle, ShieldCheck, Shirt, Info, Sparkle, Lock, RotateCcw,
+  Footprints, Gem, Crown, Watch
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -39,41 +40,61 @@ const STANDARD_COLORS = [
 ];
 
 // Department-Specific Categories
-const MALE_CATEGORIES = [
-  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory },
-  { id: 'agbada_robes', label: 'Grand Agbada & 3-Piece Robes', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweatshirts', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'tshirts_tees', label: 'T-Shirts & Graphic Tees', generalCat: 'tops' as GarmentCategory },
-  { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory },
-  { id: 'jeans_trousers', label: 'Baggy Jeans, Cargo & Trousers', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'shorts_sweats', label: 'Shorts & Sweatpants', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'men_footwear', label: 'Loafers, Slides & Footwear', generalCat: 'footwear' as GarmentCategory },
-  { id: 'men_caps', label: 'Caps, Fila & Accessories', generalCat: 'accessories' as GarmentCategory },
+export const MALE_CATEGORIES = [
+  // Apparel
+  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
+  { id: 'agbada_robes', label: 'Grand Agbada & 3-Piece Robes', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweatshirts', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  { id: 'tshirts_tees', label: 'T-Shirts & Graphic Tees', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
+  { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
+  { id: 'jeans_trousers', label: 'Baggy Jeans, Cargo & Trousers', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
+  { id: 'shorts_sweats', label: 'Shorts & Sweatpants', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
+  // Footwear
+  { id: 'men_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  { id: 'men_shoes_loafers', label: 'Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  // Accessories & Jewelry
+  { id: 'men_caps_fila', label: 'Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
+  { id: 'men_jewelry_chains', label: 'Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory, iconType: 'jewelry' },
+  { id: 'men_bags_wallets', label: 'Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
 ];
 
-const FEMALE_CATEGORIES = [
-  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory },
-  { id: 'boubou_kaftans', label: 'Silk Boubou, Kaftans & Abayas', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory },
-  { id: 'corsets_tops', label: 'Corsets, Crop Tops & Blouses', generalCat: 'tops' as GarmentCategory },
-  { id: 'skirts_minis', label: 'Skirts & Mini Skirts', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'women_jeans_trousers', label: 'High-Waist Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'female_streetwear', label: 'Female Streetwear, Hoodies & Jackets', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'women_footwear', label: 'Heels, Mules & Slides', generalCat: 'footwear' as GarmentCategory },
-  { id: 'women_bags', label: 'Handbags, Clutches & Accessories', generalCat: 'accessories' as GarmentCategory },
+export const FEMALE_CATEGORIES = [
+  // Apparel
+  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
+  { id: 'boubou_kaftans', label: 'Silk Boubou, Kaftans & Abayas', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
+  { id: 'corsets_tops', label: 'Corsets, Crop Tops & Blouses', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
+  { id: 'skirts_minis', label: 'Skirts & Mini Skirts', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
+  { id: 'women_jeans_trousers', label: 'High-Waist Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
+  { id: 'female_streetwear', label: 'Female Streetwear & Hoodies', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  // Footwear
+  { id: 'women_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  { id: 'women_heels_mules', label: 'Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  // Accessories & Jewelry
+  { id: 'women_jewelry', label: 'Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory, iconType: 'jewelry' },
+  { id: 'women_bags', label: 'Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
+  { id: 'women_caps_scarves', label: 'Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
 ];
 
-const UNISEX_CATEGORIES = [
-  { id: 'unisex_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory },
-  { id: 'unisex_denim', label: 'Denim Jeans & Baggy Cargo Pants', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'unisex_jackets', label: 'Jackets, Windbreakers & Coats', generalCat: 'outerwear' as GarmentCategory },
-  { id: 'unisex_footwear', label: 'Sneakers, Crocs & Slides', generalCat: 'footwear' as GarmentCategory },
-  { id: 'unisex_accessories', label: 'Caps, Beanies & Jewelry', generalCat: 'accessories' as GarmentCategory },
+export const UNISEX_CATEGORIES = [
+  // Apparel
+  { id: 'unisex_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
+  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
+  { id: 'unisex_jackets', label: 'Jackets & Windbreakers', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  // Footwear
+  { id: 'unisex_slides_palms', label: 'Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  { id: 'unisex_sneakers', label: 'Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  // Accessories & Jewelry
+  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Bucket Hats', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
+  { id: 'unisex_jewelry', label: 'Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory, iconType: 'jewelry' },
+  { id: 'unisex_bags', label: 'Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
 ];
 
-const STANDARD_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const APPAREL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const FOOTWEAR_SIZES = ['39', '40', '41', '42', '43', '44', '45', '46'];
+const ACCESSORY_SIZES = ['One Size'];
 
 export default function PublishGarmentPage() {
   const { vendorProfile } = useStore();
@@ -109,13 +130,13 @@ export default function PublishGarmentPage() {
   const [customColorHex, setCustomColorHex] = useState('#2563eb');
   const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
 
-  // Ready-to-Wear Size Stock
+  // Dynamic Adaptive Size Stock State
   const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number } }>({
     'S': { enabled: true, quantity: 10 },
-    'M': { enabled: true, quantity: 25 },
-    'L': { enabled: true, quantity: 30 },
-    'XL': { enabled: true, quantity: 15 },
-    'XXL': { enabled: true, quantity: 5 },
+    'M': { enabled: true, quantity: 20 },
+    'L': { enabled: true, quantity: 20 },
+    'XL': { enabled: true, quantity: 10 },
+    'XXL': { enabled: false, quantity: 0 },
   });
 
   // Photo Upload State
@@ -166,20 +187,48 @@ export default function PublishGarmentPage() {
   // Update categories when genderTarget changes
   useEffect(() => {
     if (genderTarget === 'male') {
-      setSubCategory(MALE_CATEGORIES[0].id);
-      setCategory(MALE_CATEGORIES[0].generalCat);
+      handleCategorySelect(MALE_CATEGORIES[0].id, MALE_CATEGORIES[0].generalCat);
     } else if (genderTarget === 'female') {
-      setSubCategory(FEMALE_CATEGORIES[0].id);
-      setCategory(FEMALE_CATEGORIES[0].generalCat);
+      handleCategorySelect(FEMALE_CATEGORIES[0].id, FEMALE_CATEGORIES[0].generalCat);
     } else {
-      setSubCategory(UNISEX_CATEGORIES[0].id);
-      setCategory(UNISEX_CATEGORIES[0].generalCat);
+      handleCategorySelect(UNISEX_CATEGORIES[0].id, UNISEX_CATEGORIES[0].generalCat);
     }
   }, [genderTarget]);
 
+  // Adaptive Sizing Initializer based on category type
+  const handleCategorySelect = (selectedSubCatId: string, generalCat: GarmentCategory) => {
+    setSubCategory(selectedSubCatId);
+    setCategory(generalCat);
+
+    if (generalCat === 'footwear') {
+      setSizeStock({
+        '39': { enabled: true, quantity: 5 },
+        '40': { enabled: true, quantity: 10 },
+        '41': { enabled: true, quantity: 10 },
+        '42': { enabled: true, quantity: 10 },
+        '43': { enabled: true, quantity: 10 },
+        '44': { enabled: true, quantity: 5 },
+        '45': { enabled: false, quantity: 0 },
+        '46': { enabled: false, quantity: 0 },
+      });
+    } else if (generalCat === 'accessories') {
+      setSizeStock({
+        'One Size': { enabled: true, quantity: 20 }
+      });
+    } else {
+      setSizeStock({
+        'S': { enabled: true, quantity: 10 },
+        'M': { enabled: true, quantity: 20 },
+        'L': { enabled: true, quantity: 20 },
+        'XL': { enabled: true, quantity: 10 },
+        'XXL': { enabled: false, quantity: 0 },
+      });
+    }
+  };
+
   const handleGenerateAiDescription = async () => {
     if (!name.trim()) {
-      setAiToast('Please enter a garment title first to generate description with AI.');
+      setAiToast('Please enter a product title first to generate description with AI.');
       setTimeout(() => setAiToast(''), 3500);
       return;
     }
@@ -210,7 +259,7 @@ export default function PublishGarmentPage() {
         if (!rawPrice && data.suggestedPrice) {
           setRawPrice(String(data.suggestedPrice));
         }
-        setAiToast('AI generated description, fabric specs, and tags!');
+        setAiToast('AI generated product description, material specs, and tags!');
         confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
         setTimeout(() => setAiToast(''), 4000);
       }
@@ -264,7 +313,7 @@ export default function PublishGarmentPage() {
   const handleToggleSize = (size: string) => {
     setSizeStock(prev => ({
       ...prev,
-      [size]: { ...prev[size], enabled: !prev[size].enabled }
+      [size]: { ...prev[size], enabled: !prev[size]?.enabled }
     }));
   };
 
@@ -300,9 +349,9 @@ export default function PublishGarmentPage() {
       return;
     }
 
-    const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s].enabled);
+    const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
     if (enabledSizes.length === 0) {
-      setErrorMessage('Please enable at least one ready-to-wear size.');
+      setErrorMessage(category === 'accessories' ? 'Please specify available stock quantity.' : 'Please enable at least one size with stock quantity.');
       return;
     }
 
@@ -370,9 +419,12 @@ export default function PublishGarmentPage() {
     setErrorMessage('');
   };
 
+  const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
+  const currentSizeList = category === 'footwear' ? FOOTWEAR_SIZES : category === 'accessories' ? ACCESSORY_SIZES : APPAREL_SIZES;
+
   const totalStockCount = Object.values(sizeStock)
-    .filter(s => s.enabled)
-    .reduce((sum, s) => sum + Number(s.quantity || 0), 0);
+    .filter(s => s?.enabled)
+    .reduce((sum, s) => sum + Number(s?.quantity || 0), 0);
 
   const isVerified = profileStatus?.isVerified || profileStatus?.approvalStatus === 'approved';
   const isRejected = profileStatus?.approvalStatus === 'rejected';
@@ -521,14 +573,14 @@ export default function PublishGarmentPage() {
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
-              Ready-to-Wear Catalog Publisher
+              Product & Collection Catalog Publisher
             </span>
           </div>
           <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mt-1">
-            Add New Ready-to-Wear Piece
+            Add Product / Drop Piece
           </h1>
           <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-1">
-            Upload ready-made inventory with size stocks, color variants, and instant fulfillment.
+            Publish apparel, footwear, slides, caps, jewelry, and luxury accessories to your live storefront.
           </p>
         </div>
 
@@ -592,7 +644,7 @@ export default function PublishGarmentPage() {
                 Piece Published to Catalog!
               </h3>
               <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">
-                Your garment is now live with real-time stock sync and Twin 3D measurement matching.
+                Your piece is live with real-time stock sync and verified checkout.
               </p>
             </div>
           </div>
@@ -612,7 +664,7 @@ export default function PublishGarmentPage() {
             <button
               type="button"
               onClick={resetForm}
-              className="px-5 py-2.5 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-xs font-bold hover:border-[var(--gold-accent)] transition-all flex items-center gap-2"
+              className="px-5 py-2.5 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-xs font-bold hover:border-[var(--gold-accent)] transition-all flex items-center gap-2 cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Publish Another Piece</span>
@@ -667,7 +719,7 @@ export default function PublishGarmentPage() {
                   </div>
                   <div>
                     <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
-                      Upload Product Lookbook Photo
+                      Upload Lookbook / Product Photo
                     </span>
                     <span className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
                       Click to select from your phone or desktop
@@ -694,7 +746,7 @@ export default function PublishGarmentPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Midnight Wool Senator Kaftan"
+                  placeholder="e.g. Leather Crocodile Palms, Velvet Fila, Silk Boubou, Diamond Cuban Chain"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
@@ -721,18 +773,20 @@ export default function PublishGarmentPage() {
 
             {/* Department Category Select */}
             <div>
-              <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                Garment Silhouette / Category <strong className="text-rose-400">*</strong>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] font-bold">
+                  Garment / Accessory Category <strong className="text-rose-400">*</strong>
+                </label>
+                <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold uppercase">
+                  {category === 'footwear' ? '👟 Footwear Sizing Active' : category === 'accessories' ? '💎 One-Size Inventory Active' : '👔 Apparel Sizing Active'}
+                </span>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                {(genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES).map((cat) => (
+                {currentCategoryList.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
-                    onClick={() => {
-                      setSubCategory(cat.id);
-                      setCategory(cat.generalCat);
-                    }}
+                    onClick={() => handleCategorySelect(cat.id, cat.generalCat)}
                     className={`p-3 rounded-xl border text-left text-xs font-mono-luxury transition-all cursor-pointer ${
                       subCategory === cat.id
                         ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--text-primary)] font-bold shadow-sm'
@@ -749,7 +803,7 @@ export default function PublishGarmentPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] font-bold">
-                  Editorial Description & Fabric Notes
+                  Editorial Description & Material Notes
                 </label>
                 <button
                   type="button"
@@ -779,10 +833,10 @@ export default function PublishGarmentPage() {
               )}
 
               <textarea
-                rows={4}
+                rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe tailoring details, fabric quality, occasions, and care instructions..."
+                placeholder="Describe material quality, leather grade, metal type, occasion, and care instructions..."
                 className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none leading-relaxed"
               />
             </div>
@@ -793,10 +847,10 @@ export default function PublishGarmentPage() {
           <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
             <div>
               <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
-                3. Available Colorways
+                3. Available Colorways & Metal Finishes
               </span>
               <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-                Select all shades available in your store inventory for this piece.
+                Select all shades, leather tones, or metal colors available in stock.
               </p>
             </div>
 
@@ -830,7 +884,7 @@ export default function PublishGarmentPage() {
                 className="px-3 py-1.5 rounded-xl border border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury text-[var(--gold-accent)] flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <Plus className="h-3 w-3" />
-                <span>Custom Color</span>
+                <span>Custom Shade</span>
               </button>
             </div>
 
@@ -846,7 +900,7 @@ export default function PublishGarmentPage() {
                   type="text"
                   value={customColorName}
                   onChange={(e) => setCustomColorName(e.target.value)}
-                  placeholder="e.g. Royal Emerald"
+                  placeholder="e.g. 18k Gold, Matte Silver, Oxblood"
                   className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none flex-1 font-bold"
                 />
                 <button
@@ -860,64 +914,94 @@ export default function PublishGarmentPage() {
             )}
           </div>
 
-          {/* Section 4: Size Stock & Inventory */}
+          {/* Section 4: Adaptive Size Stock & Inventory */}
           <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
-                  4. Size Stocks & Units
+                  {category === 'footwear'
+                    ? '4. Shoe / Slide Sizing & Inventory (EU Sizes)'
+                    : category === 'accessories'
+                    ? '4. Accessory / Jewelry Stock Units'
+                    : '4. Ready-to-Wear Size Stocks & Units'}
                 </span>
                 <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-                  Set available quantity per standard ready-to-wear sizing.
+                  {category === 'footwear'
+                    ? 'Enable available shoe sizes and specify stock units per pair.'
+                    : category === 'accessories'
+                    ? 'No size complexity. Simply specify total units available in inventory.'
+                    : 'Set available quantity per standard ready-to-wear sizing.'}
                 </p>
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Total Units</span>
-                <span className="text-base font-editorial font-bold text-[var(--gold-accent)]">{totalStockCount} in Stock</span>
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Total Available</span>
+                <span className="text-base font-editorial font-bold text-[var(--gold-accent)]">{totalStockCount} Units</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
-              {STANDARD_SIZES.map((size) => {
-                const isEnabled = sizeStock[size]?.enabled;
-                const qty = sizeStock[size]?.quantity || 0;
+            {/* If Accessory: Super Simple Single Quantity Input */}
+            {category === 'accessories' ? (
+              <div className="p-5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] max-w-sm">
+                <label className="block text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-secondary)] mb-2">
+                  Total Units in Stock
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={1}
+                    value={sizeStock['One Size']?.quantity || 20}
+                    onChange={(e) => handleSizeStockChange('One Size', Number(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono-luxury text-[var(--text-muted)] font-bold">
+                    One Size
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* Grid for Apparel or Footwear Sizes */
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 pt-2">
+                {currentSizeList.map((size) => {
+                  const isEnabled = sizeStock[size]?.enabled;
+                  const qty = sizeStock[size]?.quantity || 0;
 
-                return (
-                  <div
-                    key={size}
-                    className={`p-3.5 rounded-2xl border transition-all ${
-                      isEnabled
-                        ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] shadow-sm'
-                        : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] opacity-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-editorial text-lg font-bold text-[var(--text-primary)]">{size}</span>
-                      <input
-                        type="checkbox"
-                        checked={isEnabled}
-                        onChange={() => handleToggleSize(size)}
-                        className="rounded text-[var(--gold-accent)] border-[var(--border-subtle)] cursor-pointer"
-                      />
-                    </div>
-
-                    {isEnabled && (
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-mono-luxury uppercase text-[var(--text-secondary)] block">Quantity</span>
+                  return (
+                    <div
+                      key={size}
+                      className={`p-3 rounded-2xl border transition-all ${
+                        isEnabled
+                          ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] shadow-sm'
+                          : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] opacity-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-editorial text-base font-bold text-[var(--text-primary)]">{size}</span>
                         <input
-                          type="number"
-                          min={0}
-                          value={qty}
-                          onChange={(e) => handleSizeStockChange(size, Number(e.target.value))}
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                          type="checkbox"
+                          checked={isEnabled}
+                          onChange={() => handleToggleSize(size)}
+                          className="rounded text-[var(--gold-accent)] border-[var(--border-subtle)] cursor-pointer"
                         />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+
+                      {isEnabled && (
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-mono-luxury uppercase text-[var(--text-secondary)] block">Qty</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={qty}
+                            onChange={(e) => handleSizeStockChange(size, Number(e.target.value))}
+                            className="w-full px-2 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Section 5: Discovery Tags */}
@@ -927,7 +1011,7 @@ export default function PublishGarmentPage() {
                 5. Search & Discovery Tags
               </span>
               <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-                Type a keyword and press <strong className="text-[var(--text-primary)]">Enter</strong> (e.g. Kaftan, Agbada, Wedding, Lagos).
+                Type a keyword and press <strong className="text-[var(--text-primary)]">Enter</strong> (e.g. Palms, Slides, Fila, Kaftan, Chains, Agbada).
               </p>
             </div>
 
@@ -983,7 +1067,7 @@ export default function PublishGarmentPage() {
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  <span>Publish Ready-to-Wear Piece</span>
+                  <span>Publish Piece to Catalog</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </>
               )}

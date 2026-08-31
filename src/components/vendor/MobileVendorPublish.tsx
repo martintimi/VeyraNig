@@ -1,16 +1,17 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GarmentCategory, GenderTarget, isBoutiqueVendor } from '@/types';
+import { GarmentCategory, GenderTarget } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2,
   Tag, ArrowRight, Loader2, X, Palette,
   Check, AlertTriangle, ShieldCheck, Camera,
-  RefreshCw, Minus, ChevronDown
+  RefreshCw, Minus, ChevronDown, Sparkle
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import { vendorFetch } from '@/lib/services/apiClient';
 
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
@@ -33,8 +34,13 @@ const MALE_CATEGORIES = [
   { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory },
   { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory },
   { id: 'tshirts_tees', label: 'T-Shirts & Graphic Tees', generalCat: 'tops' as GarmentCategory },
+  { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory },
   { id: 'jeans_trousers', label: 'Baggy Jeans, Cargo & Trousers', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'men_footwear', label: 'Loafers, Slides & Footwear', generalCat: 'footwear' as GarmentCategory },
+  { id: 'men_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory },
+  { id: 'men_shoes_loafers', label: 'Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory },
+  { id: 'men_caps_fila', label: 'Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory },
+  { id: 'men_jewelry_chains', label: 'Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory },
+  { id: 'men_bags_wallets', label: 'Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory },
 ];
 
 const FEMALE_CATEGORIES = [
@@ -44,17 +50,27 @@ const FEMALE_CATEGORIES = [
   { id: 'corsets_tops', label: 'Corsets, Tops & Blouses', generalCat: 'tops' as GarmentCategory },
   { id: 'female_streetwear', label: 'Female Streetwear & Hoodies', generalCat: 'outerwear' as GarmentCategory },
   { id: 'women_jeans_trousers', label: 'Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'women_footwear', label: 'Heels, Mules & Slides', generalCat: 'footwear' as GarmentCategory },
+  { id: 'women_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory },
+  { id: 'women_heels_mules', label: 'Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory },
+  { id: 'women_jewelry', label: 'Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory },
+  { id: 'women_bags', label: 'Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory },
+  { id: 'women_caps_scarves', label: 'Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory },
 ];
 
 const UNISEX_CATEGORIES = [
   { id: 'unisex_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory },
   { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory },
-  { id: 'unisex_denim', label: 'Denim Jeans & Baggy Cargo Pants', generalCat: 'bottoms' as GarmentCategory },
-  { id: 'unisex_footwear', label: 'Sneakers, Crocs & Slides', generalCat: 'footwear' as GarmentCategory },
+  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory },
+  { id: 'unisex_slides_palms', label: 'Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory },
+  { id: 'unisex_sneakers', label: 'Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory },
+  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Bucket Hats', generalCat: 'accessories' as GarmentCategory },
+  { id: 'unisex_jewelry', label: 'Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory },
+  { id: 'unisex_bags', label: 'Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory },
 ];
 
-const STANDARD_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const APPAREL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const FOOTWEAR_SIZES = ['39', '40', '41', '42', '43', '44', '45', '46'];
+const ACCESSORY_SIZES = ['One Size'];
 
 interface MobileVendorPublishProps {
   onPublishSuccess: (productId: string) => void;
@@ -88,9 +104,60 @@ export default function MobileVendorPublish({
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiToast, setAiToast] = useState('');
 
+  // Sizing & Stock
+  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number } }>({
+    'S': { enabled: true, quantity: 10 },
+    'M': { enabled: true, quantity: 20 },
+    'L': { enabled: true, quantity: 20 },
+    'XL': { enabled: true, quantity: 10 },
+    'XXL': { enabled: false, quantity: 0 },
+  });
+
+  // Photo
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Submission State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
+  const currentSizeList = category === 'footwear' ? FOOTWEAR_SIZES : category === 'accessories' ? ACCESSORY_SIZES : APPAREL_SIZES;
+
+  const handleCategorySelect = (selectedSubCatId: string, generalCat: GarmentCategory) => {
+    setSubCategory(selectedSubCatId);
+    setCategory(generalCat);
+
+    if (generalCat === 'footwear') {
+      setSizeStock({
+        '39': { enabled: true, quantity: 5 },
+        '40': { enabled: true, quantity: 10 },
+        '41': { enabled: true, quantity: 10 },
+        '42': { enabled: true, quantity: 10 },
+        '43': { enabled: true, quantity: 10 },
+        '44': { enabled: true, quantity: 5 },
+        '45': { enabled: false, quantity: 0 },
+        '46': { enabled: false, quantity: 0 },
+      });
+    } else if (generalCat === 'accessories') {
+      setSizeStock({
+        'One Size': { enabled: true, quantity: 20 }
+      });
+    } else {
+      setSizeStock({
+        'S': { enabled: true, quantity: 10 },
+        'M': { enabled: true, quantity: 20 },
+        'L': { enabled: true, quantity: 20 },
+        'XL': { enabled: true, quantity: 10 },
+        'XXL': { enabled: false, quantity: 0 },
+      });
+    }
+  };
+
   const handleGenerateAiDescription = async () => {
     if (!name.trim()) {
-      setAiToast('Enter garment title first (e.g. Silk Boubou or Senator Kaftan)');
+      setAiToast('Enter product title first (e.g. Leather Palms or Senator Kaftan)');
       setTimeout(() => setAiToast(''), 3500);
       return;
     }
@@ -112,107 +179,37 @@ export default function MobileVendorPublish({
 
       const data = await res.json();
       if (res.ok && data.success) {
-        if (data.description) {
-          setDescription(data.description);
-        }
-        if (data.tags && Array.isArray(data.tags)) {
-          setTags(prev => Array.from(new Set([...prev, ...data.tags])));
-        }
-        if (!rawPrice && data.suggestedPrice) {
-          setRawPrice(String(data.suggestedPrice));
-        }
-        setAiToast('AI generated description, fabric specs & tags!');
-        confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
-        setTimeout(() => setAiToast(''), 4000);
+        if (data.description) setDescription(data.description);
+        if (data.tags && Array.isArray(data.tags)) setTags(prev => Array.from(new Set([...prev, ...data.tags])));
+        if (!rawPrice && data.suggestedPrice) setRawPrice(String(data.suggestedPrice));
+        setAiToast('AI generated description & tags!');
+        setTimeout(() => setAiToast(''), 3500);
       }
     } catch (e) {
-      console.error('AI generation error:', e);
-      setAiToast('AI generation timed out. Please try again.');
-      setTimeout(() => setAiToast(''), 3500);
+      console.error(e);
+      setAiToast('AI generation timed out');
+      setTimeout(() => setAiToast(''), 3000);
     } finally {
       setIsGeneratingAi(false);
     }
   };
 
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      const val = tagInput.trim().replace(/^#/, '');
-      if (val && !tags.includes(val)) {
-        setTags([...tags, val]);
-        setTagInput('');
-      }
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveTag = (tToRemove: string) => {
-    setTags(tags.filter(t => t !== tToRemove));
-  };
-
-  // Size Stock
-  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number } }>({
-    'S': { enabled: true, quantity: 10 },
-    'M': { enabled: true, quantity: 20 },
-    'L': { enabled: true, quantity: 20 },
-    'XL': { enabled: true, quantity: 10 },
-    'XXL': { enabled: false, quantity: 5 },
-  });
-
-  // Photo
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Status
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  // Auto-scroll to top when error occurs so vendor sees it immediately
-  useEffect(() => {
-    if (errorMessage) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [errorMessage]);
-
-  // Update categories when gender changes
-  useEffect(() => {
-    if (genderTarget === 'male') {
-      setSubCategory(MALE_CATEGORIES[0].id);
-      setCategory(MALE_CATEGORIES[0].generalCat);
-    } else if (genderTarget === 'female') {
-      setSubCategory(FEMALE_CATEGORIES[0].id);
-      setCategory(FEMALE_CATEGORIES[0].generalCat);
-    } else {
-      setSubCategory(UNISEX_CATEGORIES[0].id);
-      setCategory(UNISEX_CATEGORIES[0].generalCat);
-    }
-  }, [genderTarget]);
-
-  const activeCategoriesList = genderTarget === 'male'
-    ? MALE_CATEGORIES
-    : genderTarget === 'female'
-    ? FEMALE_CATEGORIES
-    : UNISEX_CATEGORIES;
-
-  const handleCategoryChange = (selectedId: string) => {
-    setSubCategory(selectedId);
-    const found = activeCategoriesList.find(c => c.id === selectedId);
-    if (found) setCategory(found.generalCat);
-  };
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const numeric = e.target.value.replace(/[^0-9]/g, '');
-    setRawPrice(numeric);
-  };
-
-  const handleToggleColor = (colorObj: { name: string; hex: string }) => {
-    const exists = selectedColors.some(c => c.hex.toLowerCase() === colorObj.hex.toLowerCase());
+  const toggleColor = (color: { name: string; hex: string }) => {
+    const exists = selectedColors.some(c => c.name === color.name);
     if (exists) {
-      if (selectedColors.length > 1) {
-        setSelectedColors(selectedColors.filter(c => c.hex.toLowerCase() !== colorObj.hex.toLowerCase()));
-      }
+      if (selectedColors.length > 1) setSelectedColors(selectedColors.filter(c => c.name !== color.name));
     } else {
-      setSelectedColors([...selectedColors, colorObj]);
+      setSelectedColors([...selectedColors, color]);
     }
   };
 
@@ -223,51 +220,54 @@ export default function MobileVendorPublish({
     setShowCustomColor(false);
   };
 
-  const handleToggleSize = (sz: string) => {
+  const handleSizeStockChange = (size: string, quantity: number) => {
     setSizeStock(prev => ({
       ...prev,
-      [sz]: { ...prev[sz], enabled: !prev[sz].enabled }
+      [size]: { ...prev[size], quantity: Math.max(0, quantity) }
     }));
   };
 
-  const handleAdjustQty = (sz: string, delta: number) => {
+  const handleToggleSize = (size: string) => {
     setSizeStock(prev => ({
       ...prev,
-      [sz]: { ...prev[sz], quantity: Math.max(1, prev[sz].quantity + delta) }
+      [size]: { ...prev[size], enabled: !prev[size]?.enabled }
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const clean = tagInput.trim().replace(/^#/, '');
+      if (clean && !tags.includes(clean)) {
+        setTags([...tags, clean]);
+        setTagInput('');
+      }
     }
   };
+
+  const totalStock = Object.values(sizeStock)
+    .filter(s => s?.enabled)
+    .reduce((sum, s) => sum + Number(s?.quantity || 0), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
     if (!name.trim()) {
-      setErrorMessage('Please enter product title.');
+      setErrorMessage('Please enter product title');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     if (!rawPrice || Number(rawPrice) <= 0) {
-      setErrorMessage('Please enter a valid price.');
-      return;
-    }
-    if (!imagePreview) {
-      setErrorMessage('Please upload a product showcase photo.');
+      setErrorMessage('Please enter valid price in Naira');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s].enabled);
+    const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
     if (enabledSizes.length === 0) {
-      setErrorMessage('Please enable at least 1 size.');
+      setErrorMessage(category === 'accessories' ? 'Please set stock quantity' : 'Enable at least one size with stock');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -275,23 +275,28 @@ export default function MobileVendorPublish({
     const activeVendorId = getActiveVendorId();
 
     try {
+      let finalImg = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
+
       const payload = {
         name: name.trim(),
         price: Number(rawPrice),
-        category: category,
-        genderTarget: genderTarget,
-        imageUrl: imagePreview,
-        colors: selectedColors,
-        sizes: sizeStock,
-        description: description.trim(),
-        tags: tags.length > 0 ? tags : [genderTarget, category, 'ready_to_wear'],
+        category,
+        genderTarget,
+        garmentOriginType: 'ready_made_boutique',
+        imageUrl: finalImg,
+        image_url: finalImg,
+        description: description.trim() || name.trim(),
+        tags,
+        colors: selectedColors.map(c => c.name),
+        sizes: enabledSizes,
+        sizeStock,
+        stockQuantity: totalStock,
         vendorId: activeVendorId,
-        vendorName: vendorProfile.brandName || 'Atelier',
-        isBoutique: isBoutiqueVendor(vendorProfile),
-        garmentOriginType: isBoutiqueVendor(vendorProfile) ? 'boutique_ready_to_wear' : 'bespoke_atelier',
+        vendorName: vendorProfile.brandName || 'Verified Partner',
+        is_published: true,
       };
 
-      const res = await fetch('/api/products', {
+      const res = await vendorFetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -299,434 +304,283 @@ export default function MobileVendorPublish({
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setIsSuccess(true);
-        confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
         onPublishSuccess(data.product?.id || `prod-${Date.now()}`);
       } else {
-        setErrorMessage(data.error || 'Failed to publish product. Please retry.');
+        setErrorMessage(data.error || 'Failed to publish piece');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err: any) {
-      console.error('Publish error:', err);
-      setErrorMessage('Server connection error. Please check your connection.');
+      console.error(err);
+      setErrorMessage('Network error while publishing piece');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isSuccess) {
-    return (
-      <div className="p-8 rounded-3xl surface-card border border-[var(--border-subtle)] text-center space-y-4 animate-fadeIn my-6">
-        <div className="h-16 w-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg">
-          <Check className="h-8 w-8 stroke-[3]" />
-        </div>
-        <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
-          Piece Published Successfully
-        </h3>
-        <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-xs mx-auto">
-          Your product is now live on your verified storefront and available for instant 3D digital fitting.
-        </p>
-        <div className="pt-2 flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSuccess(false);
-              setName('');
-              setRawPrice('');
-              setImagePreview(null);
-            }}
-            className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold shadow-md cursor-pointer"
-          >
-            + Add Another Piece
-          </button>
-          <Link
-            href="/vendor-portal"
-            className="w-full py-3.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] font-mono-luxury uppercase text-xs font-bold text-[var(--text-primary)] text-center"
-          >
-            Go to Overview
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 animate-fadeIn pb-20 select-none">
+    <form onSubmit={handleSubmit} className="space-y-4 animate-fadeIn pb-24 select-none">
       
-      {/* 1. Top Header */}
-      <div>
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20 mb-1">
-          <span>Live Catalog Publisher</span>
+      {/* 1. Header & Department Switcher */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold block">
+              Catalog Publisher
+            </span>
+            <h2 className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-tight">
+              Add New Piece
+            </h2>
+          </div>
+          <span className="text-[10px] font-mono-luxury text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            {totalStock} in Stock
+          </span>
         </div>
-        <h2 className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-tight">
-          Add New Garment Piece
-        </h2>
-        <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
-          Upload photo, set colorways & size inventory.
-        </p>
+
+        {/* Gender Tabs */}
+        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+          {(['male', 'female', 'unisex'] as GenderTarget[]).map((gt) => (
+            <button
+              key={gt}
+              type="button"
+              onClick={() => {
+                setGenderTarget(gt);
+                const list = gt === 'male' ? MALE_CATEGORIES : gt === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
+                handleCategorySelect(list[0].id, list[0].generalCat);
+              }}
+              className={`py-2 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all ${
+                genderTarget === gt
+                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
+                  : 'text-[var(--text-secondary)]'
+              }`}
+            >
+              {gt === 'male' ? 'Men' : gt === 'female' ? 'Women' : 'Unisex'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono-luxury flex items-center gap-2">
+        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono-luxury flex items-center gap-2 animate-fadeIn">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* 2. Department Selector Pills (No emojis) */}
-      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] font-mono-luxury text-xs font-bold uppercase">
-        {[
-          { id: 'male', label: 'Men' },
-          { id: 'female', label: 'Women' },
-          { id: 'unisex', label: 'Unisex' },
-        ].map((d) => {
-          const isChosen = genderTarget === d.id;
-          return (
-            <button
-              key={d.id}
-              type="button"
-              onClick={() => setGenderTarget(d.id as GenderTarget)}
-              className={`py-2.5 rounded-xl transition-all cursor-pointer text-center ${
-                isChosen
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              {d.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* 2. Showcase Photo Card */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
+        <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury block">
+          1. Photo Showcase <strong className="text-rose-400">*</strong>
+        </span>
 
-      {/* 3. Product Photo Upload Card */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
-            1. Product Showcase Photo <strong className="text-rose-400">*</strong>
-          </span>
-          <span className="text-[9px] font-mono-luxury text-[var(--text-muted)]">PNG / JPG</span>
-        </div>
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-[var(--border-subtle)] rounded-2xl p-4 text-center cursor-pointer transition-all bg-[var(--bg-primary)] flex flex-col items-center justify-center min-h-[160px]"
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-
-        {imagePreview ? (
-          <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-black border border-[var(--border-subtle)] group">
-            <Image
-              src={imagePreview}
-              alt="Preview"
-              fill
-              unoptimized
-              className="object-cover"
-            />
-            <div className="absolute bottom-3 inset-x-3 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 py-2 px-3 rounded-xl bg-black/80 backdrop-blur-md text-white text-[10px] font-mono-luxury uppercase font-bold border border-white/20 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Camera className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-                <span>Replace Photo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setImagePreview(null)}
-                className="p-2 rounded-xl bg-rose-500/80 text-white backdrop-blur-md text-[10px] font-mono-luxury cursor-pointer"
-                title="Remove"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+          {imagePreview ? (
+            <div className="relative h-44 w-full rounded-xl overflow-hidden">
+              <Image src={imagePreview} alt="Preview" fill unoptimized className="object-cover" />
             </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full aspect-[4/3] rounded-2xl border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] bg-[var(--bg-primary)] flex flex-col items-center justify-center gap-2 p-4 text-center cursor-pointer transition-all active:scale-98"
-          >
-            <div className="h-12 w-12 rounded-2xl bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center shadow-sm">
-              <Camera className="h-6 w-6" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-[var(--text-primary)] block font-mono-luxury uppercase">
+          ) : (
+            <div className="space-y-1.5 py-4">
+              <Camera className="h-8 w-8 text-[var(--gold-accent)] mx-auto" />
+              <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
                 Tap to Upload Photo
               </span>
-              <span className="text-[10px] text-[var(--text-secondary)] font-mono-luxury">
-                Lookbook image or mannequin shot
+              <span className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                Take camera photo or pick from gallery
               </span>
             </div>
-          </button>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* 4. Product Metadata (Title, Category, Price) */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
+      {/* 3. Title, Price & Category */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm font-mono-luxury text-xs">
         <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-          2. Garment Details
+          2. Piece Details & Category
         </span>
 
         <div>
           <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-            Product Title <strong className="text-rose-400">*</strong>
+            Piece Name / Title <strong className="text-rose-400">*</strong>
           </label>
           <input
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Midnight Onyx Senator Kaftan"
+            placeholder="e.g. Leather Palms, Velvet Fila, Silk Boubou"
             className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
           />
         </div>
 
         <div>
           <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-            Category
+            Price (₦ NGN) <strong className="text-rose-400">*</strong>
           </label>
           <div className="relative">
-            <select
-              value={subCategory}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none appearance-none pr-8 font-bold"
-            >
-              {activeCategoriesList.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)] pointer-events-none" />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
+            <input
+              type="number"
+              required
+              value={rawPrice}
+              onChange={(e) => setRawPrice(e.target.value)}
+              placeholder="35,000"
+              className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+            />
           </div>
         </div>
 
         <div>
           <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-            Price in Nigerian Naira (₦) <strong className="text-rose-400">*</strong>
+            Category / Piece Type <strong className="text-rose-400">*</strong>
           </label>
-          <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-[var(--gold-accent)] text-sm">
-              ₦
-            </span>
-            <input
-              type="text"
-              required
-              value={rawPrice ? Number(rawPrice).toLocaleString() : ''}
-              onChange={handlePriceChange}
-              placeholder="35,000"
-              className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold text-sm"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 5. Colorways Picker */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
-        <div className="flex items-center justify-between">
-          <span className="text-xs uppercase font-bold text-[var(--text-primary)]">
-            3. Available Colors ({selectedColors.length})
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowCustomColor(!showCustomColor)}
-            className="text-[10px] text-[var(--gold-accent)] uppercase font-bold underline cursor-pointer"
-          >
-            {showCustomColor ? 'Cancel' : '+ Custom Color'}
-          </button>
-        </div>
-
-        {showCustomColor && (
-          <div className="p-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={customHex}
-                onChange={(e) => setCustomHex(e.target.value)}
-                className="h-8 w-8 rounded-lg cursor-pointer bg-transparent border-0"
-              />
-              <input
-                type="text"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Color Name (e.g. Royal Maroon)"
-                className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)]"
-              />
+          <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
+            {currentCategoryList.map((cat) => (
               <button
+                key={cat.id}
                 type="button"
-                onClick={handleAddCustomColor}
-                className="px-3 py-1.5 rounded-lg bg-[var(--gold-accent)] text-black text-xs font-bold cursor-pointer"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-2 pt-1">
-          {STANDARD_COLORS.map((col) => {
-            const isChosen = selectedColors.some(c => c.hex.toLowerCase() === col.hex.toLowerCase());
-            return (
-              <button
-                key={col.hex}
-                type="button"
-                onClick={() => handleToggleColor(col)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                  isChosen
-                    ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)] text-[var(--text-primary)] font-bold'
-                    : 'surface-card border-[var(--border-subtle)] text-[var(--text-secondary)] opacity-70'
+                onClick={() => handleCategorySelect(cat.id, cat.generalCat)}
+                className={`p-2.5 rounded-xl border text-left text-[11px] font-mono-luxury transition-all cursor-pointer ${
+                  subCategory === cat.id
+                    ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--text-primary)] font-bold'
+                    : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'
                 }`}
               >
-                <span
-                  className="h-3 w-3 rounded-full border border-white/20 shrink-0"
-                  style={{ backgroundColor: col.hex }}
-                />
-                <span className="text-[10px]">{col.name}</span>
-                {isChosen && <Check className="h-2.5 w-2.5 text-[var(--gold-accent)]" />}
+                {cat.label}
               </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. Description & Care Details with AI Generator */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span className="text-xs uppercase font-bold text-[var(--text-primary)]">
-            4. Description & Care Details
-          </span>
-          <button
-            type="button"
-            onClick={handleGenerateAiDescription}
-            disabled={isGeneratingAi}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 hover:bg-[var(--gold-accent)] hover:text-black transition-all text-[11px] font-bold cursor-pointer disabled:opacity-50"
-          >
-            <Sparkles className={`h-3 w-3 ${isGeneratingAi ? 'animate-spin' : ''}`} />
-            <span>{isGeneratingAi ? 'Generating...' : 'Generate with AI'}</span>
-          </button>
-        </div>
-
-        {aiToast && (
-          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold flex items-center gap-2 animate-fadeIn">
-            <Sparkles className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
-            <span>{aiToast}</span>
-          </div>
-        )}
-
-        <textarea
-          rows={3}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Fabric composition, fit silhouette, wash instructions... (Or tap 'Generate with AI' above!)"
-          className="w-full p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none font-sans"
-        />
-
-        {/* Search Tags */}
-        <div className="space-y-1.5 pt-1">
-          <label className="block text-[10px] uppercase text-[var(--text-muted)] font-bold">
-            Search Tags:
-          </label>
-          <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] min-h-[38px]">
-            {tags.map((t) => (
-              <span
-                key={t}
-                className="px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[10px] text-[var(--text-primary)] flex items-center gap-1"
-              >
-                <span>#{t}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(t)}
-                  className="text-[var(--text-muted)] hover:text-rose-500 cursor-pointer"
-                >
-                  ✕
-                </button>
-              </span>
             ))}
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              placeholder={tags.length === 0 ? "Type tag & tap enter..." : "Add tag..."}
-              className="flex-1 min-w-[90px] bg-transparent text-[11px] text-[var(--text-primary)] focus:outline-none px-1"
-            />
           </div>
+        </div>
+
+        {/* AI Generator Button */}
+        <div className="pt-1">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[var(--text-secondary)] uppercase font-bold text-[10px]">Description</span>
+            <button
+              type="button"
+              onClick={handleGenerateAiDescription}
+              disabled={isGeneratingAi}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-[10px] font-bold"
+            >
+              {isGeneratingAi ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              <span>Auto-Write</span>
+            </button>
+          </div>
+
+          {aiToast && (
+            <div className="p-2 rounded-lg bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] mb-2 animate-fadeIn">
+              {aiToast}
+            </div>
+          )}
+
+          <textarea
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Fabric specs, tailoring notes, occasion..."
+            className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none resize-none"
+          />
         </div>
       </div>
 
-      {/* 5. Ready-to-Wear Sizes & Stock Counters */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
-        <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-          5. Ready-to-Wear Sizing Stock
-        </span>
+      {/* 4. Adaptive Size Stocks */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm font-mono-luxury text-xs">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+            {category === 'footwear' ? '3. Shoe / Slide Sizing (EU)' : category === 'accessories' ? '3. Inventory Stock' : '3. Ready-to-Wear Sizes'}
+          </span>
+          <span className="text-[10px] text-[var(--gold-accent)] font-bold">{totalStock} Units</span>
+        </div>
 
-        <div className="space-y-2">
-          {STANDARD_SIZES.map((sz) => {
-            const isEnabled = sizeStock[sz]?.enabled;
-            const qty = sizeStock[sz]?.quantity || 0;
-            return (
-              <div
-                key={sz}
-                className={`p-2.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                  isEnabled
-                    ? 'bg-[var(--bg-primary)] border-[var(--border-subtle)]'
-                    : 'bg-[var(--bg-secondary)]/50 border-[var(--border-subtle)] opacity-40'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleToggleSize(sz)}
-                  className={`px-3 py-1.5 rounded-xl font-bold uppercase text-xs transition-all cursor-pointer ${
-                    isEnabled
-                      ? 'bg-[var(--gold-accent)] text-black shadow-sm'
-                      : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-muted)]'
+        {category === 'accessories' ? (
+          <div>
+            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold text-[11px]">
+              Total Available Units
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={sizeStock['One Size']?.quantity || 20}
+              onChange={(e) => handleSizeStockChange('One Size', Number(e.target.value))}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-2">
+            {currentSizeList.map((sz) => {
+              const isEn = sizeStock[sz]?.enabled;
+              const qty = sizeStock[sz]?.quantity || 0;
+              return (
+                <div
+                  key={sz}
+                  className={`p-2 rounded-xl border text-center ${
+                    isEn ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)]' : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] opacity-50'
                   }`}
                 >
-                  Size {sz}
-                </button>
-
-                {isEnabled ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-[var(--text-secondary)]">Stock:</span>
-                    <div className="flex items-center gap-1 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl p-1">
-                      <button
-                        type="button"
-                        onClick={() => handleAdjustQty(sz, -1)}
-                        className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-8 text-center font-bold text-xs text-[var(--text-primary)]">
-                        {qty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleAdjustQty(sz, 1)}
-                        className="p-1 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-xs text-[var(--text-primary)]">{sz}</span>
+                    <input
+                      type="checkbox"
+                      checked={isEn}
+                      onChange={() => handleToggleSize(sz)}
+                      className="rounded text-[var(--gold-accent)]"
+                    />
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleToggleSize(sz)}
-                    className="text-[10px] text-[var(--text-muted)] uppercase hover:underline cursor-pointer"
-                  >
-                    + Enable Size
-                  </button>
-                )}
-              </div>
+                  {isEn && (
+                    <input
+                      type="number"
+                      min={0}
+                      value={qty}
+                      onChange={(e) => handleSizeStockChange(sz, Number(e.target.value))}
+                      className="w-full text-center px-1 py-0.5 rounded bg-[var(--bg-secondary)] text-xs font-bold text-[var(--text-primary)]"
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 5. Color Palette */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm font-mono-luxury text-xs">
+        <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+          4. Colorways & Finishes
+        </span>
+
+        <div className="flex flex-wrap gap-1.5">
+          {STANDARD_COLORS.slice(0, 10).map((c) => {
+            const isSel = selectedColors.some(sc => sc.name === c.name);
+            return (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => toggleColor(c)}
+                className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 ${
+                  isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                }`}
+              >
+                <span className="h-2.5 w-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                <span>{c.name}</span>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* 7. Clean Luxury Full-Width Publish Button */}
+      {/* Submit Button */}
       <div className="pt-2">
         <button
           type="submit"
@@ -740,8 +594,9 @@ export default function MobileVendorPublish({
             </>
           ) : (
             <>
-              <UploadCloud className="h-4 w-4 stroke-[2.5]" />
-              <span>Publish to Store Catalog</span>
+              <Sparkles className="h-4 w-4" />
+              <span>Publish Piece to Catalog</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </>
           )}
         </button>

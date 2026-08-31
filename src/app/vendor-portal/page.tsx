@@ -102,7 +102,7 @@ export default function VendorOverviewPage() {
       const revData = await resReviews.json();
       if (resReviews.ok && revData.success) {
         setReviewsData({
-          averageRating: revData.averageRating || 5.0,
+          averageRating: revData.averageRating || 0,
           count: revData.count || (revData.reviews ? revData.reviews.length : 0)
         });
       }
@@ -141,11 +141,15 @@ export default function VendorOverviewPage() {
   }, 0);
 
   const totalLiveInventory = dbProducts.reduce((acc, p) => {
-    if (p.sizes && typeof p.sizes === 'object') {
-      const sum = Object.values(p.sizes).reduce((s: number, item: any) => s + (Number(item?.quantity) || 0), 0);
-      return acc + (sum || 10);
+    if (p.size_stock && typeof p.size_stock === 'object') {
+      const sum = Object.values(p.size_stock).reduce((s: number, item: any) => s + (Number(item?.quantity) || 0), 0);
+      return acc + sum;
     }
-    return acc + 10;
+    if (p.sizes && typeof p.sizes === 'object' && !Array.isArray(p.sizes)) {
+      const sum = Object.values(p.sizes).reduce((s: number, item: any) => s + (Number(item?.quantity) || 0), 0);
+      return acc + sum;
+    }
+    return acc + (Number(p.stock_quantity || p.stockQuantity) || 0);
   }, 0);
 
   if (loadingData) {
