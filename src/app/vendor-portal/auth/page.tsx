@@ -177,11 +177,6 @@ export default function VendorAuthPage() {
       setIsSubmitting(false);
       return;
     }
-    if (!regForm.designerName.trim()) {
-      setErrorMessage(isBoutiqueSelected ? 'Please enter contact person / store manager name.' : 'Please enter lead designer name.');
-      setIsSubmitting(false);
-      return;
-    }
     if (regForm.password !== regForm.confirmPassword) {
       setErrorMessage('Passwords do not match. Please re-enter your password.');
       setIsSubmitting(false);
@@ -694,47 +689,24 @@ export default function VendorAuthPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
-                    {isBoutiqueSelected ? 'Boutique / Brand Name' : 'Atelier / Brand Name'}
-                  </label>
-                  <div className="relative">
-                    {isBoutiqueSelected ? (
-                      <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                    ) : (
-                      <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                    )}
-                    <input
-                      type="text"
-                      required
-                      value={regForm.brandName}
-                      onChange={(e) => setRegForm({ ...regForm, brandName: e.target.value })}
-                      placeholder={isBoutiqueSelected ? 'e.g. Moji Boutique' : 'e.g. Deji & Kola Atelier'}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
-                    {isBoutiqueSelected ? 'Store Manager / Contact Person' : 'Lead Designer / Tailor'}
-                  </label>
-                  <div className="relative">
-                    {isBoutiqueSelected ? (
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                    ) : (
-                      <Scissors className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-                    )}
-                    <input
-                      type="text"
-                      required
-                      value={regForm.designerName}
-                      onChange={(e) => setRegForm({ ...regForm, designerName: e.target.value })}
-                      placeholder="e.g. Full Name"
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
-                    />
-                  </div>
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
+                  {isBoutiqueSelected ? 'Boutique / Brand Name' : 'Atelier / Brand Name'}
+                </label>
+                <div className="relative">
+                  {isBoutiqueSelected ? (
+                    <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                  ) : (
+                    <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
+                  )}
+                  <input
+                    type="text"
+                    required
+                    value={regForm.brandName}
+                    onChange={(e) => setRegForm({ ...regForm, brandName: e.target.value, designerName: e.target.value })}
+                    placeholder={isBoutiqueSelected ? 'e.g. Moji Boutique' : 'e.g. Deji & Kola Atelier'}
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+                  />
                 </div>
               </div>
 
