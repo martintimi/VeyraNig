@@ -6,7 +6,8 @@ import {
   UploadCloud, Sparkles, Plus, Trash2,
   Tag, ArrowRight, Loader2, X, Palette,
   Check, AlertTriangle, ShieldCheck, Camera,
-  RefreshCw, Minus, ChevronDown, Sparkle
+  RefreshCw, Minus, ChevronDown, Sparkle,
+  Shirt, Footprints, Gem, Layers
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -38,12 +39,12 @@ const MALE_CATEGORIES = [
   { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
   { id: 'jeans_trousers', label: 'Baggy Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
   // Footwear
-  { id: 'men_slides_palms', label: '👡 Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
-  { id: 'men_shoes_loafers', label: '👞 Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'men_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'men_shoes_loafers', label: 'Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
   // Accessories & Jewelry
-  { id: 'men_jewelry_chains', label: '💎 Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
-  { id: 'men_caps_fila', label: '🧢 Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
-  { id: 'men_bags_wallets', label: '👜 Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'men_jewelry_chains', label: 'Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'men_caps_fila', label: 'Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'men_bags_wallets', label: 'Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 const FEMALE_CATEGORIES = [
@@ -55,12 +56,12 @@ const FEMALE_CATEGORIES = [
   { id: 'female_streetwear', label: 'Female Streetwear & Hoodies', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
   { id: 'women_jeans_trousers', label: 'Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
   // Footwear
-  { id: 'women_slides_palms', label: '👡 Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
-  { id: 'women_heels_mules', label: '👠 Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'women_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'women_heels_mules', label: 'Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
   // Accessories & Jewelry
-  { id: 'women_jewelry', label: '💎 Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
-  { id: 'women_bags', label: '👜 Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
-  { id: 'women_caps_scarves', label: '🧢 Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'women_jewelry', label: 'Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'women_bags', label: 'Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'women_caps_scarves', label: 'Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 const UNISEX_CATEGORIES = [
@@ -69,12 +70,12 @@ const UNISEX_CATEGORIES = [
   { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
   { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
   // Footwear
-  { id: 'unisex_slides_palms', label: '👡 Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
-  { id: 'unisex_sneakers', label: '👟 Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'unisex_slides_palms', label: 'Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'unisex_sneakers', label: 'Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
   // Accessories & Jewelry
-  { id: 'unisex_jewelry', label: '💎 Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
-  { id: 'unisex_caps_hats', label: '🧢 Caps, Beanies & Hats', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
-  { id: 'unisex_bags', label: '🎒 Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'unisex_jewelry', label: 'Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Hats', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'unisex_bags', label: 'Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 const APPAREL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -99,7 +100,7 @@ export default function MobileVendorPublish({
   const [category, setCategory] = useState<GarmentCategory>(MALE_CATEGORIES[0].generalCat);
   const [rawPrice, setRawPrice] = useState<string>('');
   
-  // Colors
+  // Colors (for apparel and footwear)
   const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([
     { name: 'Black', hex: '#111111' }
   ]);
@@ -277,6 +278,12 @@ export default function MobileVendorPublish({
       return;
     }
 
+    if (category !== 'accessories' && selectedColors.length === 0) {
+      setErrorMessage('Please select at least one color');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
     if (enabledSizes.length === 0) {
       setErrorMessage(category === 'accessories' ? 'Please set stock quantity' : 'Enable at least one size with stock');
@@ -300,7 +307,7 @@ export default function MobileVendorPublish({
         image_url: finalImg,
         description: description.trim() || name.trim(),
         tags,
-        colors: selectedColors.map(c => c.name),
+        colors: category === 'accessories' ? ['Standard'] : selectedColors.map(c => c.name),
         sizes: enabledSizes,
         sizeStock,
         stockQuantity: totalStock,
@@ -362,7 +369,7 @@ export default function MobileVendorPublish({
                 const list = gt === 'male' ? MALE_CATEGORIES : gt === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
                 handleCategorySelect(list[0].id, list[0].generalCat);
               }}
-              className={`py-2 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all ${
+              className={`py-2 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
                 genderTarget === gt
                   ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
                   : 'text-[var(--text-secondary)]'
@@ -433,7 +440,7 @@ export default function MobileVendorPublish({
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Leather Palms, Velvet Fila, Silk Boubou"
+            placeholder="e.g. Leather Crocodile Palms, Velvet Fila, Silk Boubou, Cuban Chain"
             className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
           />
         </div>
@@ -461,34 +468,38 @@ export default function MobileVendorPublish({
               Category / Piece Type <strong className="text-rose-400">*</strong>
             </label>
             <span className="text-[9px] text-[var(--gold-accent)] font-bold uppercase">
-              {category === 'footwear' ? '👟 Shoe Sizing' : category === 'accessories' ? '💎 One-Size Stock' : '👔 Apparel Sizing'}
+              {category === 'footwear' ? 'Shoe Sizing' : category === 'accessories' ? 'Jewelry / One-Size' : 'Apparel Sizing'}
             </span>
           </div>
 
-          {/* Quick Segment Tabs */}
+          {/* Quick Segment Tabs with Lucide Icons */}
           <div className="flex items-center gap-1.5 mb-2 overflow-x-auto no-scrollbar pb-0.5">
             {[
-              { id: 'all', label: 'All Items' },
-              { id: 'apparel', label: '👔 Apparel' },
-              { id: 'footwear', label: '👟 Shoes & Slides' },
-              { id: 'accessories', label: '💎 Jewelry, Caps & Bags' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setCatFilterTab(tab.id as any)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono-luxury font-bold shrink-0 transition-all cursor-pointer ${
-                  catFilterTab === tab.id
-                    ? 'bg-[var(--gold-accent)] text-black shadow-sm'
-                    : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+              { id: 'all', label: 'All', icon: Layers },
+              { id: 'apparel', label: 'Apparel', icon: Shirt },
+              { id: 'footwear', label: 'Footwear', icon: Footprints },
+              { id: 'accessories', label: 'Jewelry & Accessories', icon: Gem },
+            ].map((tab) => {
+              const IconComp = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setCatFilterTab(tab.id as any)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono-luxury font-bold shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
+                    catFilterTab === tab.id
+                      ? 'bg-[var(--gold-accent)] text-black shadow-sm'
+                      : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                  }`}
+                >
+                  <IconComp className="h-3 w-3" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Clean Category Grid (No hidden scroll cut-off!) */}
+          {/* Clean Category Grid */}
           <div className="grid grid-cols-2 gap-1.5">
             {filteredCategoryList.map((cat) => (
               <button
@@ -597,31 +608,33 @@ export default function MobileVendorPublish({
         )}
       </div>
 
-      {/* 5. Color Palette */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm font-mono-luxury text-xs">
-        <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-          4. Colorways & Finishes
-        </span>
+      {/* 5. Color Palette (Only shown for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
+      {category !== 'accessories' && (
+        <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm font-mono-luxury text-xs">
+          <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+            4. Colorways & Finishes
+          </span>
 
-        <div className="flex flex-wrap gap-1.5">
-          {STANDARD_COLORS.slice(0, 10).map((c) => {
-            const isSel = selectedColors.some(sc => sc.name === c.name);
-            return (
-              <button
-                key={c.name}
-                type="button"
-                onClick={() => toggleColor(c)}
-                className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 ${
-                  isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                }`}
-              >
-                <span className="h-2.5 w-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
-                <span>{c.name}</span>
-              </button>
-            );
-          })}
+          <div className="flex flex-wrap gap-1.5">
+            {STANDARD_COLORS.slice(0, 10).map((c) => {
+              const isSel = selectedColors.some(sc => sc.name === c.name);
+              return (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => toggleColor(c)}
+                  className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 ${
+                    isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                  }`}
+                >
+                  <span className="h-2.5 w-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                  <span>{c.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Submit Button */}
       <div className="pt-2">

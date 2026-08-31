@@ -9,7 +9,7 @@ import {
   ShoppingBag, Tag, ArrowRight, ExternalLink,
   Loader2, Wand2, X, Palette, Store, Clock,
   Check, AlertTriangle, ShieldCheck, Shirt, Info, Sparkle, Lock, RotateCcw,
-  Footprints, Gem, Crown, Watch
+  Footprints, Gem, Crown, Watch, Layers
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -42,54 +42,54 @@ const STANDARD_COLORS = [
 // Department-Specific Categories
 export const MALE_CATEGORIES = [
   // Apparel
-  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
-  { id: 'agbada_robes', label: 'Grand Agbada & 3-Piece Robes', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
-  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweatshirts', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
-  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
-  { id: 'tshirts_tees', label: 'T-Shirts & Graphic Tees', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
-  { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
-  { id: 'jeans_trousers', label: 'Baggy Jeans, Cargo & Trousers', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
-  { id: 'shorts_sweats', label: 'Shorts & Sweatpants', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
+  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'agbada_robes', label: 'Grand Agbada & 3-Piece Robes', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweatshirts', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'tshirts_tees', label: 'T-Shirts & Graphic Tees', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'shirts_polos', label: 'Luxury Shirts & Polos', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'jeans_trousers', label: 'Baggy Jeans, Cargo & Trousers', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
+  { id: 'shorts_sweats', label: 'Shorts & Sweatpants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
   // Footwear
-  { id: 'men_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
-  { id: 'men_shoes_loafers', label: 'Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  { id: 'men_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'men_shoes_loafers', label: 'Loafers, Shoes & Sneakers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
   // Accessories & Jewelry
-  { id: 'men_caps_fila', label: 'Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
-  { id: 'men_jewelry_chains', label: 'Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory, iconType: 'jewelry' },
-  { id: 'men_bags_wallets', label: 'Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
+  { id: 'men_jewelry_chains', label: 'Jewelry, Chains & Watches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'men_caps_fila', label: 'Caps, Fila & Headwear', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'men_bags_wallets', label: 'Bags, Wallets & Belts', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 export const FEMALE_CATEGORIES = [
   // Apparel
-  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
-  { id: 'boubou_kaftans', label: 'Silk Boubou, Kaftans & Abayas', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
-  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
-  { id: 'corsets_tops', label: 'Corsets, Crop Tops & Blouses', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
-  { id: 'skirts_minis', label: 'Skirts & Mini Skirts', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
-  { id: 'women_jeans_trousers', label: 'High-Waist Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
-  { id: 'female_streetwear', label: 'Female Streetwear & Hoodies', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'boubou_kaftans', label: 'Silk Boubou, Kaftans & Abayas', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'corsets_tops', label: 'Corsets, Crop Tops & Blouses', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'skirts_minis', label: 'Skirts & Mini Skirts', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
+  { id: 'women_jeans_trousers', label: 'High-Waist Jeans, Cargo & Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
+  { id: 'female_streetwear', label: 'Female Streetwear & Hoodies', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
   // Footwear
-  { id: 'women_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
-  { id: 'women_heels_mules', label: 'Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  { id: 'women_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'women_heels_mules', label: 'Heels, Mules & Loafers', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
   // Accessories & Jewelry
-  { id: 'women_jewelry', label: 'Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory, iconType: 'jewelry' },
-  { id: 'women_bags', label: 'Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
-  { id: 'women_caps_scarves', label: 'Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
+  { id: 'women_jewelry', label: 'Jewelry, Necklaces & Bangles', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'women_bags', label: 'Handbags, Totes & Clutches', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'women_caps_scarves', label: 'Caps, Scarves & Headbands', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 export const UNISEX_CATEGORIES = [
   // Apparel
-  { id: 'unisex_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
-  { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory, iconType: 'apparel' },
-  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, iconType: 'apparel' },
-  { id: 'unisex_jackets', label: 'Jackets & Windbreakers', generalCat: 'outerwear' as GarmentCategory, iconType: 'apparel' },
+  { id: 'unisex_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
+  { id: 'unisex_tees', label: 'Graphic Tees & Oversized Shirts', generalCat: 'tops' as GarmentCategory, group: 'apparel' },
+  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, group: 'apparel' },
+  { id: 'unisex_jackets', label: 'Jackets & Windbreakers', generalCat: 'outerwear' as GarmentCategory, group: 'apparel' },
   // Footwear
-  { id: 'unisex_slides_palms', label: 'Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
-  { id: 'unisex_sneakers', label: 'Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory, iconType: 'footwear' },
+  { id: 'unisex_slides_palms', label: 'Slides, Palms & Crocs', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
+  { id: 'unisex_sneakers', label: 'Sneakers & Casual Shoes', generalCat: 'footwear' as GarmentCategory, group: 'footwear' },
   // Accessories & Jewelry
-  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Bucket Hats', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
-  { id: 'unisex_jewelry', label: 'Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory, iconType: 'jewelry' },
-  { id: 'unisex_bags', label: 'Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, iconType: 'accessory' },
+  { id: 'unisex_jewelry', label: 'Chains, Rings & Jewelry', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Bucket Hats', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
+  { id: 'unisex_bags', label: 'Crossbody Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, group: 'accessories' },
 ];
 
 const APPAREL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -123,7 +123,7 @@ export default function PublishGarmentPage() {
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiToast, setAiToast] = useState('');
 
-  // Interactive Colorway State
+  // Interactive Colorway State (Apparel & Footwear only)
   const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([
     { name: 'Black', hex: '#111111' }
   ]);
@@ -345,7 +345,8 @@ export default function PublishGarmentPage() {
       setErrorMessage('Please enter a valid price in Naira.');
       return;
     }
-    if (selectedColors.length === 0) {
+
+    if (category !== 'accessories' && selectedColors.length === 0) {
       setErrorMessage('Please select at least one available color.');
       return;
     }
@@ -372,7 +373,7 @@ export default function PublishGarmentPage() {
         image_url: finalImageUrl,
         description: description.trim() || name.trim(),
         tags,
-        colors: selectedColors.map(c => c.name),
+        colors: category === 'accessories' ? ['Standard'] : selectedColors.map(c => c.name),
         sizes: enabledSizes,
         sizeStock,
         stockQuantity: totalStockCount,
@@ -423,7 +424,7 @@ export default function PublishGarmentPage() {
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
   const filteredCategoryList = catFilterTab === 'all'
     ? currentCategoryList
-    : currentCategoryList.filter(c => (c.generalCat === 'accessories' && catFilterTab === 'accessories') || (c.generalCat === 'footwear' && catFilterTab === 'footwear') || (c.generalCat !== 'accessories' && c.generalCat !== 'footwear' && catFilterTab === 'apparel'));
+    : currentCategoryList.filter(c => c.group === catFilterTab);
   const currentSizeList = category === 'footwear' ? FOOTWEAR_SIZES : category === 'accessories' ? ACCESSORY_SIZES : APPAREL_SIZES;
 
   const totalStockCount = Object.values(sizeStock)
@@ -750,7 +751,7 @@ export default function PublishGarmentPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Leather Crocodile Palms, Velvet Fila, Silk Boubou, Diamond Cuban Chain"
+                  placeholder="e.g. Leather Crocodile Palms, Velvet Fila, Silk Boubou, Cuban Chain"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
@@ -782,31 +783,35 @@ export default function PublishGarmentPage() {
                   Garment / Accessory Category <strong className="text-rose-400">*</strong>
                 </label>
                 <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold uppercase">
-                  {category === 'footwear' ? '👟 Footwear Sizing Active' : category === 'accessories' ? '💎 One-Size Inventory Active' : '👔 Apparel Sizing Active'}
+                  {category === 'footwear' ? 'Shoe Sizing Active' : category === 'accessories' ? 'Jewelry / One-Size Stock Active' : 'Apparel Sizing Active'}
                 </span>
               </div>
 
-              {/* Category Segment Tabs */}
+              {/* Category Segment Tabs with Lucide Icons */}
               <div className="flex items-center gap-2 mb-3">
                 {[
-                  { id: 'all', label: 'All Categories' },
-                  { id: 'apparel', label: '👔 Apparel & Sets' },
-                  { id: 'footwear', label: '👟 Footwear & Slides' },
-                  { id: 'accessories', label: '💎 Jewelry, Caps & Bags' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setCatFilterTab(tab.id as any)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
-                      catFilterTab === tab.id
-                        ? 'bg-[var(--gold-accent)] text-black shadow-sm'
-                        : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-white'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+                  { id: 'all', label: 'All Categories', icon: Layers },
+                  { id: 'apparel', label: 'Apparel & Sets', icon: Shirt },
+                  { id: 'footwear', label: 'Footwear & Slides', icon: Footprints },
+                  { id: 'accessories', label: 'Jewelry, Caps & Bags', icon: Gem },
+                ].map((tab) => {
+                  const IconComp = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setCatFilterTab(tab.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        catFilterTab === tab.id
+                          ? 'bg-[var(--gold-accent)] text-black shadow-sm'
+                          : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-white'
+                      }`}
+                    >
+                      <IconComp className="h-3.5 w-3.5" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -871,76 +876,78 @@ export default function PublishGarmentPage() {
 
           </div>
 
-          {/* Section 3: Colorway Variations */}
-          <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
-            <div>
-              <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
-                3. Available Colorways & Metal Finishes
-              </span>
-              <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-                Select all shades, leather tones, or metal colors available in stock.
-              </p>
-            </div>
+          {/* Section 3: Colorway Variations (Only for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
+          {category !== 'accessories' && (
+            <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
+              <div>
+                <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
+                  3. Available Colorways
+                </span>
+                <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
+                  Select all shades available in your store inventory for this piece.
+                </p>
+              </div>
 
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              {STANDARD_COLORS.map((c) => {
-                const isSelected = selectedColors.some(sc => sc.name === c.name);
-                return (
-                  <button
-                    key={c.name}
-                    type="button"
-                    onClick={() => toggleColor(c)}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-mono-luxury flex items-center gap-2 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold shadow-sm ring-1 ring-[var(--gold-accent)]'
-                        : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]'
-                    }`}
-                  >
-                    <span
-                      className="h-3 w-3 rounded-full border border-white/20 shrink-0"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                    <span>{c.name}</span>
-                    {isSelected && <Check className="h-3 w-3 text-[var(--gold-accent)]" />}
-                  </button>
-                );
-              })}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {STANDARD_COLORS.map((c) => {
+                  const isSelected = selectedColors.some(sc => sc.name === c.name);
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => toggleColor(c)}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono-luxury flex items-center gap-2 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold shadow-sm ring-1 ring-[var(--gold-accent)]'
+                          : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]'
+                      }`}
+                    >
+                      <span
+                        className="h-3 w-3 rounded-full border border-white/20 shrink-0"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      <span>{c.name}</span>
+                      {isSelected && <Check className="h-3 w-3 text-[var(--gold-accent)]" />}
+                    </button>
+                  );
+                })}
 
-              <button
-                type="button"
-                onClick={() => setShowCustomColorPicker(!showCustomColorPicker)}
-                className="px-3 py-1.5 rounded-xl border border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury text-[var(--gold-accent)] flex items-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Plus className="h-3 w-3" />
-                <span>Custom Shade</span>
-              </button>
-            </div>
-
-            {showCustomColorPicker && (
-              <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3 animate-fadeIn">
-                <input
-                  type="color"
-                  value={customColorHex}
-                  onChange={(e) => setCustomColorHex(e.target.value)}
-                  className="h-9 w-9 rounded-lg border border-[var(--border-subtle)] cursor-pointer bg-transparent"
-                />
-                <input
-                  type="text"
-                  value={customColorName}
-                  onChange={(e) => setCustomColorName(e.target.value)}
-                  placeholder="e.g. 18k Gold, Matte Silver, Oxblood"
-                  className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none flex-1 font-bold"
-                />
                 <button
                   type="button"
-                  onClick={handleAddCustomColor}
-                  className="px-4 py-2 rounded-xl bg-[var(--gold-accent)] text-black text-xs font-mono-luxury uppercase font-bold cursor-pointer"
+                  onClick={() => setShowCustomColorPicker(!showCustomColorPicker)}
+                  className="px-3 py-1.5 rounded-xl border border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury text-[var(--gold-accent)] flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  Add
+                  <Plus className="h-3 w-3" />
+                  <span>Custom Shade</span>
                 </button>
               </div>
-            )}
-          </div>
+
+              {showCustomColorPicker && (
+                <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3 animate-fadeIn">
+                  <input
+                    type="color"
+                    value={customColorHex}
+                    onChange={(e) => setCustomColorHex(e.target.value)}
+                    className="h-9 w-9 rounded-lg border border-[var(--border-subtle)] cursor-pointer bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={customColorName}
+                    onChange={(e) => setCustomColorName(e.target.value)}
+                    placeholder="e.g. Royal Emerald"
+                    className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none flex-1 font-bold"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomColor}
+                    className="px-4 py-2 rounded-xl bg-[var(--gold-accent)] text-black text-xs font-mono-luxury uppercase font-bold cursor-pointer"
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Section 4: Adaptive Size Stock & Inventory */}
           <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
@@ -950,7 +957,7 @@ export default function PublishGarmentPage() {
                   {category === 'footwear'
                     ? '4. Shoe / Slide Sizing & Inventory (EU Sizes)'
                     : category === 'accessories'
-                    ? '4. Accessory / Jewelry Stock Units'
+                    ? '3. Accessory / Jewelry Stock Units'
                     : '4. Ready-to-Wear Size Stocks & Units'}
                 </span>
                 <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
@@ -1036,7 +1043,7 @@ export default function PublishGarmentPage() {
           <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
             <div>
               <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
-                5. Search & Discovery Tags
+                {category === 'accessories' ? '4. Search & Discovery Tags' : '5. Search & Discovery Tags'}
               </span>
               <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
                 Type a keyword and press <strong className="text-[var(--text-primary)]">Enter</strong> (e.g. Palms, Slides, Fila, Kaftan, Chains, Agbada).
