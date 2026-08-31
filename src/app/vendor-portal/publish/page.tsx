@@ -387,33 +387,41 @@ export default function PublishGarmentPage() {
   // =========================================================================
   if (!isVerified) {
     return (
-      <div className="p-6 sm:p-12 max-w-4xl mx-auto space-y-8 animate-fadeIn text-center">
+      <div className="p-6 sm:p-12 max-w-3xl mx-auto space-y-8 animate-fadeIn text-center">
         {isRejected ? (
-          <div className="p-8 sm:p-12 rounded-3xl bg-rose-500/10 border-2 border-rose-500/40 space-y-6 shadow-2xl">
-            <div className="h-20 w-20 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center mx-auto shadow-lg">
-              <AlertTriangle className="h-10 w-10" />
+          <div className="p-8 sm:p-12 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-xl">
+            <div className="h-16 w-16 rounded-2xl bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center mx-auto shadow-sm">
+              <AlertTriangle className="h-8 w-8 text-[var(--gold-accent)]" />
             </div>
 
-            <div className="space-y-2 max-w-xl mx-auto">
-              <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 text-xs font-mono-luxury font-bold uppercase">
+            <div className="space-y-3 max-w-lg mx-auto">
+              <span className="px-3 py-1 rounded-full bg-[var(--bg-secondary)] text-[var(--gold-accent)] border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
                 Action Required · Store Profile Returned
               </span>
-              <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mt-3">
+              <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
                 Store Profile Returned For Correction
               </h1>
-              <div className="p-4 rounded-2xl bg-black/40 border border-rose-500/30 text-rose-300 text-xs font-mono-luxury mt-3">
-                <span className="font-bold block uppercase text-[10px] text-rose-400 mb-1">Super Admin Feedback:</span>
-                "{profileStatus?.rejectionReason || 'Please review your store contact details, location, and social handles.'}"
-              </div>
-              <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed pt-2">
-                You cannot publish products or create drops while your store profile is returned. Please update your details and resubmit for Super Admin approval.
+              
+              {profileStatus?.rejectionReason && (
+                <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-left space-y-1 mt-2">
+                  <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] font-bold block">
+                    Admin Feedback
+                  </span>
+                  <p className="text-xs text-[var(--text-primary)] font-mono-luxury leading-relaxed">
+                    {profileStatus.rejectionReason}
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed pt-1">
+                You cannot publish products or create drops until your store profile is updated and approved by Super Admin.
               </p>
             </div>
 
             <div className="pt-2">
               <Link
                 href="/vendor-portal/atelier"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-rose-500 text-white font-mono-luxury uppercase text-xs font-bold hover:bg-rose-600 transition-all shadow-xl hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md hover:scale-105 active:scale-95"
               >
                 <span>Update Store Profile & Resubmit</span>
                 <ArrowRight className="h-4 w-4" />
@@ -421,62 +429,62 @@ export default function PublishGarmentPage() {
             </div>
           </div>
         ) : isPending ? (
-          <div className="p-8 sm:p-12 rounded-3xl bg-amber-500/10 border-2 border-amber-500/40 space-y-6 shadow-2xl">
-            <div className="h-20 w-20 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center mx-auto shadow-lg">
-              <Clock className="h-10 w-10 animate-pulse" />
+          <div className="p-8 sm:p-12 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-xl">
+            <div className="h-16 w-16 rounded-2xl bg-[var(--bg-secondary)] text-amber-400 border border-[var(--border-subtle)] flex items-center justify-center mx-auto shadow-sm">
+              <Clock className="h-8 w-8 animate-pulse" />
             </div>
 
-            <div className="space-y-2 max-w-xl mx-auto">
-              <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-mono-luxury font-bold uppercase">
+            <div className="space-y-3 max-w-lg mx-auto">
+              <span className="px-3 py-1 rounded-full bg-[var(--bg-secondary)] text-amber-400 border border-amber-500/30 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
                 Account Status · Pending Review
               </span>
-              <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mt-3">
-                Store Profile Under Super Admin Review
+              <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                Store Profile Under Executive Review
               </h1>
-              <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed pt-2">
-                Your store details and delivery zone rates have been submitted. Super Admin is currently reviewing your account. Product publishing will unlock automatically once your store is approved.
+              <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
+                Your store details and delivery rates have been submitted. Super Admin is reviewing your account. Product publishing will unlock automatically once approved.
               </p>
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/vendor-portal/atelier"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full surface-card border border-amber-500/40 text-amber-400 font-mono-luxury uppercase text-xs font-bold hover:bg-amber-500/10 transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-xs font-bold hover:border-[var(--gold-accent)] transition-all shadow-sm"
               >
                 <span>View Submitted Profile</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <button
                 onClick={checkVerification}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-sm cursor-pointer"
               >
                 <RotateCcw className="h-4 w-4" />
-                <span>Check Approval Status</span>
+                <span>Check Status</span>
               </button>
             </div>
           </div>
         ) : (
-          <div className="p-8 sm:p-12 rounded-3xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-6 shadow-2xl">
-            <div className="h-20 w-20 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 flex items-center justify-center mx-auto shadow-lg">
-              <Store className="h-10 w-10" />
+          <div className="p-8 sm:p-12 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6 shadow-xl">
+            <div className="h-16 w-16 rounded-2xl bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 flex items-center justify-center mx-auto shadow-sm">
+              <Store className="h-8 w-8" />
             </div>
 
-            <div className="space-y-2 max-w-xl mx-auto">
-              <span className="px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-xs font-mono-luxury font-bold uppercase">
-                Setup Required · Store Profile Incomplete
+            <div className="space-y-3 max-w-lg mx-auto">
+              <span className="px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
+                Setup Required · Profile Incomplete
               </span>
-              <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] mt-3">
+              <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
                 Complete Store Profile to Enable Publishing
               </h1>
-              <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed pt-2">
-                You must complete your brand identity, location, and delivery zone rates so Super Admin can verify your boutique before you publish pieces.
+              <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
+                You must set up your brand identity, turnaround times, and delivery zone rates before publishing pieces to the catalog.
               </p>
             </div>
 
             <div className="pt-2">
               <Link
                 href="/vendor-portal/atelier"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-xl hover:scale-105 active:scale-95"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold hover:opacity-90 transition-all shadow-md hover:scale-105 active:scale-95"
               >
                 <span>Complete Store Profile</span>
                 <ArrowRight className="h-4 w-4" />
