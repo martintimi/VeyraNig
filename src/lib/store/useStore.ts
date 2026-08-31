@@ -519,7 +519,7 @@ export const useStore = create<VeyraState>()(
       setAllProducts: (products) => set({ allProducts: products }),
       fetchProductsFromDb: async () => {
         try {
-          const res = await fetch('/api/products');
+          const res = await fetch('/api/products', { cache: 'no-store' });
           const data = await res.json();
           if (data.success && Array.isArray(data.products) && data.products.length > 0) {
             const dbProducts: Product[] = data.products.map((p: any) => {
