@@ -227,6 +227,16 @@ export default function PublishGarmentPage() {
     }
   };
 
+  const handlePriceChange = (val: string) => {
+    const cleanDigits = val.replace(/\D/g, '');
+    if (!cleanDigits) {
+      setRawPrice('');
+      return;
+    }
+    const formatted = Number(cleanDigits).toLocaleString('en-NG');
+    setRawPrice(formatted);
+  };
+
   const handleGenerateAiDescription = async () => {
     if (!name.trim()) {
       setAiToast('Please enter a product title first to generate description with AI.');
@@ -258,7 +268,7 @@ export default function PublishGarmentPage() {
           setTags(prev => Array.from(new Set([...prev, ...data.tags])));
         }
         if (!rawPrice && data.suggestedPrice) {
-          setRawPrice(String(data.suggestedPrice));
+          setRawPrice(Number(data.suggestedPrice).toLocaleString('en-NG'));
         }
         setAiToast('AI generated product description, material specs, and tags!');
         confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
@@ -341,7 +351,8 @@ export default function PublishGarmentPage() {
       setErrorMessage('Please enter a product title.');
       return;
     }
-    if (!rawPrice || Number(rawPrice) <= 0) {
+    const numericPrice = Number(rawPrice.replace(/,/g, ''));
+    if (!rawPrice || isNaN(numericPrice) || numericPrice <= 0) {
       setErrorMessage('Please enter a valid price in Naira.');
       return;
     }
@@ -365,7 +376,7 @@ export default function PublishGarmentPage() {
 
       const payload = {
         name: name.trim(),
-        price: Number(rawPrice),
+        price: numericPrice,
         category,
         genderTarget,
         garmentOriginType: 'ready_made_boutique',
@@ -765,10 +776,11 @@ export default function PublishGarmentPage() {
                     ₦
                   </span>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     required
                     value={rawPrice}
-                    onChange={(e) => setRawPrice(e.target.value)}
+                    onChange={(e) => handlePriceChange(e.target.value)}
                     placeholder="35,000"
                     className="w-full pl-8 pr-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
                   />

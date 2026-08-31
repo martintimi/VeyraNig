@@ -169,6 +169,16 @@ export default function MobileVendorPublish({
     }
   };
 
+  const handlePriceChange = (val: string) => {
+    const cleanDigits = val.replace(/\D/g, '');
+    if (!cleanDigits) {
+      setRawPrice('');
+      return;
+    }
+    const formatted = Number(cleanDigits).toLocaleString('en-NG');
+    setRawPrice(formatted);
+  };
+
   const handleGenerateAiDescription = async () => {
     if (!name.trim()) {
       setAiToast('Enter product title first (e.g. Leather Palms or Senator Kaftan)');
@@ -195,7 +205,7 @@ export default function MobileVendorPublish({
       if (res.ok && data.success) {
         if (data.description) setDescription(data.description);
         if (data.tags && Array.isArray(data.tags)) setTags(prev => Array.from(new Set([...prev, ...data.tags])));
-        if (!rawPrice && data.suggestedPrice) setRawPrice(String(data.suggestedPrice));
+        if (!rawPrice && data.suggestedPrice) setRawPrice(Number(data.suggestedPrice).toLocaleString('en-NG'));
         setAiToast('AI generated description & tags!');
         setTimeout(() => setAiToast(''), 3500);
       }
@@ -272,7 +282,8 @@ export default function MobileVendorPublish({
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (!rawPrice || Number(rawPrice) <= 0) {
+    const numericPrice = Number(rawPrice.replace(/,/g, ''));
+    if (!rawPrice || isNaN(numericPrice) || numericPrice <= 0) {
       setErrorMessage('Please enter valid price in Naira');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -299,7 +310,7 @@ export default function MobileVendorPublish({
 
       const payload = {
         name: name.trim(),
-        price: Number(rawPrice),
+        price: numericPrice,
         category,
         genderTarget,
         garmentOriginType: 'ready_made_boutique',
@@ -452,10 +463,11 @@ export default function MobileVendorPublish({
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               required
               value={rawPrice}
-              onChange={(e) => setRawPrice(e.target.value)}
+              onChange={(e) => handlePriceChange(e.target.value)}
               placeholder="35,000"
               className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
             />
