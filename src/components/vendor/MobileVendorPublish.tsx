@@ -272,6 +272,10 @@ export default function MobileVendorPublish({
     }
   };
 
+  const totalStock = Object.values(sizeStock)
+    .filter(s => s?.enabled)
+    .reduce((sum, s) => sum + Number(s?.quantity || 0), 0);
+
   const handleResetForm = () => {
     setName('');
     setRawPrice('');

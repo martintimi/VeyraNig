@@ -525,7 +525,7 @@ export default function VendorAtelierProfilePage() {
                   </p>
                 </div>
               </div>
-            </div>  </div>
+            </div>
           </div>
 
           {/* 3. Social Media Channels */}
