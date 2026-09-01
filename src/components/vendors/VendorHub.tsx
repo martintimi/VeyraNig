@@ -152,7 +152,7 @@ export default function VendorHub() {
             </div>
 
             <div className="space-y-1">
-              <h3 className="font-editorial text-3xl font-bold text-[var(--text-primary)]">
+              <h3 className="font-editorial text-3xl font-normal text-[var(--text-primary)]">
                 Garment Published Live!
               </h3>
               <p className="text-xs text-[var(--text-secondary)]">

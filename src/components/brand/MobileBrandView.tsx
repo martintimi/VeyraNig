@@ -124,7 +124,7 @@ export default function MobileBrandView({
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <h1 className="font-editorial text-xl sm:text-2xl font-bold text-[var(--text-primary)] truncate">
+              <h1 className="font-editorial text-xl sm:text-2xl font-normal text-[var(--text-primary)] truncate">
                 {brandName}
               </h1>
               <ShieldCheck className="h-4 w-4 text-[var(--gold-accent)] shrink-0" />

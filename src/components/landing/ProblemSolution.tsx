@@ -42,7 +42,7 @@ export default function ProblemSolution() {
             <span>THE VEYRA ADVANTAGE</span>
           </div>
 
-          <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--text-primary)]">
+          <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-[var(--text-primary)]">
             A New Standard for Nigerian Fashion
           </h2>
 

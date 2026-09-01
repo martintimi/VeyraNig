@@ -17,7 +17,7 @@ export default function BrandShowcase() {
               <Store className="h-3.5 w-3.5" />
               <span>VERIFIED NIGERIAN ATELIERS</span>
             </div>
-            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--text-primary)]">
+            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-[var(--text-primary)]">
               Partner Designers & Houses
             </h2>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light max-w-xl">

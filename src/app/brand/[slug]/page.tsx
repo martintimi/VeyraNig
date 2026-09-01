@@ -242,7 +242,7 @@ export default function BrandStorefrontPage() {
             
             <div className="space-y-2">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] leading-tight">
+                <h1 className="font-editorial text-3xl sm:text-4xl font-normal text-[var(--text-primary)] leading-tight">
                   {vendor.name}
                 </h1>
                 <span className="px-3 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">

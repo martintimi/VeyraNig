@@ -217,7 +217,7 @@ export default function VendorOverviewPage() {
                 <span className="text-[10px] font-mono-luxury font-bold uppercase text-amber-400">
                   Account Status · Not Verified
                 </span>
-                <h3 className="font-editorial text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+                <h3 className="font-editorial text-lg sm:text-xl font-normal text-[var(--text-primary)]">
                   Complete Your Store Profile to Activate Drops
                 </h3>
                 <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-0.5">

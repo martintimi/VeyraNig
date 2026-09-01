@@ -182,7 +182,7 @@ export default function MobileVendorOverview({
         {/* Metric 1: Live Drops */}
         <div className="p-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
           <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] block">Live Drops</span>
-          <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)] leading-none">{dbProducts.length}</div>
+          <div className="font-editorial text-2xl font-normal text-[var(--gold-accent)] leading-none">{dbProducts.length}</div>
           <div className="text-[9px] text-emerald-400 flex items-center gap-1 pt-0.5">
             <TrendingUp className="h-2.5 w-2.5" />
             <span>Active in catalog</span>
@@ -192,7 +192,7 @@ export default function MobileVendorOverview({
         {/* Metric 2: Orders to Pack */}
         <div className="p-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
           <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] block">Orders to Pack</span>
-          <div className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-none">{pendingOrdersCount}</div>
+          <div className="font-editorial text-2xl font-normal text-[var(--text-primary)] leading-none">{pendingOrdersCount}</div>
           <div className="text-[9px] text-[var(--text-secondary)] pt-0.5">
             {pendingOrdersCount === 0 ? 'Queue is clear' : 'Awaiting dispatch'}
           </div>
@@ -201,7 +201,7 @@ export default function MobileVendorOverview({
         {/* Metric 3: Total Stock Units */}
         <div className="p-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
           <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] block">Stock Units</span>
-          <div className="font-editorial text-2xl font-bold text-emerald-400 leading-none">{totalLiveInventory}</div>
+          <div className="font-editorial text-2xl font-normal text-emerald-400 leading-none">{totalLiveInventory}</div>
           <div className="text-[9px] text-[var(--text-secondary)] pt-0.5 truncate">
             Across {dbProducts.length} piece{dbProducts.length === 1 ? '' : 's'}
           </div>
@@ -210,7 +210,7 @@ export default function MobileVendorOverview({
         {/* Metric 4: Escrow Settlement */}
         <div className="p-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-1">
           <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] block">Active Escrow</span>
-          <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)] leading-none">
+          <div className="font-editorial text-2xl font-normal text-[var(--gold-accent)] leading-none">
             ₦{activeEscrowBalance.toLocaleString()}
           </div>
           <div className="text-[9px] text-emerald-400 pt-0.5 font-bold">

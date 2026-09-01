@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory } from '@/types';
-import { Heart, SlidersHorizontal, X, Search } from 'lucide-react';
+import { Heart, SlidersHorizontal, X, Search, ShoppingBag, Zap } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import MobileQuickBuyDrawer from '@/components/mobile/MobileQuickBuyDrawer';
@@ -160,67 +160,90 @@ export default function MobileShopView() {
         </div>
 
       ) : (
-        <div className="grid grid-cols-2 px-2 gap-x-2 gap-y-6">
+        <div className="grid grid-cols-2 px-2 gap-x-2.5 gap-y-6">
           {filteredProducts.map((product) => {
             const saved = isInVault(product.id);
             return (
-              <div key={product.id} className="flex flex-col">
-                {/* Image */}
-                <div className="relative aspect-[3/4] w-full bg-[var(--bg-secondary)] overflow-hidden rounded-sm">
-                  <Link href={`/shop/${product.id}`} className="block w-full h-full">
-                    <Image
-                      src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
-                      alt={product.name}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                    />
-                  </Link>
-                  {/* Wishlist heart — Instagram burst animation */}
-                  <button
-                    type="button"
-                    onClick={() => handleHeartClick(product)}
-                    className="absolute top-2 right-2 p-1.5 cursor-pointer"
-                    aria-label="Save"
-                  >
-                    {/* Burst pop heart (appears briefly on save) */}
-                    {burstingHearts.has(product.id) && (
-                      <span
-                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                        style={{ animation: 'heartBurst 0.6s ease-out forwards' }}
-                      >
-                        <Heart className="h-8 w-8 fill-red-500 text-red-500 opacity-80" />
-                      </span>
-                    )}
-                    <Heart
-                      className={`h-5 w-5 transition-all duration-200 ${
-                        saved ? 'fill-red-500 stroke-red-500' : 'stroke-white fill-black/30'
-                      } ${burstingHearts.has(product.id) ? 'scale-125' : 'scale-100'}`}
-                      strokeWidth={1.5}
-                      style={{
-                        filter: saved ? 'drop-shadow(0 0 4px rgba(239,68,68,0.6))' : undefined,
-                        transition: 'transform 0.2s cubic-bezier(0.36,0.07,0.19,0.97)',
-                      }}
-                    />
-                  </button>
-                </div>
+              <div key={product.id} className="flex flex-col justify-between h-full group">
+                <div>
+                  {/* Image */}
+                  <div className="relative aspect-[4/5] w-full bg-[var(--bg-secondary)] overflow-hidden rounded-xl border border-[var(--border-subtle)]">
+                    <Link href={`/shop/${product.id}`} className="block w-full h-full">
+                      <Image
+                        src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
+                        alt={product.name}
+                        fill
+                        unoptimized
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </Link>
+                    {/* Wishlist heart — Instagram burst animation */}
+                    <button
+                      type="button"
+                      onClick={() => handleHeartClick(product)}
+                      className="absolute top-2 right-2 p-1.5 cursor-pointer z-10"
+                      aria-label="Save"
+                    >
+                      {/* Burst pop heart (appears briefly on save) */}
+                      {burstingHearts.has(product.id) && (
+                        <span
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                          style={{ animation: 'heartBurst 0.6s ease-out forwards' }}
+                        >
+                          <Heart className="h-8 w-8 fill-red-500 text-red-500 opacity-80" />
+                        </span>
+                      )}
+                      <Heart
+                        className={`h-5 w-5 transition-all duration-200 ${
+                          saved ? 'fill-red-500 stroke-red-500' : 'stroke-white fill-black/30'
+                        } ${burstingHearts.has(product.id) ? 'scale-125' : 'scale-100'}`}
+                        strokeWidth={1.5}
+                        style={{
+                          filter: saved ? 'drop-shadow(0 0 4px rgba(239,68,68,0.6))' : undefined,
+                          transition: 'transform 0.2s cubic-bezier(0.36,0.07,0.19,0.97)',
+                        }}
+                      />
+                    </button>
+                  </div>
 
-                {/* Info */}
-                <div className="pt-2 px-0.5 space-y-0.5">
-                  <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wide">
-                    New Season
-                  </p>
-                  <Link href={`/shop/${product.id}`} className="block">
-                    <p className="text-xs font-semibold text-[var(--text-primary)] leading-tight line-clamp-1">
+                  {/* Info */}
+                  <div className="pt-2 px-0.5 space-y-0.5">
+                    {/* Vendor Name */}
+                    <p className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-semibold uppercase tracking-wider line-clamp-1">
                       {product.vendorName || 'Atelier'}
                     </p>
-                    <p className="text-xs text-[var(--text-secondary)] leading-tight line-clamp-1">
-                      {product.name}
+                    {/* Product Name */}
+                    <Link href={`/shop/${product.id}`} className="block">
+                      <h3 className="text-xs font-medium text-[var(--text-primary)] leading-snug line-clamp-1 hover:underline">
+                        {product.name}
+                      </h3>
+                    </Link>
+                    {/* Gold Price Matching Desktop */}
+                    <p className="font-editorial text-sm font-normal text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm pt-0.5">
+                      ₦{Number(product.price || 0).toLocaleString()}
                     </p>
-                  </Link>
-                  <p className="text-xs font-semibold text-[var(--text-primary)] pt-0.5">
-                    ₦{Number(product.price || 0).toLocaleString()}
-                  </p>
+                  </div>
+                </div>
+
+                {/* Separate Action Buttons: Add to Bag & Buy Now */}
+                <div className="grid grid-cols-2 gap-1.5 mt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setQuickBuyProduct(product)}
+                    className="py-1.5 px-1.5 rounded-xl surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--gold-accent)] text-[10px] font-mono-luxury font-bold uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <ShoppingBag className="h-3 w-3 text-[var(--gold-accent)] shrink-0" />
+                    <span>Bag</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQuickBuyProduct(product)}
+                    className="py-1.5 px-1.5 rounded-xl bg-[var(--gold-accent)] text-black text-[10px] font-mono-luxury font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm cursor-pointer"
+                  >
+                    <Zap className="h-3 w-3 fill-black shrink-0" />
+                    <span>Buy Now</span>
+                  </button>
                 </div>
               </div>
             );

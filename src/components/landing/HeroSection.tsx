@@ -155,15 +155,15 @@ export default function HeroSection() {
             {/* Proof Points */}
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[var(--border-subtle)] max-w-md mx-auto lg:mx-0 text-left">
               <div>
-                <div className="text-xl sm:text-2xl font-editorial font-bold text-[var(--text-primary)]">100% Fit</div>
+                <div className="text-xl sm:text-2xl font-editorial font-medium text-[var(--text-primary)]">100% Fit</div>
                 <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Sized to Your Body</div>
               </div>
               <div>
-                <div className="text-xl sm:text-2xl font-editorial font-bold text-emerald-500">24 - 48 Hrs</div>
+                <div className="text-xl sm:text-2xl font-editorial font-medium text-emerald-500">24 - 48 Hrs</div>
                 <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Lagos Delivery</div>
               </div>
               <div>
-                <div className="text-xl sm:text-2xl font-editorial font-bold text-[var(--text-primary)]">1 Checkout</div>
+                <div className="text-xl sm:text-2xl font-editorial font-medium text-[var(--text-primary)]">1 Checkout</div>
                 <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Unified Package</div>
               </div>
             </div>

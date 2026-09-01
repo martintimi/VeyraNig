@@ -17,11 +17,11 @@ export default function StudioPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[var(--border-subtle)]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-[var(--badge-bg)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase tracking-widest font-bold">
+            <span className="px-3 py-1 rounded-full bg-[var(--badge-bg)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase tracking-widest ">
               Mix & Match Outfit Builder
             </span>
           </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--text-primary)] mt-1.5">
+          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl  text-[var(--text-primary)] mt-1.5">
             Virtual Dressing Room
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 font-light">
@@ -36,7 +36,7 @@ export default function StudioPage() {
         >
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <div className="text-left">
-            <div className="font-bold text-[11px] font-mono-luxury uppercase">
+            <div className=" text-[11px] font-mono-luxury uppercase">
               {userAuth.isLoggedIn && userAuth.name ? `Model: ${userAuth.name}` : `Model: Standard ${bodyProfile.gender === 'male' ? 'Male' : 'Female'}`}
             </div>
             <div className="text-[10px] text-[var(--text-secondary)] font-mono-luxury">

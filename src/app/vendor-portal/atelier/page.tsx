@@ -242,7 +242,7 @@ export default function VendorAtelierProfilePage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+          <h1 className="font-editorial text-3xl sm:text-4xl font-normal text-[var(--text-primary)]">
             {isBoutique ? 'Boutique Store Profile & Logistics' : 'Atelier Profile & Storefront'}
           </h1>
           <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">

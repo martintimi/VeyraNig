@@ -200,7 +200,7 @@ export default function WardrobeDrawer() {
                       <span>{fitResult.matchScore}% Match · Size {fitResult.recommendedSize}</span>
                     </div>
 
-                    <span className="text-xs font-editorial font-bold text-[var(--text-primary)]">
+                    <span className="text-xs font-mono-luxury font-semibold text-[var(--text-primary)]">
                       ₦{product.price.toLocaleString()}
                     </span>
                   </div>

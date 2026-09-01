@@ -99,7 +99,7 @@ export default function LookBreakdown() {
               </div>
 
               <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className="text-xs font-editorial font-bold text-[var(--text-primary)]">
+                <span className="text-xs font-mono-luxury font-semibold text-[var(--text-primary)]">
                   ₦{product.price.toLocaleString()}
                 </span>
                 <button

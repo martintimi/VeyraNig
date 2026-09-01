@@ -313,7 +313,7 @@ export default function SuperAdminPage() {
               </div>
 
               <div className="space-y-1.5">
-                <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+                <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-normal text-white leading-tight">
                   {adminEditorialSlides[currentSlide].title}
                 </h2>
                 <p className="text-xs sm:text-sm text-zinc-300 font-light leading-relaxed">

@@ -239,7 +239,7 @@ export default function CuratedAteliers() {
               <span>THE DESIGN HOUSES</span>
             </div>
 
-            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--text-primary)]">
+            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-[var(--text-primary)]">
               Curated Nigerian Ateliers
             </h2>
 

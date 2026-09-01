@@ -506,7 +506,7 @@ export default function PublishGarmentPage() {
               <span className="px-3 py-1 rounded-full bg-[var(--bg-secondary)] text-amber-400 border border-amber-500/30 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
                 Account Status · Pending Review
               </span>
-              <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              <h1 className="font-editorial text-2xl sm:text-3xl font-normal text-[var(--text-primary)]">
                 Store Profile Under Executive Review
               </h1>
               <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
@@ -541,7 +541,7 @@ export default function PublishGarmentPage() {
               <span className="px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
                 Setup Required · Profile Incomplete
               </span>
-              <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              <h1 className="font-editorial text-2xl sm:text-3xl font-normal text-[var(--text-primary)]">
                 Complete Store Profile to Enable Publishing
               </h1>
               <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">

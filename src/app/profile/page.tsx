@@ -189,7 +189,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              <h1 className="font-editorial text-2xl sm:text-3xl font-normal text-[var(--text-primary)]">
                 {displayName}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold">

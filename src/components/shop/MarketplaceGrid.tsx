@@ -147,7 +147,7 @@ export default function MarketplaceGrid() {
               <span>NIGERIAN APPAREL CATALOG</span>
             </div>
 
-            <h1 className="font-editorial text-2xl sm:text-5xl font-bold text-[var(--text-primary)] leading-tight">
+            <h1 className="font-editorial text-2xl sm:text-5xl text-[var(--text-primary)] leading-tight font-normal">
               Shop Senator, Native & Streetwear
             </h1>
 
