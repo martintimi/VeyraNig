@@ -315,6 +315,7 @@ export default function CheckoutPage() {
         })),
         paymentRef,
         paystackRef: paymentRef,
+        packageMethods,
       };
 
       // 1. Send live POST request to PostgreSQL database

@@ -229,6 +229,7 @@ export default function MobileCheckoutView() {
         })),
         paymentRef,
         paystackRef: paymentRef,
+        packageMethods,
       };
 
       try {

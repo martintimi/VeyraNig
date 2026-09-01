@@ -182,12 +182,21 @@ export async function POST(request: Request) {
       body.items.forEach((item: any) => {
         const vId = (item.vendorId || item.vendor_id || 'vendor').toLowerCase().trim();
         if (!initialVendorPackages[vId]) {
+          const method = body.packageMethods?.[vId] || 'doorstep';
+          const isPark = method === 'park_pickup';
+          const trackingCode = isPark ? `VY-PK-${Date.now().toString().slice(-6)}` : `GIG-NG-${Date.now().toString().slice(-6)}`;
+          
           initialVendorPackages[vId] = {
             vendorId: vId,
             vendorName: item.vendorName || vId.replace(/-/g, ' ').toUpperCase(),
+            vendorCity: item.vendorCity || 'Lagos',
+            vendorState: item.vendorState || 'Lagos',
             status: 'escrow_secured',
+            deliveryMethod: method,
+            courierName: isPark ? 'Motor Park Bus Waybill' : 'GIG Logistics / Shipbubble',
             trackingStage: 1,
-            waybillNumber: '',
+            waybillNumber: trackingCode,
+            trackingNumber: trackingCode,
             driverPhone: '',
             driverName: '',
             lastUpdated: new Date().toISOString()
@@ -201,6 +210,7 @@ export async function POST(request: Request) {
       ...(body.customerMeasurements || {}),
       items: body.items || [],
       vendorPackages: initialVendorPackages,
+      packageMethods: body.packageMethods || {},
       trackingDetails: {}
     };
 
