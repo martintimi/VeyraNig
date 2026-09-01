@@ -478,7 +478,7 @@ export default function MobileCheckoutView() {
                         }`}
                       >
                         <Home className="h-3.5 w-3.5" />
-                        <span>Prepay Doorstep</span>
+                        <span>Deliver to Address</span>
                       </button>
 
                       <button
@@ -491,7 +491,7 @@ export default function MobileCheckoutView() {
                         }`}
                       >
                         <Building className="h-3.5 w-3.5" />
-                        <span>Pay Driver at Park</span>
+                        <span>Park Waybill (Pay on Pickup)</span>
                       </button>
                     </div>
                   )}

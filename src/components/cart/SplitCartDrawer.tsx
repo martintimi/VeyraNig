@@ -41,8 +41,7 @@ export default function SplitCartDrawer() {
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const distinctVendors = Object.keys(groupedItems).length;
-  const shippingTotal = distinctVendors > 0 ? (subtotal > 100000 ? 0 : 3500) : 0;
-  const grandTotal = subtotal + shippingTotal;
+  const grandTotal = subtotal;
 
   const handleProceedToCheckout = () => {
     setIsCartOpen(false);
@@ -129,7 +128,7 @@ export default function SplitCartDrawer() {
                       <h4 className="font-bold text-xs text-[var(--text-primary)]">{vendor.name}</h4>
                     </div>
                     <span className="text-[10px] font-mono-luxury text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
-                      ● Lagos Hub Dispatch
+                      ● Direct Atelier Dispatch
                     </span>
                   </div>
 
@@ -186,16 +185,16 @@ export default function SplitCartDrawer() {
             <div className="space-y-1.5 text-xs font-mono-luxury">
               <div className="flex justify-between text-[var(--text-secondary)]">
                 <span>Items Subtotal</span>
-                <span>₦{subtotal.toLocaleString()}</span>
+                <span className="font-bold text-[var(--text-primary)]">₦{subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-[var(--text-secondary)]">
-                <span>Lagos Central Hub Delivery</span>
-                <span className={shippingTotal === 0 ? 'text-emerald-500 font-semibold' : ''}>
-                  {shippingTotal === 0 ? 'FREE' : `₦${shippingTotal.toLocaleString()}`}
+                <span>Delivery Fee</span>
+                <span className="text-[var(--gold-accent)] font-semibold">
+                  Calculated at Checkout
                 </span>
               </div>
               <div className="flex justify-between text-base font-bold text-[var(--text-primary)] pt-2 border-t border-[var(--border-subtle)]">
-                <span>Total Amount</span>
+                <span>Subtotal</span>
                 <span className="font-editorial text-2xl font-bold text-[var(--gold-accent)]">₦{grandTotal.toLocaleString()}</span>
               </div>
             </div>

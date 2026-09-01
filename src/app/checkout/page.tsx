@@ -695,7 +695,7 @@ export default function CheckoutPage() {
                             }`}
                           >
                             <Home className="h-3.5 w-3.5" />
-                            <span>Prepay Doorstep Courier</span>
+                            <span>Deliver to My Address</span>
                           </button>
 
                           <button
@@ -708,7 +708,7 @@ export default function CheckoutPage() {
                             }`}
                           >
                             <Building className="h-3.5 w-3.5" />
-                            <span>Pay Driver at Park (₦0 Now)</span>
+                            <span>Motor Park Waybill (Pay on Pickup)</span>
                           </button>
                         </div>
                       )}
