@@ -259,10 +259,75 @@ export default function MobileVendorAtelier({
         </div>
       </div>
 
-      {/* 4. Logistics & Delivery Rates */}
+      {/* 2. Social Media & Direct Concierge */}
       <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
         <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-          2. Delivery Rates & Turnaround
+          2. Social Channels & WhatsApp
+        </span>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <div>
+            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold text-[10px]">
+              Instagram
+            </label>
+            <input
+              type="text"
+              disabled={isFieldsDisabled}
+              value={form.instagram}
+              onChange={(e) => setForm({ ...form, instagram: e.target.value })}
+              placeholder="@brand"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-pink-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold text-[10px]">
+              TikTok
+            </label>
+            <input
+              type="text"
+              disabled={isFieldsDisabled}
+              value={form.tiktok}
+              onChange={(e) => setForm({ ...form, tiktok: e.target.value })}
+              placeholder="@tiktok"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-cyan-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold text-[10px]">
+              Snapchat
+            </label>
+            <input
+              type="text"
+              disabled={isFieldsDisabled}
+              value={form.snapchat}
+              onChange={(e) => setForm({ ...form, snapchat: e.target.value })}
+              placeholder="@snapchat"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-amber-300 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold text-[10px]">
+              WhatsApp
+            </label>
+            <input
+              type="tel"
+              disabled={isFieldsDisabled}
+              value={form.whatsapp}
+              onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+              placeholder="080..."
+              className="w-full px-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-emerald-500 focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Logistics & Delivery Rates */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
+        <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+          3. Delivery Rates & Turnaround
         </span>
 
         <div>
