@@ -7,7 +7,7 @@ import {
   Tag, ArrowRight, Loader2, X, Palette,
   Check, AlertTriangle, ShieldCheck, Camera,
   RefreshCw, Minus, ChevronDown, Sparkle,
-  Shirt, Footprints, Gem, Layers
+  Shirt, Footprints, Gem, Layers, CheckCircle2, ExternalLink
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -132,6 +132,9 @@ export default function MobileVendorPublish({
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isPublishSuccess, setIsPublishSuccess] = useState(false);
+  const [publishedProductId, setPublishedProductId] = useState<string | null>(null);
+  const [lastPublishedName, setLastPublishedName] = useState('');
 
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
   const filteredCategoryList = catFilterTab === 'all' 
@@ -269,12 +272,46 @@ export default function MobileVendorPublish({
     }
   };
 
-  const totalStock = Object.values(sizeStock)
-    .filter(s => s?.enabled)
-    .reduce((sum, s) => sum + Number(s?.quantity || 0), 0);
+  const handleResetForm = () => {
+    setName('');
+    setRawPrice('');
+    setDescription('');
+    setTags([]);
+    setTagInput('');
+    setImageFile(null);
+    setImagePreview(null);
+    setSelectedColors([{ name: 'Black', hex: '#111111' }]);
+    setSizeStock(
+      category === 'footwear'
+        ? {
+            '39': { enabled: true, quantity: 5 },
+            '40': { enabled: true, quantity: 10 },
+            '41': { enabled: true, quantity: 10 },
+            '42': { enabled: true, quantity: 10 },
+            '43': { enabled: true, quantity: 10 },
+            '44': { enabled: true, quantity: 5 },
+            '45': { enabled: false, quantity: 0 },
+            '46': { enabled: false, quantity: 0 },
+          }
+        : category === 'accessories'
+        ? { 'One Size': { enabled: true, quantity: 20 } }
+        : {
+            'S': { enabled: true, quantity: 10 },
+            'M': { enabled: true, quantity: 20 },
+            'L': { enabled: true, quantity: 20 },
+            'XL': { enabled: true, quantity: 10 },
+            'XXL': { enabled: false, quantity: 0 },
+          }
+    );
+    setIsPublishSuccess(false);
+    setPublishedProductId(null);
+    setErrorMessage('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent double-clicks
     setErrorMessage('');
 
     if (!name.trim()) {
@@ -335,8 +372,13 @@ export default function MobileVendorPublish({
 
       const data = await res.json();
       if (res.ok && data.success) {
-        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-        onPublishSuccess(data.product?.id || `prod-${Date.now()}`);
+        const prodId = data.product?.id || `prod-${Date.now()}`;
+        setPublishedProductId(prodId);
+        setLastPublishedName(name.trim());
+        setIsPublishSuccess(true);
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        onPublishSuccess(prodId);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setErrorMessage(data.error || 'Failed to publish piece');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -349,6 +391,60 @@ export default function MobileVendorPublish({
       setIsSubmitting(false);
     }
   };
+
+  // If successfully published, render celebration confirmation screen
+  if (isPublishSuccess) {
+    return (
+      <div className="p-2 sm:p-4 space-y-6 animate-fadeIn text-center pb-24 select-none">
+        <div className="p-6 sm:p-8 rounded-3xl surface-card border border-emerald-500/30 space-y-5 shadow-2xl relative overflow-hidden">
+          <div className="h-16 w-16 rounded-3xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-lg">
+            <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
+              Live on Storefront
+            </span>
+            <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              Piece Published!
+            </h2>
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed max-w-sm mx-auto">
+              <strong className="text-[var(--text-primary)]">{lastPublishedName}</strong> is now live on your catalog with real-time stock sync and verified checkout.
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2.5 pt-2">
+            {publishedProductId && (
+              <Link
+                href={`/shop/${publishedProductId}`}
+                className="w-full py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold shadow-xl hover:opacity-90 active:scale-98 transition-all flex items-center justify-center gap-2"
+              >
+                <span>View Live in Shop</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            )}
+
+            <Link
+              href="/vendor-portal/drops"
+              className="w-full py-3.5 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-xs font-bold hover:border-[var(--gold-accent)] active:scale-98 transition-all flex items-center justify-center gap-2"
+            >
+              <span>Manage Inventory Drops</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleResetForm}
+              className="w-full py-3 text-[var(--text-secondary)] hover:text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold transition-colors inline-flex items-center justify-center gap-1.5 pt-2 cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Publish Another Piece</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 animate-fadeIn pb-24 select-none">
