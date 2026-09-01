@@ -3,11 +3,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory } from '@/types';
-import { Heart, SlidersHorizontal, X, Search, ShoppingBag, Zap } from 'lucide-react';
+import { Heart, SlidersHorizontal, X, Search, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import MobileQuickBuyDrawer from '@/components/mobile/MobileQuickBuyDrawer';
 import MobileStoriesRow from '@/components/mobile/MobileStoriesRow';
+
+const ITEMS_PER_PAGE = 8;
 
 export default function MobileShopView() {
   const {
@@ -21,6 +23,7 @@ export default function MobileShopView() {
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
   const [selectedCategory, setSelectedCategory] = useState<GarmentCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [isRefineOpen, setIsRefineOpen] = useState(false);
   const [quickBuyProduct, setQuickBuyProduct] = useState<any>(null);
   // Track which product hearts are animating (Instagram-style burst)
@@ -67,6 +70,22 @@ export default function MobileShopView() {
     });
   }, [allProducts, genderFilter, selectedCategory, searchQuery]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  const handleGenderChange = (g: 'all' | 'male' | 'female') => {
+    setGenderFilter(g);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (catId: GarmentCategory | 'all') => {
+    setSelectedCategory(catId);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="md:hidden pb-28 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen">
 
@@ -100,7 +119,7 @@ export default function MobileShopView() {
           <button
             key={g.id}
             type="button"
-            onClick={() => setGenderFilter(g.id as 'all' | 'male' | 'female')}
+            onClick={() => handleGenderChange(g.id as 'all' | 'male' | 'female')}
             className={`pb-3 text-xs font-medium uppercase tracking-wide transition-all border-b-2 cursor-pointer ${
               genderFilter === g.id
                 ? 'border-[var(--text-primary)] text-[var(--text-primary)]'
@@ -118,7 +137,7 @@ export default function MobileShopView() {
           <button
             key={cat.id}
             type="button"
-            onClick={() => setSelectedCategory(cat.id)}
+            onClick={() => handleCategoryChange(cat.id)}
             className={`whitespace-nowrap px-3 py-1.5 text-xs border rounded-full transition-all cursor-pointer ${
               selectedCategory === cat.id
                 ? 'border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-primary)]'
@@ -131,13 +150,16 @@ export default function MobileShopView() {
       </div>
 
       {/* ITEM COUNT */}
-      <div className="px-4 pb-3">
-        <span className="text-xs text-[var(--text-secondary)]">{filteredProducts.length} items</span>
+      <div className="px-4 pb-3 flex items-center justify-between text-xs text-[var(--text-secondary)]">
+        <span>{filteredProducts.length} items</span>
+        {totalPages > 1 && (
+          <span className="font-mono-luxury text-[11px]">Page {currentPage} of {totalPages}</span>
+        )}
       </div>
 
       {/* PRODUCT GRID */}
       {filteredProducts.length === 0 ? (
-        <div className="px-6 py-20 flex flex-col items-center text-center gap-4">
+        <div className="px-6 py-15 flex flex-col items-center text-center gap-4">
           {/* Minimal icon */}
           <div className="h-16 w-16 rounded-full border-2 border-dashed border-[var(--border-subtle)] flex items-center justify-center">
             <span className="text-2xl opacity-30">
@@ -152,7 +174,7 @@ export default function MobileShopView() {
           </div>
           <button
             type="button"
-            onClick={() => { setGenderFilter('all'); setSelectedCategory('all'); setSearchQuery(''); }}
+            onClick={() => { setGenderFilter('all'); setSelectedCategory('all'); setSearchQuery(''); setCurrentPage(1); }}
             className="mt-1 px-6 py-2.5 border border-[var(--text-primary)] text-[var(--text-primary)] text-xs font-medium rounded-sm hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-colors cursor-pointer"
           >
             Clear Filters
@@ -160,95 +182,137 @@ export default function MobileShopView() {
         </div>
 
       ) : (
-        <div className="grid grid-cols-2 px-2 gap-x-2.5 gap-y-6">
-          {filteredProducts.map((product) => {
-            const saved = isInVault(product.id);
-            return (
-              <div key={product.id} className="flex flex-col justify-between h-full group">
-                <div>
-                  {/* Image */}
-                  <div className="relative aspect-[4/5] w-full bg-[var(--bg-secondary)] overflow-hidden rounded-xl border border-[var(--border-subtle)]">
-                    <Link href={`/shop/${product.id}`} className="block w-full h-full">
-                      <Image
-                        src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
-                        alt={product.name}
-                        fill
-                        unoptimized
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </Link>
-                    {/* Wishlist heart — Instagram burst animation */}
-                    <button
-                      type="button"
-                      onClick={() => handleHeartClick(product)}
-                      className="absolute top-2 right-2 p-1.5 cursor-pointer z-10"
-                      aria-label="Save"
-                    >
-                      {/* Burst pop heart (appears briefly on save) */}
-                      {burstingHearts.has(product.id) && (
-                        <span
-                          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                          style={{ animation: 'heartBurst 0.6s ease-out forwards' }}
-                        >
-                          <Heart className="h-8 w-8 fill-red-500 text-red-500 opacity-80" />
-                        </span>
-                      )}
-                      <Heart
-                        className={`h-5 w-5 transition-all duration-200 ${
-                          saved ? 'fill-red-500 stroke-red-500' : 'stroke-white fill-black/30'
-                        } ${burstingHearts.has(product.id) ? 'scale-125' : 'scale-100'}`}
-                        strokeWidth={1.5}
-                        style={{
-                          filter: saved ? 'drop-shadow(0 0 4px rgba(239,68,68,0.6))' : undefined,
-                          transition: 'transform 0.2s cubic-bezier(0.36,0.07,0.19,0.97)',
-                        }}
-                      />
-                    </button>
+        <>
+          <div className="grid grid-cols-2 px-2 gap-x-2.5 gap-y-6">
+            {paginatedProducts.map((product) => {
+              const saved = isInVault(product.id);
+              return (
+                <div key={product.id} className="flex flex-col justify-between h-full group">
+                  <div>
+                    {/* Image */}
+                    <div className="relative aspect-[4/5] w-full bg-[var(--bg-secondary)] overflow-hidden rounded-xl border border-[var(--border-subtle)]">
+                      <Link href={`/shop/${product.id}`} className="block w-full h-full">
+                        <Image
+                          src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
+                          alt={product.name}
+                          fill
+                          unoptimized
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </Link>
+                      {/* Wishlist heart — Instagram burst animation */}
+                      <button
+                        type="button"
+                        onClick={() => handleHeartClick(product)}
+                        className="absolute top-2 right-2 p-1.5 cursor-pointer z-10"
+                        aria-label="Save"
+                      >
+                        {/* Burst pop heart (appears briefly on save) */}
+                        {burstingHearts.has(product.id) && (
+                          <span
+                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            style={{ animation: 'heartBurst 0.6s ease-out forwards' }}
+                          >
+                            <Heart className="h-8 w-8 fill-red-500 text-red-500 opacity-80" />
+                          </span>
+                        )}
+                        <Heart
+                          className={`h-5 w-5 transition-all duration-200 ${
+                            saved ? 'fill-red-500 stroke-red-500' : 'stroke-white fill-black/30'
+                          } ${burstingHearts.has(product.id) ? 'scale-125' : 'scale-100'}`}
+                          strokeWidth={1.5}
+                          style={{
+                            filter: saved ? 'drop-shadow(0 0 4px rgba(239,68,68,0.6))' : undefined,
+                            transition: 'transform 0.2s cubic-bezier(0.36,0.07,0.19,0.97)',
+                          }}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Info */}
+                    <div className="pt-2 px-0.5 space-y-0.5">
+                      {/* Vendor Name in Standard Subtle Typography */}
+                      <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wide line-clamp-1">
+                        {product.vendorName || 'Atelier'}
+                      </p>
+                      {/* Product Name */}
+                      <Link href={`/shop/${product.id}`} className="block">
+                        <h3 className="text-xs font-semibold text-[var(--text-primary)] leading-snug line-clamp-1 hover:underline">
+                          {product.name}
+                        </h3>
+                      </Link>
+                      {/* Gold Price Matching Desktop */}
+                      <p className="font-editorial text-sm font-normal text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm pt-0.5">
+                        ₦{Number(product.price || 0).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Info */}
-                  <div className="pt-2 px-0.5 space-y-0.5">
-                    {/* Vendor Name */}
-                    <p className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-semibold uppercase tracking-wider line-clamp-1">
-                      {product.vendorName || 'Atelier'}
-                    </p>
-                    {/* Product Name */}
-                    <Link href={`/shop/${product.id}`} className="block">
-                      <h3 className="text-xs font-medium text-[var(--text-primary)] leading-snug line-clamp-1 hover:underline">
-                        {product.name}
-                      </h3>
-                    </Link>
-                    {/* Gold Price Matching Desktop */}
-                    <p className="font-editorial text-sm font-normal text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm pt-0.5">
-                      ₦{Number(product.price || 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Separate Action Buttons: Add to Bag & Buy Now */}
-                <div className="grid grid-cols-2 gap-1.5 mt-2.5">
+                  {/* Single Clean Add to Bag Button */}
                   <button
                     type="button"
                     onClick={() => setQuickBuyProduct(product)}
-                    className="py-1.5 px-1.5 rounded-xl surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--gold-accent)] text-[10px] font-mono-luxury font-bold uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+                    className="w-full mt-2.5 py-2 px-2.5 rounded-xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-primary)] text-[11px] font-mono-luxury uppercase font-bold tracking-wider hover:bg-[var(--gold-subtle)] active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                   >
-                    <ShoppingBag className="h-3 w-3 text-[var(--gold-accent)] shrink-0" />
-                    <span>Bag</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setQuickBuyProduct(product)}
-                    className="py-1.5 px-1.5 rounded-xl bg-[var(--gold-accent)] text-black text-[10px] font-mono-luxury font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1 shadow-sm cursor-pointer"
-                  >
-                    <Zap className="h-3 w-3 fill-black shrink-0" />
-                    <span>Buy Now</span>
+                    <ShoppingBag className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
+                    <span>Add to Bag</span>
                   </button>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* MOBILE PAGINATION */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-8 pb-4">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => {
+                  setCurrentPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="p-2.5 rounded-xl surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] disabled:opacity-30 disabled:pointer-events-none active:scale-90 transition-all cursor-pointer"
+                aria-label="Previous Page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => {
+                      setCurrentPage(pageNum);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`h-8 min-w-[32px] px-2 rounded-xl text-xs font-mono-luxury font-bold transition-all cursor-pointer ${
+                      currentPage === pageNum
+                        ? 'bg-[var(--gold-accent)] text-black shadow-md'
+                        : 'surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
               </div>
-            );
-          })}
-        </div>
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => {
+                  setCurrentPage(p => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="p-2.5 rounded-xl surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] disabled:opacity-30 disabled:pointer-events-none active:scale-90 transition-all cursor-pointer"
+                aria-label="Next Page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* REFINE BOTTOM SHEET */}
