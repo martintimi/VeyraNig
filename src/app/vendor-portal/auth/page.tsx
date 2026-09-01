@@ -445,7 +445,7 @@ export default function VendorAuthPage() {
         </div>
 
         {/* Center Container */}
-        <div className="w-full max-w-xl xl:max-w-2xl mx-auto space-y-6 my-auto py-6">
+        <div className="w-full max-w-md mx-auto space-y-6 my-auto py-6">
           
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold tracking-wider">

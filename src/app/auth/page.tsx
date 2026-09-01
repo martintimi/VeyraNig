@@ -381,7 +381,7 @@ function AuthPageContent() {
       {/* RIGHT COLUMN: Independently scrollable form */}
       <div className="w-full lg:w-1/2 min-h-[100dvh] flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 bg-[var(--bg-primary)] overflow-y-auto">
 
-        <div className="w-full max-w-xl xl:max-w-2xl mx-auto space-y-6 my-auto pt-6 pb-16">
+        <div className="w-full max-w-md mx-auto space-y-6 my-auto pt-6 pb-16">
           
           {/* Header */}
           <div className="space-y-1.5">
