@@ -324,11 +324,16 @@ export default function MobileVendorAtelier({
         </div>
       </div>
 
-      {/* 3. Logistics & Delivery Rates */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
-        <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-          3. Delivery Rates & Turnaround
-        </span>
+      {/* 3. Logistics & Dispatch Turnaround */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3.5 shadow-sm text-xs font-mono-luxury">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+            3. Dispatch Turnaround & Logistics
+          </span>
+          <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            Veyra Smart Rates
+          </span>
+        </div>
 
         <div>
           <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
@@ -348,44 +353,24 @@ export default function MobileVendorAtelier({
           </select>
         </div>
 
-        <div className="space-y-2">
-          <div>
-            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-              Same-City Intra Delivery Fee (₦)
-            </label>
-            <input
-              type="number"
-              disabled={isFieldsDisabled}
-              value={form.sameCityFee}
-              onChange={(e) => setForm({ ...form, sameCityFee: Number(e.target.value) })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
-            />
+        {/* Automated Logistics Card */}
+        <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--gold-accent)] font-bold">
+            <Truck className="h-4 w-4" />
+            <span>Automated Logistics & Delivery</span>
           </div>
-
-          <div>
-            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-              Inter-State Courier Waybill Fee (₦)
-            </label>
-            <input
-              type="number"
-              disabled={isFieldsDisabled}
-              value={form.interstateFee}
-              onChange={(e) => setForm({ ...form, interstateFee: Number(e.target.value) })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
-              Motor Park Pickup Fee (₦)
-            </label>
-            <input
-              type="number"
-              disabled={isFieldsDisabled}
-              value={form.parkPickupFee}
-              onChange={(e) => setForm({ ...form, parkPickupFee: Number(e.target.value) })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed"
-            />
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+            You don&apos;t have to calculate delivery fees! Veyra automatically calculates shipping at checkout based on destination states.
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1 text-[10px]">
+            <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+              <span className="font-bold text-[var(--text-primary)] block">🚚 Doorstep Courier</span>
+              <span className="text-[var(--text-muted)]">Prepaid at checkout</span>
+            </div>
+            <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+              <span className="font-bold text-[var(--text-primary)] block">🚌 Park Waybill</span>
+              <span className="text-[var(--text-muted)]">Buyer pays driver</span>
+            </div>
           </div>
         </div>
       </div>

@@ -338,27 +338,27 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
           {isRatesOpen && (
             <div className="p-4 pt-0 border-t border-[var(--border-subtle)] space-y-2.5 text-xs font-mono-luxury">
               <div className="grid grid-cols-3 gap-2 text-[10px] pt-3">
-                <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
+                <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
                   <div className="text-[var(--text-muted)]">Same City:</div>
-                  <div className="font-bold text-[var(--gold-accent)] text-xs">₦{Number(rates.sameCity || 1000).toLocaleString()}</div>
-                  <div className="text-[8px] text-[var(--text-muted)]">Local courier</div>
+                  <div className="font-bold text-[var(--gold-accent)] text-xs">₦1,500</div>
+                  <div className="text-[8px] text-[var(--text-muted)]">Local town rider</div>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
-                  <div className="text-[var(--text-muted)]">Intra-State:</div>
-                  <div className="font-bold text-[var(--gold-accent)] text-xs">₦{Number(rates.closeHub || 2500).toLocaleString()}</div>
-                  <div className="text-[8px] text-[var(--text-muted)]">Nearby hub</div>
+                <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
+                  <div className="text-[var(--text-muted)]">Doorstep:</div>
+                  <div className="font-bold text-[var(--gold-accent)] text-xs">₦4,500</div>
+                  <div className="text-[8px] text-[var(--text-muted)]">Prepay checkout</div>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
-                  <div className="text-[var(--text-muted)]">Interstate:</div>
-                  <div className="font-bold text-[var(--gold-accent)] text-xs">₦{Number(rates.interstate || 4500).toLocaleString()}</div>
-                  <div className="text-[8px] text-[var(--text-muted)]">Nationwide</div>
+                <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
+                  <div className="text-[var(--text-muted)]">Park Waybill:</div>
+                  <div className="font-bold text-emerald-400 text-xs">Pay at Park</div>
+                  <div className="text-[8px] text-[var(--text-muted)]">~₦1,500–₦2,500</div>
                 </div>
               </div>
 
               <p className="text-[10px] text-[var(--text-secondary)] font-light leading-relaxed">
-                Shipped directly from {product.vendorName} via verified dispatch riders and park waybills.
+                Dispatched directly from <strong className="text-[var(--text-primary)]">{product.vendorCity ? `${product.vendorCity}, ` : ''}{product.vendorState || 'Nigeria'}</strong>.
               </p>
             </div>
           )}

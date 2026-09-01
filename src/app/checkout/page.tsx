@@ -119,28 +119,28 @@ export default function CheckoutPage() {
       ));
 
       if (isSameCity) {
-        // Same city is strictly direct local rider - no park pickup needed
+        // Same city is direct local rider
         calcs[pkg.vendorId] = {
-          fee: Number(rates.sameCity) || 0,
+          fee: 1500,
           method: 'doorstep',
-          reason: 'Same City Delivery',
+          reason: 'Same-City Direct Rider',
           isSameCity: true,
         };
         return;
       }
 
-      // 2. Inter-city / Inter-state: Check if buyer chose Park/Hub Waybill Pickup
-      if (chosenMethod === 'park_pickup' && rates.parkPickupEnabled !== false) {
+      // 2. Inter-city / Interstate: Check if buyer chose Park Waybill (Pay driver on collection)
+      if (chosenMethod === 'park_pickup') {
         calcs[pkg.vendorId] = {
-          fee: Number(rates.parkPickup) || 1500,
+          fee: 0,
           method: 'park_pickup',
-          reason: 'Park / Hub Waybill Pickup',
+          reason: 'Pay Driver on Pickup (~₦1,500 - ₦2,500)',
           isSameCity: false,
         };
         return;
       }
 
-      // 3. Intra-State vs Interstate Doorstep Delivery
+      // 3. Intra-State / Nearby vs Interstate Doorstep Delivery (Prepaid online)
       const isNeighborState = customerState && vendorState && (
         customerState.includes(vendorState) ||
         vendorState.includes(customerState)
@@ -148,16 +148,16 @@ export default function CheckoutPage() {
 
       if (isNeighborState) {
         calcs[pkg.vendorId] = {
-          fee: Number(rates.closeHub) || 2500,
+          fee: 2500,
           method: 'doorstep',
-          reason: 'Intra-State / Nearby Delivery',
+          reason: 'Intra-State Doorstep Courier',
           isSameCity: false,
         };
       } else {
         calcs[pkg.vendorId] = {
-          fee: Number(rates.interstate) || 4500,
+          fee: 4500,
           method: 'doorstep',
-          reason: 'Interstate Delivery',
+          reason: 'Interstate Doorstep Courier',
           isSameCity: false,
         };
       }
@@ -656,32 +656,32 @@ export default function CheckoutPage() {
                       </div>
 
                       {/* Delivery Mode Toggles (Only show for inter-city/inter-state, never for same city) */}
-                      {!calc.isSameCity && rates.parkPickupEnabled !== false && (
+                      {!calc.isSameCity && (
                         <div className="flex items-center gap-2 pt-1">
                           <button
                             type="button"
                             onClick={() => togglePackageMethod(pkg.vendorId, 'doorstep')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
                               currentMethod === 'doorstep'
                                 ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                                : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
+                                : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                             }`}
                           >
-                            <Home className="h-3 w-3" />
-                            <span>Doorstep Delivery</span>
+                            <Home className="h-3.5 w-3.5" />
+                            <span>Prepay Doorstep Courier</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => togglePackageMethod(pkg.vendorId, 'park_pickup')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
                               currentMethod === 'park_pickup'
-                                ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                                : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
+                                ? 'bg-[var(--gold-accent)] text-black shadow-sm font-extrabold'
+                                : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                             }`}
                           >
-                            <Building className="h-3 w-3" />
-                            <span>Park / Hub Pickup (₦{Number(rates.parkPickup || 1500).toLocaleString()})</span>
+                            <Building className="h-3.5 w-3.5" />
+                            <span>Pay Driver at Park (₦0 Now)</span>
                           </button>
                         </div>
                       )}

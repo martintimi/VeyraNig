@@ -100,19 +100,19 @@ export default function MobileCheckoutView() {
 
       if (isSameCity) {
         calcs[pkg.vendorId] = {
-          fee: Number(rates.sameCity) || 1000,
+          fee: 1500,
           method: 'doorstep',
-          reason: 'Same City Direct Rider',
+          reason: 'Same-City Direct Rider',
           isSameCity: true,
         };
         return;
       }
 
-      if (chosenMethod === 'park_pickup' && rates.parkPickupEnabled !== false) {
+      if (chosenMethod === 'park_pickup') {
         calcs[pkg.vendorId] = {
-          fee: Number(rates.parkPickup) || 1500,
+          fee: 0,
           method: 'park_pickup',
-          reason: 'Park / Hub Waybill Pickup',
+          reason: 'Pay Driver on Pickup (~₦1,500 - ₦2,500)',
           isSameCity: false,
         };
         return;
@@ -125,16 +125,16 @@ export default function MobileCheckoutView() {
 
       if (isNeighborState) {
         calcs[pkg.vendorId] = {
-          fee: Number(rates.closeHub) || 2500,
+          fee: 2500,
           method: 'doorstep',
-          reason: 'Intra-State / Nearby Delivery',
+          reason: 'Intra-State Doorstep Courier',
           isSameCity: false,
         };
       } else {
         calcs[pkg.vendorId] = {
-          fee: Number(rates.interstate) || 4500,
+          fee: 4500,
           method: 'doorstep',
-          reason: 'Interstate Nationwide Delivery',
+          reason: 'Interstate Doorstep Courier',
           isSameCity: false,
         };
       }
@@ -435,32 +435,32 @@ export default function MobileCheckoutView() {
                   </div>
 
                   {/* Delivery Mode Toggles */}
-                  {!calc.isSameCity && rates.parkPickupEnabled !== false && (
+                  {!calc.isSameCity && (
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => togglePackageMethod(pkg.vendorId, 'doorstep')}
-                        className={`flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-[10px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-[10px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
                           currentMethod === 'doorstep'
                             ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
                             : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
                         }`}
                       >
-                        <Home className="h-3 w-3" />
-                        <span>Doorstep</span>
+                        <Home className="h-3.5 w-3.5" />
+                        <span>Prepay Doorstep</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => togglePackageMethod(pkg.vendorId, 'park_pickup')}
-                        className={`flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-[10px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-[10px] font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
                           currentMethod === 'park_pickup'
-                            ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
+                            ? 'bg-[var(--gold-accent)] text-black shadow-sm font-extrabold'
                             : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
                         }`}
                       >
-                        <Building className="h-3 w-3" />
-                        <span>Park Pickup (₦{Number(rates.parkPickup || 1500).toLocaleString()})</span>
+                        <Building className="h-3.5 w-3.5" />
+                        <span>Pay Driver at Park</span>
                       </button>
                     </div>
                   )}

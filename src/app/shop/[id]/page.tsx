@@ -255,20 +255,20 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-[11px]">
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1">
                 <div className="text-[var(--text-secondary)]">Same City Delivery:</div>
-                <div className="font-bold text-[var(--gold-accent)] text-sm">₦{Number(rates.sameCity || 1000).toLocaleString()}</div>
+                <div className="font-bold text-[var(--gold-accent)] text-sm">₦1,500</div>
                 <div className="text-[9px] text-[var(--text-muted)]">Local town courier</div>
               </div>
 
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1">
-                <div className="text-[var(--text-secondary)]">Intra-State / Nearby:</div>
-                <div className="font-bold text-[var(--gold-accent)] text-sm">₦{Number(rates.closeHub || 2500).toLocaleString()}</div>
-                <div className="text-[9px] text-[var(--text-muted)]">Within state / nearby hub</div>
+                <div className="text-[var(--text-secondary)]">Doorstep Courier:</div>
+                <div className="font-bold text-[var(--gold-accent)] text-sm">₦4,500</div>
+                <div className="text-[9px] text-[var(--text-muted)]">Prepaid at checkout</div>
               </div>
 
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1">
-                <div className="text-[var(--text-secondary)]">Interstate (Nationwide):</div>
-                <div className="font-bold text-[var(--gold-accent)] text-sm">₦{Number(rates.interstate || 4500).toLocaleString()}</div>
-                <div className="text-[9px] text-[var(--text-muted)]">Rest of Nigeria</div>
+                <div className="text-[var(--text-secondary)]">Motor Park Waybill:</div>
+                <div className="font-bold text-emerald-400 text-sm">Pay Driver at Park</div>
+                <div className="text-[9px] text-[var(--text-muted)]">~₦1,500–₦2,500 on pickup</div>
               </div>
             </div>
 

@@ -493,98 +493,39 @@ export default function VendorAtelierProfilePage() {
               </div>
             </div>
 
-            {/* Delivery Fees Configuration */}
+            {/* Automated Smart Logistics Notice */}
             <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3">
-              <span className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
-                Delivery Charges for Your Dispatch
-              </span>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                    Same City / Local
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
-                    <input
-                      type="number"
-                      disabled={isFieldsDisabled}
-                      value={form.sameCityFee}
-                      onChange={(e) => setForm({ ...form, sameCityFee: Number(e.target.value) })}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                  <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Direct local rider</span>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                    Nearby / Intra-State
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
-                    <input
-                      type="number"
-                      disabled={isFieldsDisabled}
-                      value={form.closeHubFee}
-                      onChange={(e) => setForm({ ...form, closeHubFee: Number(e.target.value) })}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                  <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Within state / nearby hub</span>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                    Nationwide (Interstate)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
-                    <input
-                      type="number"
-                      disabled={isFieldsDisabled}
-                      value={form.interstateFee}
-                      onChange={(e) => setForm({ ...form, interstateFee: Number(e.target.value) })}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                  <span className="text-[9px] text-[var(--text-muted)] font-mono-luxury">Other Nigerian states</span>
-                </div>
-              </div>
-
-              {/* Park Pickup Option */}
-              <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    disabled={isFieldsDisabled}
-                    checked={form.parkPickupEnabled}
-                    onChange={(e) => setForm({ ...form, parkPickupEnabled: e.target.checked })}
-                    className="rounded border-[var(--border-subtle)] text-[var(--gold-accent)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                  />
-                  <span className="text-xs font-mono-luxury text-[var(--text-primary)]">
-                    Allow Park / Hub Waybill Pickup Option
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-[var(--gold-accent)]" />
+                  <span className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
+                    Automated Smart Logistics & Rates
                   </span>
-                </label>
-
-                {form.parkPickupEnabled && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono-luxury text-[var(--text-secondary)]">Pickup Fee:</span>
-                    <div className="relative w-24">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--gold-accent)] font-bold">₦</span>
-                      <input
-                        type="number"
-                        disabled={isFieldsDisabled}
-                        value={form.parkPickupFee}
-                        onChange={(e) => setForm({ ...form, parkPickupFee: Number(e.target.value) })}
-                        className="w-full pl-6 pr-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold disabled:opacity-60 disabled:cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-                )}
+                </div>
+                <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  Auto-Calculated
+                </span>
               </div>
 
-            </div>
+              <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
+                You don&apos;t have to calculate delivery fees! Veyra automatically calculates shipping rates at customer checkout based on your state ({form.state || 'Lagos'}) and the customer&apos;s delivery location.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
+                  <span className="text-xs font-bold text-[var(--text-primary)] block">🚚 Doorstep Courier Delivery</span>
+                  <p className="text-[11px] text-[var(--text-secondary)]">
+                    Calculated automatically and prepaid by the customer at online checkout.
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
+                  <span className="text-xs font-bold text-[var(--text-primary)] block">🚌 Motor Park Bus Waybill</span>
+                  <p className="text-[11px] text-[var(--text-secondary)]">
+                    Customer pays the bus driver directly upon collection at their city motor park.
+                  </p>
+                </div>
+              </div>
+            </div>  </div>
           </div>
 
           {/* 3. Social Media Channels */}
