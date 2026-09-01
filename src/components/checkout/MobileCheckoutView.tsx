@@ -79,69 +79,100 @@ export default function MobileCheckoutView() {
     }>);
   }, [cart]);
 
+  // Live Logistics API State
+  const [liveRates, setLiveRates] = useState<Record<string, any>>({});
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+
+  // Fetch real-time live carrier quotes from /api/logistics/rates
+  React.useEffect(() => {
+    async function fetchLiveRates() {
+      const packageRequests = Object.values(groupedItems).map(pkg => ({
+        vendorId: pkg.vendorId,
+        vendorName: pkg.vendorName,
+        originState: pkg.vendorState || 'Lagos',
+        originCity: pkg.vendorCity || 'Lagos',
+        destinationState: formData.state || 'Lagos',
+        destinationCity: formData.city || 'Lagos',
+        itemCount: pkg.items.length
+      }));
+
+      if (packageRequests.length === 0) return;
+
+      setIsLoadingRates(true);
+      try {
+        const res = await fetch('/api/logistics/rates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ packages: packageRequests })
+        });
+        const data = await res.json();
+        if (data.success && data.rates) {
+          setLiveRates(data.rates);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch live carrier rates on mobile:', err);
+      } finally {
+        setIsLoadingRates(false);
+      }
+    }
+
+    const timer = setTimeout(fetchLiveRates, 300);
+    return () => clearTimeout(timer);
+  }, [groupedItems, formData.state, formData.city]);
+
   // Calculate dynamic shipping fee per vendor package
   const packageShippingCalculations = useMemo(() => {
-    const customerState = (formData.state || '').toLowerCase().trim();
-    const customerCity = (formData.city || '').toLowerCase().trim();
-
-    const calcs: Record<string, { fee: number; method: 'doorstep' | 'park_pickup'; reason: string; isSameCity: boolean }> = {};
+    const calcs: Record<string, { fee: number; method: 'doorstep' | 'park_pickup'; reason: string; isSameCity: boolean; courierName?: string; eta?: string }> = {};
 
     Object.values(groupedItems).forEach((pkg) => {
-      const vendorState = (pkg.vendorState || '').toLowerCase().trim();
-      const vendorCity = (pkg.vendorCity || '').toLowerCase().trim();
-      const rates = pkg.shippingRates || { sameCity: 1000, closeHub: 2500, interstate: 4500, parkPickup: 1500 };
+      const live = liveRates[pkg.vendorId];
       const chosenMethod = packageMethods[pkg.vendorId] || 'doorstep';
 
-      const isSameCity = !!(customerCity && vendorCity && (
-        customerCity === vendorCity ||
-        customerCity.includes(vendorCity) ||
-        vendorCity.includes(customerCity)
-      ));
-
-      if (isSameCity) {
-        calcs[pkg.vendorId] = {
-          fee: 1500,
-          method: 'doorstep',
-          reason: 'Same-City Direct Rider',
-          isSameCity: true,
-        };
-        return;
-      }
-
-      if (chosenMethod === 'park_pickup') {
-        calcs[pkg.vendorId] = {
-          fee: 0,
-          method: 'park_pickup',
-          reason: 'Pay Driver on Pickup (~₦1,500 - ₦2,500)',
-          isSameCity: false,
-        };
-        return;
-      }
-
-      const isNeighborState = customerState && vendorState && (
-        customerState.includes(vendorState) ||
-        vendorState.includes(customerState)
-      );
-
-      if (isNeighborState) {
-        calcs[pkg.vendorId] = {
-          fee: 2500,
-          method: 'doorstep',
-          reason: 'Intra-State Doorstep Courier',
-          isSameCity: false,
-        };
+      if (live) {
+        if (chosenMethod === 'park_pickup') {
+          calcs[pkg.vendorId] = {
+            fee: 0,
+            method: 'park_pickup',
+            reason: 'Pay Driver on Pickup (~₦1,500 - ₦2,500)',
+            isSameCity: live.isSameCity,
+            courierName: live.parkPickup?.courierName || 'Motor Park Waybill',
+            eta: live.parkPickup?.estimatedDeliveryDays || '1-2 business days',
+          };
+        } else {
+          calcs[pkg.vendorId] = {
+            fee: live.doorstep?.fee || 4500,
+            method: 'doorstep',
+            reason: live.doorstep?.serviceType || 'Doorstep Courier',
+            isSameCity: live.isSameCity,
+            courierName: live.doorstep?.courierName || 'GIG Logistics',
+            eta: live.doorstep?.estimatedDeliveryDays || '1-3 business days',
+          };
+        }
       } else {
-        calcs[pkg.vendorId] = {
-          fee: 4500,
-          method: 'doorstep',
-          reason: 'Interstate Doorstep Courier',
-          isSameCity: false,
-        };
+        const customerCity = (formData.city || '').toLowerCase().trim();
+        const vendorCity = (pkg.vendorCity || '').toLowerCase().trim();
+        const isSameCity = !!(customerCity && vendorCity && (customerCity === vendorCity || customerCity.includes(vendorCity) || vendorCity.includes(customerCity)));
+
+        if (chosenMethod === 'park_pickup') {
+          calcs[pkg.vendorId] = {
+            fee: 0,
+            method: 'park_pickup',
+            reason: 'Pay Driver on Pickup (~₦1,500 - ₦2,500)',
+            isSameCity: false,
+          };
+        } else {
+          calcs[pkg.vendorId] = {
+            fee: isSameCity ? 1500 : 4500,
+            method: 'doorstep',
+            reason: isSameCity ? 'Same-City Direct Rider' : 'Interstate Doorstep Courier',
+            isSameCity,
+          };
+        }
       }
     });
 
     return calcs;
-  }, [groupedItems, formData.state, formData.city, packageMethods]);
+  }, [groupedItems, liveRates, packageMethods, formData.city]);
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const totalShippingFee = Object.values(packageShippingCalculations).reduce((sum, item) => sum + item.fee, 0);
