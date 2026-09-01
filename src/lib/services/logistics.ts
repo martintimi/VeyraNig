@@ -143,6 +143,7 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
           receiver: { state: destState, city: destCity },
           package: { weight: pkg.totalWeightKg || 1 }
         }),
+        signal: AbortSignal.timeout(2500),
         cache: 'no-store'
       });
 
