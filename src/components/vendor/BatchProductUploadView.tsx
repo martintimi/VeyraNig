@@ -118,6 +118,13 @@ export default function BatchProductUploadView({
   const [publishedCount, setPublishedCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Auto-scroll to top when error occurs so vendor sees message immediately
+  useEffect(() => {
+    if (errorMessage) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [errorMessage]);
+
   // Filter Categories by Active Drop Mode / Specialty
   const availableCategories = ALL_CATEGORY_OPTIONS.filter(c => {
     if (vendorSpecialty === 'jewelry' || dropMode === 'jewelry') return c.group === 'jewelry';

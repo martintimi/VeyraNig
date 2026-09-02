@@ -59,6 +59,24 @@ export async function GET(request: Request) {
     const { data: vendorsList } = await supabase.from('vendors').select('id, brand_name, designer_name, location, bio');
     const vendorMap = new Map<string, any>();
 
+    // Fetch product variants for sizing & stock
+    const productIds = (products || []).map((p) => p.id);
+    const variantsMap = new Map<string, any[]>();
+    if (productIds.length > 0) {
+      const { data: variantsList } = await supabase
+        .from('product_variants')
+        .select('*')
+        .in('product_id', productIds);
+      if (variantsList && Array.isArray(variantsList)) {
+        variantsList.forEach((v) => {
+          if (!variantsMap.has(v.product_id)) {
+            variantsMap.set(v.product_id, []);
+          }
+          variantsMap.get(v.product_id)!.push(v);
+        });
+      }
+    }
+
     if (vendorsList && Array.isArray(vendorsList)) {
       vendorsList.forEach((v) => {
         let city = '';
@@ -233,20 +251,33 @@ export async function GET(request: Request) {
         normalizedColors = [{ name: 'As Featured', hex: '#111111' }];
       }
 
+      const pVariants = variantsMap.get(p.id) || [];
+      const dynamicSizeStock: Record<string, { enabled: boolean; quantity: number }> = {};
+      let dynamicTotalStock = 0;
+
+      if (pVariants.length > 0) {
+        pVariants.forEach((v) => {
+          dynamicSizeStock[v.size] = { enabled: true, quantity: Number(v.stock_quantity) || 0 };
+          dynamicTotalStock += Number(v.stock_quantity) || 0;
+        });
+      }
+
       let resolvedSizes: string[] = ['M', 'L', 'XL'];
       if (isAccessory) {
         resolvedSizes = ['One Size'];
-      } else if (Array.isArray(p.sizes) && p.sizes.length > 0) {
-        resolvedSizes = p.sizes;
-      } else if (p.size_stock && typeof p.size_stock === 'object') {
-        const enabled = Object.keys(p.size_stock).filter(sz => {
-          const v = p.size_stock[sz];
-          return typeof v === 'object' ? v?.enabled !== false : Number(v) > 0;
-        });
-        if (enabled.length > 0) {
-          resolvedSizes = enabled;
-        }
+      } else if (Object.keys(dynamicSizeStock).length > 0) {
+        resolvedSizes = Object.keys(dynamicSizeStock);
+      } else if (p.category === 'footwear') {
+        resolvedSizes = ['40', '41', '42', '43', '44'];
       }
+
+      const finalSizeStock = isAccessory
+        ? { 'One Size': dynamicSizeStock['One Size'] || { enabled: true, quantity: 20 } }
+        : Object.keys(dynamicSizeStock).length > 0
+        ? dynamicSizeStock
+        : (p.category === 'footwear'
+          ? { '40': { enabled: true, quantity: 10 }, '41': { enabled: true, quantity: 10 }, '42': { enabled: true, quantity: 10 } }
+          : { S: { enabled: true, quantity: 10 }, M: { enabled: true, quantity: 20 }, L: { enabled: true, quantity: 20 } });
 
       return {
         id: p.id,
@@ -261,10 +292,8 @@ export async function GET(request: Request) {
         tags: p.tags || [],
         colors: isAccessory ? [] : normalizedColors,
         sizes: resolvedSizes,
-        sizeStock: isAccessory 
-          ? { 'One Size': typeof p.size_stock?.['One Size'] === 'object' ? p.size_stock['One Size'] : { enabled: true, quantity: p.stock_quantity || 20 } }
-          : (p.size_stock || {}),
-        stockQuantity: p.stock_quantity || 10,
+        sizeStock: finalSizeStock,
+        stockQuantity: dynamicTotalStock > 0 ? dynamicTotalStock : (isAccessory ? 20 : 50),
         isCustomizable: p.is_customizable,
         tailoringSpecs: p.tailoring_specs,
         vendorId: p.vendor_id,
@@ -357,9 +386,6 @@ export async function POST(request: Request) {
           description: item.description && item.description.trim().toLowerCase() !== (item.name || '').trim().toLowerCase() ? item.description : '',
           tags: tagsList,
           colors: colorsList,
-          sizes: item.sizes || ['M', 'L', 'XL'],
-          size_stock: item.sizeStock || {},
-          stock_quantity: Number(item.stockQuantity || 20),
           vendor_id: resolvedVendorId,
           is_published: true,
         };
@@ -369,6 +395,46 @@ export async function POST(request: Request) {
       if (error) {
         console.error('Error inserting batch into products table:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      // Insert size variants into product_variants
+      try {
+        const allVariants: any[] = [];
+        body.items.forEach((item: any, idx: number) => {
+          const pId = rows[idx].id;
+          const defaultColor = Array.isArray(item.colors) && item.colors.length > 0
+            ? (typeof item.colors[0] === 'string' ? item.colors[0] : item.colors[0]?.name || 'Standard')
+            : 'Standard';
+
+          if (item.category === 'accessories') {
+            const accQty = item.sizeStock?.['One Size'] === '' ? 20 : (Number(item.sizeStock?.['One Size']?.quantity ?? item.sizeStock?.['One Size']) || 20);
+            allVariants.push({
+              product_id: pId,
+              size: 'One Size',
+              color: defaultColor,
+              stock_quantity: accQty,
+            });
+          } else if (item.sizeStock && typeof item.sizeStock === 'object') {
+            Object.entries(item.sizeStock).forEach(([sz, val]: [string, any]) => {
+              const qty = typeof val === 'object' ? (val.quantity === '' ? 0 : Number(val.quantity) || 0) : (val === '' ? 0 : Number(val) || 0);
+              const enabled = typeof val === 'object' ? val.enabled !== false : qty > 0;
+              if (enabled && qty > 0) {
+                allVariants.push({
+                  product_id: pId,
+                  size: sz,
+                  color: defaultColor,
+                  stock_quantity: qty,
+                });
+              }
+            });
+          }
+        });
+
+        if (allVariants.length > 0) {
+          await supabase.from('product_variants').insert(allVariants);
+        }
+      } catch (varErr) {
+        console.warn('Error inserting batch variants:', varErr);
       }
 
       return NextResponse.json({
@@ -425,9 +491,6 @@ export async function POST(request: Request) {
       description: description && description.trim().toLowerCase() !== name.trim().toLowerCase() ? description : '',
       tags: tagsList,
       colors: colorsList,
-      sizes: sizes || ['M', 'L', 'XL'],
-      size_stock: sizeStock || {},
-      stock_quantity: Number(stockQuantity || 20),
       vendor_id: vendorId,
       is_published: true,
     }).select().single();
@@ -437,20 +500,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Optionally insert size variants into product_variants if available
+    // Insert size variants into product_variants
     try {
       if (sizeStock && typeof sizeStock === 'object') {
         const variantsToInsert: any[] = [];
-        Object.entries(sizeStock).forEach(([sz, val]: [string, any]) => {
-          if (val && (val.enabled || val.quantity > 0)) {
-            variantsToInsert.push({
-              product_id: productId,
-              size: sz,
-              color: colorsList[0] || 'Default',
-              stock_quantity: Number(val.quantity || 10),
-            });
-          }
-        });
+        const defaultColor = colorsList[0] || 'Standard';
+
+        if (category === 'accessories') {
+          const accQty = sizeStock['One Size'] === '' ? 20 : (Number(sizeStock['One Size']?.quantity ?? sizeStock['One Size']) || 20);
+          variantsToInsert.push({
+            product_id: productId,
+            size: 'One Size',
+            color: defaultColor,
+            stock_quantity: accQty,
+          });
+        } else {
+          Object.entries(sizeStock).forEach(([sz, val]: [string, any]) => {
+            const qty = typeof val === 'object' ? (val.quantity === '' ? 0 : Number(val.quantity) || 0) : (val === '' ? 0 : Number(val) || 0);
+            const enabled = typeof val === 'object' ? val.enabled !== false : qty > 0;
+            if (enabled && qty > 0) {
+              variantsToInsert.push({
+                product_id: productId,
+                size: sz,
+                color: defaultColor,
+                stock_quantity: qty,
+              });
+            }
+          });
+        }
+
         if (variantsToInsert.length > 0) {
           await supabase.from('product_variants').insert(variantsToInsert);
         }

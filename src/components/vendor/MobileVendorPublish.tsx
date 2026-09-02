@@ -170,6 +170,13 @@ export default function MobileVendorPublish({
   const [lastPublishedName, setLastPublishedName] = useState('');
   const [successToast, setSuccessToast] = useState('');
 
+  // Auto-scroll to top whenever an error is encountered
+  useEffect(() => {
+    if (errorMessage) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [errorMessage]);
+
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
   const filteredCategoryList = catFilterTab === 'all' 
     ? currentCategoryList 

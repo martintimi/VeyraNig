@@ -216,21 +216,37 @@ export async function GET(
 
     const isAccessory = product.category === 'accessories';
 
-    // Strictly resolve vendor-selected sizes
+    // Fetch product variants for sizing & stock
+    const { data: variants } = await supabase
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', id);
+
+    const dynamicSizeStock: Record<string, { enabled: boolean; quantity: number }> = {};
+    let dynamicTotalStock = 0;
+    if (variants && Array.isArray(variants) && variants.length > 0) {
+      variants.forEach((v) => {
+        dynamicSizeStock[v.size] = { enabled: true, quantity: Number(v.stock_quantity) || 0 };
+        dynamicTotalStock += Number(v.stock_quantity) || 0;
+      });
+    }
+
     let resolvedSizes: string[] = ['M', 'L', 'XL'];
     if (isAccessory) {
       resolvedSizes = ['One Size'];
-    } else if (Array.isArray(product.sizes) && product.sizes.length > 0) {
-      resolvedSizes = product.sizes;
-    } else if (product.size_stock && typeof product.size_stock === 'object') {
-      const enabled = Object.keys(product.size_stock).filter(sz => {
-        const v = product.size_stock[sz];
-        return typeof v === 'object' ? v?.enabled !== false : Number(v) > 0;
-      });
-      if (enabled.length > 0) {
-        resolvedSizes = enabled;
-      }
+    } else if (Object.keys(dynamicSizeStock).length > 0) {
+      resolvedSizes = Object.keys(dynamicSizeStock);
+    } else if (product.category === 'footwear') {
+      resolvedSizes = ['40', '41', '42', '43', '44'];
     }
+
+    const finalSizeStock = isAccessory
+      ? { 'One Size': dynamicSizeStock['One Size'] || { enabled: true, quantity: 20 } }
+      : Object.keys(dynamicSizeStock).length > 0
+      ? dynamicSizeStock
+      : (product.category === 'footwear'
+        ? { '40': { enabled: true, quantity: 10 }, '41': { enabled: true, quantity: 10 }, '42': { enabled: true, quantity: 10 } }
+        : { S: { enabled: true, quantity: 10 }, M: { enabled: true, quantity: 20 }, L: { enabled: true, quantity: 20 } });
 
     const formattedProduct = {
       id: product.id,
@@ -251,10 +267,8 @@ export async function GET(
       tags: Array.isArray(product.tags) && product.tags.length > 0 ? product.tags : ['Ready-to-Wear'],
       colors: isAccessory ? [] : normalizedColors,
       sizes: resolvedSizes,
-      sizeStock: isAccessory 
-        ? { 'One Size': typeof product.size_stock?.['One Size'] === 'object' ? product.size_stock['One Size'] : { enabled: true, quantity: product.stock_quantity || 20 } }
-        : (product.size_stock || {}),
-      stockQuantity: product.stock_quantity || 20,
+      sizeStock: finalSizeStock,
+      stockQuantity: dynamicTotalStock > 0 ? dynamicTotalStock : (isAccessory ? 20 : 50),
       rating: 0,
       reviewCount: 0,
       createdAt: product.created_at,

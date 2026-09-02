@@ -77,6 +77,24 @@ export async function GET(
       .eq('is_published', true)
       .order('created_at', { ascending: false });
 
+    // Fetch product variants for sizing & stock
+    const productIds = (dbProducts || []).map((p: any) => p.id);
+    const variantsMap = new Map<string, any[]>();
+    if (productIds.length > 0) {
+      const { data: variantsList } = await supabase
+        .from('product_variants')
+        .select('*')
+        .in('product_id', productIds);
+      if (variantsList && Array.isArray(variantsList)) {
+        variantsList.forEach((v) => {
+          if (!variantsMap.has(v.product_id)) {
+            variantsMap.set(v.product_id, []);
+          }
+          variantsMap.get(v.product_id)!.push(v);
+        });
+      }
+    }
+
     const formattedProducts = (dbProducts || []).map((p: any) => {
       let normalizedColors = [];
       if (Array.isArray(p.colors)) {
@@ -84,6 +102,32 @@ export async function GET(
           typeof c === 'string' ? { name: c === '#111111' ? 'Black' : c === '#ffffff' ? 'White' : `Color ${idx+1}`, hex: c } : c
         );
       }
+
+      const pVariants = variantsMap.get(p.id) || [];
+      const dynamicSizeStock: Record<string, { enabled: boolean; quantity: number }> = {};
+      let dynamicTotalStock = 0;
+      if (pVariants.length > 0) {
+        pVariants.forEach((v) => {
+          dynamicSizeStock[v.size] = { enabled: true, quantity: Number(v.stock_quantity) || 0 };
+          dynamicTotalStock += Number(v.stock_quantity) || 0;
+        });
+      }
+
+      const isAccessory = p.category === 'accessories';
+      const resolvedSizes = isAccessory
+        ? ['One Size']
+        : Object.keys(dynamicSizeStock).length > 0
+        ? Object.keys(dynamicSizeStock)
+        : (p.category === 'footwear' ? ['40', '41', '42', '43', '44'] : ['S', 'M', 'L', 'XL', 'XXL']);
+
+      const finalSizeStock = isAccessory
+        ? { 'One Size': dynamicSizeStock['One Size'] || { enabled: true, quantity: 20 } }
+        : Object.keys(dynamicSizeStock).length > 0
+        ? dynamicSizeStock
+        : (p.category === 'footwear'
+          ? { '40': { enabled: true, quantity: 10 }, '41': { enabled: true, quantity: 10 }, '42': { enabled: true, quantity: 10 } }
+          : { S: { enabled: true, quantity: 10 }, M: { enabled: true, quantity: 25 }, L: { enabled: true, quantity: 30 }, XL: { enabled: true, quantity: 15 }, XXL: { enabled: true, quantity: 5 } });
+
       return {
         id: p.id,
         vendorId: p.vendor_id,
@@ -96,10 +140,10 @@ export async function GET(
         garmentOriginType: p.garment_origin_type || 'ready_made_boutique',
         imageUrl: p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
         tags: Array.isArray(p.tags) ? p.tags : [],
-        colors: normalizedColors,
-        sizes: Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : ['S', 'M', 'L', 'XL', 'XXL'],
-        sizeStock: p.size_stock || { S: 10, M: 25, L: 30, XL: 15, XXL: 5 },
-        stockQuantity: p.stock_quantity || 85,
+        colors: isAccessory ? [] : normalizedColors,
+        sizes: resolvedSizes,
+        sizeStock: finalSizeStock,
+        stockQuantity: dynamicTotalStock > 0 ? dynamicTotalStock : (isAccessory ? 20 : 85),
         rating: 5.0,
         reviewCount: 18,
         createdAt: p.created_at
