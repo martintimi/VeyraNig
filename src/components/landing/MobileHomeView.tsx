@@ -406,7 +406,7 @@ export default function MobileHomeView() {
         <FadeUp className="px-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">Featured Ateliers</h3>
+              <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">Featured Brands</h3>
               <span className="text-xs text-[var(--text-secondary)]">Verified Nigerian fashion houses</span>
             </div>
             <span className="text-xs font-mono-luxury text-[var(--gold-accent)] font-bold">Verified ({featuredAteliers.length})</span>

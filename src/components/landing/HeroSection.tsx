@@ -117,46 +117,46 @@ export default function HeroSection() {
             {/* Pill Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs font-mono-luxury tracking-wider uppercase">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Doorstep Nationwide Delivery · Top Independent Ateliers</span>
+              <span>Doorstep Nationwide Delivery · Top Nigerian Designers</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-[var(--text-primary)] leading-[1.1]">
-              Mix Independent Ateliers.<br />
-              <span className="italic font-normal shimmer-gold">See It On Your Body.</span><br />
-              Order in 1 Single Delivery.
+              Shop Top Nigerian Brands.<br />
+              <span className="italic font-normal shimmer-gold">Curated Luxury Pieces.</span><br />
+              Delivered in 1 Single Order.
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
-              Experience Nigeria&apos;s first cross-brand virtual fitting room. Mix bespoke native wear, streetwear drops, handcrafted footwear, and fine jewelry—tested on your digital body model before buying.
+              Discover Nigeria&apos;s premier multi-brand fashion marketplace. Shop bespoke native wear, streetwear drops, handcrafted footwear, and fine jewelry from verified independent designers—all in one seamless checkout.
             </p>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
               <Link
-                href="/studio"
+                href="/shop"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-semibold text-xs tracking-widest uppercase hover:opacity-90 transition-all shadow-lg group"
               >
-                <Layers className="h-4 w-4" />
-                <span>Open Outfit Studio</span>
+                <ShoppingBag className="h-4 w-4" />
+                <span>Explore Marketplace</span>
                 <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
               </Link>
 
               <Link
-                href="/shop"
+                href="/vendors"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-medium text-xs tracking-widest uppercase hover:border-[var(--border-hover)] transition-all"
               >
-                <ShoppingBag className="h-4 w-4 text-[var(--gold-accent)]" />
-                <span>Shop All Drops</span>
+                <Layers className="h-4 w-4 text-[var(--gold-accent)]" />
+                <span>Browse All Brands</span>
               </Link>
             </div>
 
             {/* Proof Points */}
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[var(--border-subtle)] max-w-md mx-auto lg:mx-0 text-left">
               <div>
-                <div className="text-xl sm:text-2xl font-editorial font-medium text-[var(--text-primary)]">100% Fit</div>
-                <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Sized to Your Body</div>
+                <div className="text-xl sm:text-2xl font-editorial font-medium text-[var(--text-primary)]">100% Quality</div>
+                <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Verified Designers</div>
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-editorial font-medium text-emerald-500">Fast Dispatch</div>
@@ -179,14 +179,14 @@ export default function HeroSection() {
             >
               
               {/* Header Status Bar */}
-              <div className="flex items-center justify-between pb-3 border-b   ">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center  text-[var(--gold-accent)]">
+                  <div className="flex h-7 w-7 items-center justify-center text-[var(--gold-accent)]">
                     <Scissors className="h-3.5 w-3.5" />
                   </div>
                   <div>
                     <span className="text-xs font-mono-luxury font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                      Auto-Rotating Lookbook
+                      Curated Lookbook
                     </span>
                     <div className="text-[10px] text-[var(--text-muted)] font-mono-luxury">
                       {activeItem.designer}
@@ -196,12 +196,12 @@ export default function HeroSection() {
 
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
-                    {activeItem.fitScore}% Fit Match
+                    Verified Quality
                   </span>
 
                   <button
                     onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-                    className="p-1.5 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    className="p-1.5 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                     title={isAutoPlaying ? 'Pause Rotation' : 'Resume Rotation'}
                   >
                     {isAutoPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
@@ -243,7 +243,7 @@ export default function HeroSection() {
                     <div className="absolute top-3 right-3 z-10">
                       <span className="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-[10px] font-mono-luxury text-white border border-white/20 flex items-center gap-1.5">
                         <Sparkles className="h-3 w-3 text-[var(--gold-accent)]" />
-                        <span>3D Calibrated</span>
+                        <span>Curated Drop</span>
                       </span>
                     </div>
 
@@ -317,17 +317,17 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Direct Link to Try in Studio */}
+              {/* Direct Link to Shop */}
               <div className="pt-3.5 flex items-center justify-between border-t border-[var(--border-subtle)] mt-3">
                 <div className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
-                  Live in Veyra Virtual Fitting Room
+                  Handcrafted & Ready to Wear
                 </div>
 
                 <Link
-                  href="/studio"
+                  href="/shop"
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase tracking-wider text-[10px] font-bold hover:opacity-90 transition-all shadow-md group"
                 >
-                  <span>Try In Studio</span>
+                  <span>Explore Drops</span>
                   <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>

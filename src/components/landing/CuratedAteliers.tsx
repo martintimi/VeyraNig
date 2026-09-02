@@ -217,7 +217,7 @@ function AtelierCardSlider({ atelier }: { atelier: AtelierData }) {
             href={`/brand/${atelier.slug}`}
             className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold hover:underline inline-flex items-center gap-1"
           >
-            <span>Shop Atelier</span>
+            <span>Shop Brand</span>
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
@@ -240,11 +240,11 @@ export default function CuratedAteliers() {
             </div>
 
             <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-[var(--text-primary)]">
-              Curated Nigerian Ateliers
+              Featured Nigerian Designers
             </h2>
 
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light leading-relaxed">
-              Explore verified bespoke tailors and streetwear creators across Lagos and Nigeria.
+              Explore verified bespoke designers, streetwear creators, footwear artisans, and jewelry makers.
             </p>
           </div>
 
