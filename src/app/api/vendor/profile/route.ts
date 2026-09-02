@@ -155,7 +155,21 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      vendor: updated
+      vendor: {
+        ...updated,
+        specialty,
+        vendorSpecialty: specialty,
+        bio: body.bio || '',
+        socialLinks,
+        city: body.city || '',
+        state: body.state || '',
+        dispatchDays: body.dispatchDays || '1-2 business days',
+        isProfileSaved: true,
+        is_verified: false,
+        isVerified: false,
+        approvalStatus: 'pending',
+        rejectionReason: ''
+      }
     });
   } catch (error: any) {
     console.error('API /api/vendor/profile POST error:', error);

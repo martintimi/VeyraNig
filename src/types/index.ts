@@ -120,6 +120,7 @@ export interface Vendor {
   description: string;
   vendorType?: 'fashion_designer' | 'boutique_seller';
   specialty?: VendorSpecialty;
+  vendorSpecialty?: VendorSpecialty;
   phone?: string;
 }
 
@@ -132,6 +133,7 @@ export interface VendorProfile {
   location: string;
   vendorType: 'fashion_designer' | 'boutique_seller' | 'boutique_merchant' | string;
   specialty?: VendorSpecialty;
+  vendorSpecialty?: VendorSpecialty;
   bankName: string;
   accountNumber: string;
   accountName: string;
@@ -151,11 +153,18 @@ export function isBoutiqueVendor(vendorOrType: any): boolean {
 
 export function getVendorSpecialty(vendorOrProfile: any): VendorSpecialty {
   if (!vendorOrProfile) return 'multi_department';
-  const spec = vendorOrProfile.specialty || vendorOrProfile.vendorSpecialty || vendorOrProfile.vendor_specialty;
-  if (spec === 'jewelry' || spec === 'accessories') return 'jewelry';
-  if (spec === 'footwear' || spec === 'shoes') return 'footwear';
-  if (spec === 'apparel' || spec === 'clothing') return 'apparel';
-  if (spec === 'multi_department') return 'multi_department';
+  let spec = vendorOrProfile.specialty || vendorOrProfile.vendorSpecialty || vendorOrProfile.vendor_specialty;
+  if (!spec && typeof vendorOrProfile.bio === 'string' && vendorOrProfile.bio.startsWith('{') && vendorOrProfile.bio.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(vendorOrProfile.bio);
+      spec = parsed.specialty || parsed.vendorSpecialty;
+    } catch (e) {}
+  }
+  if (!spec) return 'multi_department';
+  const s = String(spec).toLowerCase().trim();
+  if (s === 'jewelry' || s === 'accessories' || s.includes('jewel') || s.includes('watch')) return 'jewelry';
+  if (s === 'footwear' || s === 'shoes' || s.includes('shoe') || s.includes('foot') || s.includes('slide')) return 'footwear';
+  if (s === 'apparel' || s === 'clothing' || s.includes('wear') || s.includes('tailor') || s.includes('fashion')) return 'apparel';
   return 'multi_department';
 }
 
