@@ -4,29 +4,25 @@ import React, { useState, useRef } from 'react';
 import { GarmentCategory, GenderTarget } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2, Check,
-  Layers, ChevronDown, ChevronUp, CheckCircle2, ArrowRight,
-  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck, Sliders
+  Layers, ChevronDown, CheckCircle2, ArrowRight,
+  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { vendorFetch } from '@/lib/services/apiClient';
-import VariantStockMatrix, { getVariantKey } from '@/components/vendor/VariantStockMatrix';
 
 interface BatchItem {
   id: string;
   name: string;
   price: string;
-  quantityPerSize: number;
   category: GarmentCategory;
   subCategory: string;
   genderTarget: GenderTarget;
   imageFile: File | null;
   imagePreview: string;
-  selectedColors: { name: string; hex: string }[];
-  selectedSizes: string[];
-  stockMatrix: { [variantKey: string]: number };
-  showMatrix?: boolean;
+  selectedColor: { name: string; hex: string };
+  sizeStock: { [size: string]: number }; // e.g. { S: 5, M: 15, L: 20, XL: 8 }
 }
 
 interface BatchProductUploadViewProps {
@@ -69,7 +65,8 @@ const PRESET_COLORS = [
   { name: 'Emerald Gold', hex: '#e6c367' },
 ];
 
-const STANDARD_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const APPAREL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const FOOTWEAR_SIZES = ['39', '40', '41', '42', '43', '44', '45', '46'];
 
 function cleanFileNameToTitle(fileName: string): string {
   const withoutExt = fileName.replace(/\.[^/.]+$/, '');
@@ -123,13 +120,10 @@ export default function BatchProductUploadView({
         const previewUrl = reader.result as string;
         const defaultCat = CATEGORY_OPTIONS[0];
         const defaultSizes = bulkSizes.length > 0 ? [...bulkSizes] : ['M', 'L', 'XL'];
-        const defaultColors = [{ name: 'Black', hex: '#111111' }];
         
-        const initMatrix: { [k: string]: number } = {};
-        defaultColors.forEach(c => {
-          defaultSizes.forEach(s => {
-            initMatrix[getVariantKey(c.name, s)] = defaultQty;
-          });
+        const initSizeStock: { [sz: string]: number } = {};
+        defaultSizes.forEach(sz => {
+          initSizeStock[sz] = defaultQty;
         });
 
         setItems(prev => [
@@ -138,16 +132,13 @@ export default function BatchProductUploadView({
             id: `batch-${Date.now()}-${index}-${Math.random()}`,
             name: cleanFileNameToTitle(file.name),
             price: bulkPrice || '',
-            quantityPerSize: defaultQty,
             category: defaultCat.generalCat,
             subCategory: defaultCat.id,
             genderTarget: defaultCat.dept,
             imageFile: file,
             imagePreview: previewUrl,
-            selectedColors: defaultColors,
-            selectedSizes: defaultSizes,
-            stockMatrix: initMatrix,
-            showMatrix: false,
+            selectedColor: PRESET_COLORS[0],
+            sizeStock: initSizeStock,
           }
         ]);
       };
@@ -169,49 +160,26 @@ export default function BatchProductUploadView({
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
-  // Toggle a color for an item
-  const toggleItemColor = (itemId: string, color: { name: string; hex: string }) => {
+  // Update size stock for an item
+  const setItemSizeQty = (itemId: string, size: string, qty: number) => {
     setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
-      const exists = item.selectedColors.some(c => c.name === color.name);
-      const newColors = exists
-        ? (item.selectedColors.length > 1 ? item.selectedColors.filter(c => c.name !== color.name) : item.selectedColors)
-        : [...item.selectedColors, color];
-      
-      const newMatrix = { ...item.stockMatrix };
-      if (!exists) {
-        item.selectedSizes.forEach(s => {
-          const k = getVariantKey(color.name, s);
-          if (newMatrix[k] === undefined) {
-            newMatrix[k] = item.quantityPerSize || 10;
-          }
-        });
-      }
-
-      return { ...item, selectedColors: newColors, stockMatrix: newMatrix };
+      const updated = { ...item.sizeStock, [size]: Math.max(0, qty) };
+      return { ...item, sizeStock: updated };
     }));
   };
 
-  // Toggle a size for an item
+  // Toggle size active/inactive for an item
   const toggleItemSize = (itemId: string, size: string) => {
     setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
-      const exists = item.selectedSizes.includes(size);
-      const newSizes = exists
-        ? (item.selectedSizes.length > 1 ? item.selectedSizes.filter(s => s !== size) : item.selectedSizes)
-        : [...item.selectedSizes, size];
-
-      const newMatrix = { ...item.stockMatrix };
-      if (!exists) {
-        item.selectedColors.forEach(c => {
-          const k = getVariantKey(c.name, size);
-          if (newMatrix[k] === undefined) {
-            newMatrix[k] = item.quantityPerSize || 10;
-          }
-        });
+      const updated = { ...item.sizeStock };
+      if (updated[size] !== undefined) {
+        delete updated[size];
+      } else {
+        updated[size] = Number(bulkQuantity) || 15;
       }
-
-      return { ...item, selectedSizes: newSizes, stockMatrix: newMatrix };
+      return { ...item, sizeStock: updated };
     }));
   };
 
@@ -224,13 +192,11 @@ export default function BatchProductUploadView({
   const applyQuantityToAll = () => {
     const qty = Math.max(1, Number(bulkQuantity) || 1);
     setItems(prev => prev.map(item => {
-      const newMatrix: { [k: string]: number } = {};
-      item.selectedColors.forEach(c => {
-        item.selectedSizes.forEach(s => {
-          newMatrix[getVariantKey(c.name, s)] = qty;
-        });
+      const updated: { [sz: string]: number } = {};
+      Object.keys(item.sizeStock).forEach(sz => {
+        updated[sz] = qty;
       });
-      return { ...item, quantityPerSize: qty, stockMatrix: newMatrix };
+      return { ...item, sizeStock: updated };
     }));
   };
 
@@ -247,17 +213,13 @@ export default function BatchProductUploadView({
 
   const applySizesToAll = () => {
     if (bulkSizes.length === 0) return;
+    const defaultQty = Number(bulkQuantity) || 15;
     setItems(prev => prev.map(item => {
-      const newMatrix = { ...item.stockMatrix };
-      item.selectedColors.forEach(c => {
-        bulkSizes.forEach(s => {
-          const k = getVariantKey(c.name, s);
-          if (newMatrix[k] === undefined) {
-            newMatrix[k] = item.quantityPerSize || 10;
-          }
-        });
+      const updated: { [sz: string]: number } = {};
+      bulkSizes.forEach(sz => {
+        updated[sz] = item.sizeStock[sz] !== undefined ? item.sizeStock[sz] : defaultQty;
       });
-      return { ...item, selectedSizes: [...bulkSizes], stockMatrix: newMatrix };
+      return { ...item, sizeStock: updated };
     }));
   };
 
@@ -265,20 +227,12 @@ export default function BatchProductUploadView({
     setBulkSizes(prev => prev.includes(sz) ? prev.filter(s => s !== sz) : [...prev, sz]);
   };
 
-  // Calculate total item stock
-  const calculateItemTotalStock = (item: BatchItem): number => {
+  // Calculate total piece stock
+  const calculateTotalStock = (item: BatchItem): number => {
     if (item.category === 'accessories') {
-      const k = getVariantKey('Standard', 'One Size');
-      return item.stockMatrix[k] !== undefined ? item.stockMatrix[k] : item.quantityPerSize;
+      return item.sizeStock['One Size'] || 20;
     }
-    let total = 0;
-    item.selectedColors.forEach(c => {
-      item.selectedSizes.forEach(s => {
-        const k = getVariantKey(c.name, s);
-        total += item.stockMatrix[k] !== undefined ? item.stockMatrix[k] : (item.quantityPerSize || 10);
-      });
-    });
-    return total;
+    return Object.values(item.sizeStock).reduce((sum, q) => sum + (Number(q) || 0), 0);
   };
 
   // PUBLISH ALL ITEMS TO DATABASE
@@ -301,33 +255,21 @@ export default function BatchProductUploadView({
 
       const payloadItems = items.map(item => {
         const cleanPrice = Number(String(item.price).replace(/[^0-9.]/g, '')) || 10000;
-        const sizeStockObj: { [k: string]: any } = {};
-        const variantsObj: { [k: string]: number } = {};
-        const colorStockObj: { [k: string]: number } = {};
-
+        const sizeStockObj: { [k: string]: { enabled: boolean; quantity: number } } = {};
+        
         if (item.category === 'accessories') {
-          const accQty = item.quantityPerSize || 20;
+          const accQty = item.sizeStock['One Size'] || 20;
           sizeStockObj['One Size'] = { enabled: true, quantity: accQty };
         } else {
-          // Per-size total sum
-          item.selectedSizes.forEach(sz => {
-            let sizeQty = 0;
-            item.selectedColors.forEach(c => {
-              const k = getVariantKey(c.name, sz);
-              const q = item.stockMatrix[k] !== undefined ? item.stockMatrix[k] : (item.quantityPerSize || 10);
-              sizeQty += q;
-              variantsObj[k] = q;
-              colorStockObj[c.name] = (colorStockObj[c.name] || 0) + q;
-            });
-            sizeStockObj[sz] = { enabled: sizeQty > 0, quantity: sizeQty };
+          Object.entries(item.sizeStock).forEach(([sz, qty]) => {
+            if (qty > 0) {
+              sizeStockObj[sz] = { enabled: true, quantity: qty };
+            }
           });
-
-          // Embed full variant matrix
-          sizeStockObj['variants'] = variantsObj;
-          sizeStockObj['colorStock'] = colorStockObj;
         }
 
-        const totalItemStock = calculateItemTotalStock(item);
+        const totalItemStock = calculateTotalStock(item);
+        const activeSizes = Object.keys(sizeStockObj);
 
         return {
           name: item.name.trim(),
@@ -339,8 +281,8 @@ export default function BatchProductUploadView({
           image_url: item.imagePreview,
           description: '',
           tags: ['Ready-to-Wear', 'Collection Drop'],
-          colors: item.category === 'accessories' ? [] : item.selectedColors,
-          sizes: item.category === 'accessories' ? ['One Size'] : item.selectedSizes,
+          colors: item.category === 'accessories' ? [] : [item.selectedColor],
+          sizes: item.category === 'accessories' ? ['One Size'] : (activeSizes.length > 0 ? activeSizes : ['M', 'L', 'XL']),
           sizeStock: sizeStockObj,
           stockQuantity: totalItemStock,
           vendorId: activeVendorId,
@@ -598,7 +540,7 @@ export default function BatchProductUploadView({
                 <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">4. Available Sizes</span>
                 <div className="flex items-center justify-between gap-1">
                   <div className="flex items-center gap-1">
-                    {STANDARD_SIZES.map(sz => (
+                    {APPAREL_SIZES.map(sz => (
                       <button
                         key={sz}
                         type="button"
@@ -643,7 +585,8 @@ export default function BatchProductUploadView({
 
             <div className="space-y-3">
               {items.map((item, index) => {
-                const totalItemStock = calculateItemTotalStock(item);
+                const totalItemStock = calculateTotalStock(item);
+                const sizeList = item.category === 'footwear' ? FOOTWEAR_SIZES : APPAREL_SIZES;
 
                 return (
                   <div
@@ -689,8 +632,8 @@ export default function BatchProductUploadView({
                           </button>
                         </div>
 
-                        {/* Price, Stock Quantity & Category Row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono-luxury">
+                        {/* Price & Category Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono-luxury">
                           {/* Price */}
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
@@ -701,28 +644,6 @@ export default function BatchProductUploadView({
                               onChange={(e) => updateItem(item.id, { price: formatPriceString(e.target.value) })}
                               placeholder="Price in ₦"
                               className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
-                            />
-                          </div>
-
-                          {/* Default Stock Quantity per Size */}
-                          <div className="relative flex items-center gap-1.5">
-                            <span className="text-[10px] text-[var(--text-secondary)] font-bold shrink-0">Default Qty:</span>
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.quantityPerSize}
-                              onChange={(e) => {
-                                const newQty = Math.max(1, Number(e.target.value));
-                                const updatedMatrix = { ...item.stockMatrix };
-                                item.selectedColors.forEach(c => {
-                                  item.selectedSizes.forEach(s => {
-                                    const k = getVariantKey(c.name, s);
-                                    updatedMatrix[k] = newQty;
-                                  });
-                                });
-                                updateItem(item.id, { quantityPerSize: newQty, stockMatrix: updatedMatrix });
-                              }}
-                              className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
                             />
                           </div>
 
@@ -748,22 +669,20 @@ export default function BatchProductUploadView({
                           </select>
                         </div>
 
-                        {/* Colors & Sizes Row */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 text-xs font-mono-luxury border-t border-[var(--border-subtle)]">
-                          
-                          {/* Color Selector */}
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Colors:</span>
-                            {PRESET_COLORS.slice(0, 6).map(c => {
-                              const isSelected = item.selectedColors.some(sc => sc.name === c.name);
+                        {/* Color Selector (1 Tap Primary Color) */}
+                        {item.category !== 'accessories' && (
+                          <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold mr-1">Color:</span>
+                            {PRESET_COLORS.slice(0, 8).map(c => {
+                              const isSelected = item.selectedColor?.name === c.name;
                               return (
                                 <button
                                   key={c.name}
                                   type="button"
-                                  onClick={() => toggleItemColor(item.id, c)}
+                                  onClick={() => updateItem(item.id, { selectedColor: c })}
                                   className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 transition-all cursor-pointer ${
                                     isSelected
-                                      ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold'
+                                      ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold ring-1 ring-[var(--gold-accent)]'
                                       : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
                                   }`}
                                 >
@@ -773,57 +692,70 @@ export default function BatchProductUploadView({
                               );
                             })}
                           </div>
-
-                          {/* Size Selector & Total Stock Pill */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            {item.category !== 'accessories' && (
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold mr-1">Sizes:</span>
-                                {STANDARD_SIZES.map(sz => {
-                                  const isSelected = item.selectedSizes.includes(sz);
-                                  return (
-                                    <button
-                                      key={sz}
-                                      type="button"
-                                      onClick={() => toggleItemSize(item.id, sz)}
-                                      className={`h-6 w-6 rounded-md border text-[10px] font-bold transition-all cursor-pointer ${
-                                        isSelected
-                                          ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
-                                          : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
-                                      }`}
-                                    >
-                                      {sz}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={() => updateItem(item.id, { showMatrix: !item.showMatrix })}
-                              className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 transition-all flex items-center gap-1 cursor-pointer"
-                            >
-                              <span>{totalItemStock} in Stock</span>
-                              {item.showMatrix ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                            </button>
-                          </div>
-
-                        </div>
-
-                        {/* Expandable Variant Stock Matrix for this Item */}
-                        {item.showMatrix && (
-                          <div className="pt-2">
-                            <VariantStockMatrix
-                              colors={item.selectedColors}
-                              sizes={item.selectedSizes}
-                              stockMatrix={item.stockMatrix}
-                              defaultQty={item.quantityPerSize}
-                              isAccessory={item.category === 'accessories'}
-                              onChange={(newMatrix) => updateItem(item.id, { stockMatrix: newMatrix })}
-                            />
-                          </div>
                         )}
+
+                        {/* Sizing & Stock Boxes (Jumia Style) */}
+                        <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2 pt-2">
+                          <div className="flex items-center justify-between text-xs font-mono-luxury">
+                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
+                              {item.category === 'accessories' ? 'Stock Quantity' : 'Sizes & Available Stock'}
+                            </span>
+                            <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                              {totalItemStock} in Stock
+                            </span>
+                          </div>
+
+                          {item.category === 'accessories' ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-[var(--text-primary)]">Total Stock:</span>
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.sizeStock['One Size'] || 20}
+                                onChange={(e) => setItemSizeQty(item.id, 'One Size', Number(e.target.value))}
+                                className="w-24 px-3 py-1 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] text-center focus:outline-none"
+                              />
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                              {sizeList.map(sz => {
+                                const isEnabled = item.sizeStock[sz] !== undefined;
+                                const qty = item.sizeStock[sz] || 0;
+
+                                return (
+                                  <div
+                                    key={sz}
+                                    className={`p-2 rounded-xl border text-center transition-all ${
+                                      isEnabled
+                                        ? 'bg-[var(--bg-primary)] border-[var(--gold-accent)] shadow-sm'
+                                        : 'bg-[var(--bg-primary)]/40 border-[var(--border-subtle)] opacity-40'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="text-xs font-bold text-[var(--text-primary)]">{sz}</span>
+                                      <input
+                                        type="checkbox"
+                                        checked={isEnabled}
+                                        onChange={() => toggleItemSize(item.id, sz)}
+                                        className="h-3.5 w-3.5 rounded text-[var(--gold-accent)] cursor-pointer"
+                                      />
+                                    </div>
+                                    {isEnabled && (
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        value={qty}
+                                        onChange={(e) => setItemSizeQty(item.id, sz, Number(e.target.value))}
+                                        className="w-full text-center py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none"
+                                        placeholder="0"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
 
                       </div>
                     </div>

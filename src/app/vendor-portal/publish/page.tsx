@@ -16,7 +16,6 @@ import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import MobileVendorPublish from '@/components/vendor/MobileVendorPublish';
 import BatchProductUploadView from '@/components/vendor/BatchProductUploadView';
-import VariantStockMatrix, { getVariantKey } from '@/components/vendor/VariantStockMatrix';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 // Standard Apparel Colors Palette for Boutiques & Designers
@@ -144,7 +143,6 @@ export default function PublishGarmentPage() {
     'XL': { enabled: true, quantity: 10 },
     'XXL': { enabled: false, quantity: 0 },
   });
-  const [stockMatrix, setStockMatrix] = useState<{ [variantKey: string]: number }>({});
 
   // Photo Upload State
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -380,32 +378,6 @@ export default function PublishGarmentPage() {
     try {
       let finalImageUrl = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
 
-      const finalSizeStock: { [k: string]: any } = {};
-      const variantsObj: { [k: string]: number } = {};
-      const colorStockObj: { [k: string]: number } = {};
-      let calculatedTotalStock = 0;
-
-      if (category === 'accessories') {
-        const accQty = sizeStock['One Size']?.quantity || 20;
-        finalSizeStock['One Size'] = { enabled: true, quantity: accQty };
-        calculatedTotalStock = accQty;
-      } else {
-        enabledSizes.forEach(sz => {
-          let szSum = 0;
-          selectedColors.forEach(c => {
-            const k = getVariantKey(c.name, sz);
-            const q = stockMatrix[k] !== undefined ? stockMatrix[k] : (sizeStock[sz]?.quantity || 10);
-            variantsObj[k] = q;
-            colorStockObj[c.name] = (colorStockObj[c.name] || 0) + q;
-            szSum += q;
-          });
-          finalSizeStock[sz] = { enabled: szSum > 0, quantity: szSum };
-          calculatedTotalStock += szSum;
-        });
-        finalSizeStock['variants'] = variantsObj;
-        finalSizeStock['colorStock'] = colorStockObj;
-      }
-
       const payload = {
         name: name.trim(),
         price: numericPrice,
@@ -418,8 +390,8 @@ export default function PublishGarmentPage() {
         tags,
         colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
         sizes: enabledSizes,
-        sizeStock: finalSizeStock,
-        stockQuantity: calculatedTotalStock,
+        sizeStock,
+        stockQuantity: totalStockCount,
         vendorId: activeVendorId,
         vendorName: vendorProfile.brandName || 'Verified Partner',
         is_published: true,
@@ -1077,7 +1049,7 @@ export default function PublishGarmentPage() {
               </div>
             ) : (
               <div className="space-y-4 pt-2">
-                {/* Quick Size Enabled Cards */}
+                {/* Size Cards with Direct Quantity Inputs */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
                   {currentSizeList.map((size) => {
                     const isEnabled = sizeStock[size]?.enabled;
@@ -1110,7 +1082,7 @@ export default function PublishGarmentPage() {
                               min={0}
                               value={qty}
                               onChange={(e) => handleSizeStockChange(size, Number(e.target.value))}
-                              className="w-full px-2 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none"
+                              className="w-full px-2 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none text-center"
                             />
                           </div>
                         )}
@@ -1118,16 +1090,6 @@ export default function PublishGarmentPage() {
                     );
                   })}
                 </div>
-
-                {/* Color & Size Variant Matrix */}
-                {selectedColors.length > 0 && enabledSizes.length > 0 && (
-                  <VariantStockMatrix
-                    colors={selectedColors}
-                    sizes={enabledSizes}
-                    stockMatrix={stockMatrix}
-                    onChange={(newMatrix) => setStockMatrix(newMatrix)}
-                  />
-                )}
               </div>
             )}
           </div>
@@ -1205,32 +1167,6 @@ export default function PublishGarmentPage() {
                     const finalImageUrl = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
                     const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
                     
-                    const finalSizeStock: { [k: string]: any } = {};
-                    const variantsObj: { [k: string]: number } = {};
-                    const colorStockObj: { [k: string]: number } = {};
-                    let calculatedTotalStock = 0;
-
-                    if (category === 'accessories') {
-                      const accQty = sizeStock['One Size']?.quantity || 20;
-                      finalSizeStock['One Size'] = { enabled: true, quantity: accQty };
-                      calculatedTotalStock = accQty;
-                    } else {
-                      enabledSizes.forEach(sz => {
-                        let szSum = 0;
-                        selectedColors.forEach(c => {
-                          const k = getVariantKey(c.name, sz);
-                          const q = stockMatrix[k] !== undefined ? stockMatrix[k] : (sizeStock[sz]?.quantity || 10);
-                          variantsObj[k] = q;
-                          colorStockObj[c.name] = (colorStockObj[c.name] || 0) + q;
-                          szSum += q;
-                        });
-                        finalSizeStock[sz] = { enabled: szSum > 0, quantity: szSum };
-                        calculatedTotalStock += szSum;
-                      });
-                      finalSizeStock['variants'] = variantsObj;
-                      finalSizeStock['colorStock'] = colorStockObj;
-                    }
-
                     const payload = {
                       name: name.trim(),
                       price: numericPrice,
@@ -1243,8 +1179,8 @@ export default function PublishGarmentPage() {
                       tags,
                       colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
                       sizes: enabledSizes.length > 0 ? enabledSizes : ['M', 'L', 'XL'],
-                      sizeStock: finalSizeStock,
-                      stockQuantity: calculatedTotalStock,
+                      sizeStock,
+                      stockQuantity: totalStockCount,
                       vendorId: activeVendorId,
                       vendorName: vendorProfile.brandName || 'Verified Partner',
                       is_published: true,

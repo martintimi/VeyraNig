@@ -13,7 +13,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { vendorFetch } from '@/lib/services/apiClient';
-import VariantStockMatrix, { getVariantKey } from '@/components/vendor/VariantStockMatrix';
 
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
@@ -126,7 +125,6 @@ export default function MobileVendorPublish({
     'XL': { enabled: true, quantity: 10 },
     'XXL': { enabled: false, quantity: 0 },
   });
-  const [stockMatrix, setStockMatrix] = useState<{ [variantKey: string]: number }>({});
 
   // Photo
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -354,32 +352,6 @@ export default function MobileVendorPublish({
     try {
       let finalImg = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
 
-      const finalSizeStock: { [k: string]: any } = {};
-      const variantsObj: { [k: string]: number } = {};
-      const colorStockObj: { [k: string]: number } = {};
-      let calculatedTotalStock = 0;
-
-      if (category === 'accessories') {
-        const accQty = sizeStock['One Size']?.quantity || 20;
-        finalSizeStock['One Size'] = { enabled: true, quantity: accQty };
-        calculatedTotalStock = accQty;
-      } else {
-        enabledSizes.forEach(sz => {
-          let szSum = 0;
-          selectedColors.forEach(c => {
-            const k = getVariantKey(c.name, sz);
-            const q = stockMatrix[k] !== undefined ? stockMatrix[k] : (sizeStock[sz]?.quantity || 10);
-            variantsObj[k] = q;
-            colorStockObj[c.name] = (colorStockObj[c.name] || 0) + q;
-            szSum += q;
-          });
-          finalSizeStock[sz] = { enabled: szSum > 0, quantity: szSum };
-          calculatedTotalStock += szSum;
-        });
-        finalSizeStock['variants'] = variantsObj;
-        finalSizeStock['colorStock'] = colorStockObj;
-      }
-
       const payload = {
         name: name.trim(),
         price: numericPrice,
@@ -392,8 +364,8 @@ export default function MobileVendorPublish({
         tags,
         colors: category === 'accessories' ? ['Standard'] : selectedColors.map(c => c.name),
         sizes: enabledSizes,
-        sizeStock: finalSizeStock,
-        stockQuantity: calculatedTotalStock,
+        sizeStock,
+        stockQuantity: totalStock,
         vendorId: activeVendorId,
         vendorName: vendorProfile.brandName || 'Verified Partner',
         is_published: true,
@@ -799,16 +771,6 @@ export default function MobileVendorPublish({
         </div>
       )}
 
-      {/* 5. Variant Color & Size Inventory Matrix */}
-      {category !== 'accessories' && selectedColors.length > 0 && (
-        <VariantStockMatrix
-          colors={selectedColors}
-          sizes={Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled)}
-          stockMatrix={stockMatrix}
-          onChange={(newMatrix) => setStockMatrix(newMatrix)}
-        />
-      )}
-
       {/* Success Toast */}
       {successToast && (
         <div className="fixed top-6 left-4 right-4 z-50 p-4 rounded-2xl bg-emerald-500 text-black font-mono-luxury font-bold text-xs flex items-center gap-2 shadow-2xl animate-slideDown">
@@ -861,32 +823,6 @@ export default function MobileVendorPublish({
               const finalImageUrl = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
               const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
               
-              const finalSizeStock: { [k: string]: any } = {};
-              const variantsObj: { [k: string]: number } = {};
-              const colorStockObj: { [k: string]: number } = {};
-              let calculatedTotalStock = 0;
-
-              if (category === 'accessories') {
-                const accQty = sizeStock['One Size']?.quantity || 20;
-                finalSizeStock['One Size'] = { enabled: true, quantity: accQty };
-                calculatedTotalStock = accQty;
-              } else {
-                enabledSizes.forEach(sz => {
-                  let szSum = 0;
-                  selectedColors.forEach(c => {
-                    const k = getVariantKey(c.name, sz);
-                    const q = stockMatrix[k] !== undefined ? stockMatrix[k] : (sizeStock[sz]?.quantity || 10);
-                    variantsObj[k] = q;
-                    colorStockObj[c.name] = (colorStockObj[c.name] || 0) + q;
-                    szSum += q;
-                  });
-                  finalSizeStock[sz] = { enabled: szSum > 0, quantity: szSum };
-                  calculatedTotalStock += szSum;
-                });
-                finalSizeStock['variants'] = variantsObj;
-                finalSizeStock['colorStock'] = colorStockObj;
-              }
-
               const payload = {
                 name: name.trim(),
                 price: numericPrice,
@@ -899,8 +835,8 @@ export default function MobileVendorPublish({
                 tags,
                 colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
                 sizes: enabledSizes.length > 0 ? enabledSizes : ['M', 'L', 'XL'],
-                sizeStock: finalSizeStock,
-                stockQuantity: calculatedTotalStock,
+                sizeStock,
+                stockQuantity: totalStock,
                 vendorId: activeVendorId,
                 vendorName: vendorProfile.brandName || 'Verified Partner',
                 is_published: true,
