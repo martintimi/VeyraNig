@@ -120,26 +120,70 @@ export default function AmbientScreenSaver() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Combine curated high-res slides with live uploaded products if available
+  // Combine curated high-res slides with live uploaded products from database
   const [slides, setSlides] = useState<EditorialSlide[]>(CURATED_EDITORIAL_SLIDES);
 
+  // Helper to map product object to EditorialSlide
+  const mapProductToSlide = useCallback((p: any, idx: number): EditorialSlide => {
+    const rawCat = (p.category || 'tops').toLowerCase();
+    let catIcon: 'gem' | 'footwear' | 'apparel' = 'apparel';
+    let catName = 'Ready-to-Wear Fashion';
+
+    if (rawCat === 'footwear' || rawCat.includes('shoe') || rawCat.includes('slide')) {
+      catIcon = 'footwear';
+      catName = 'Artisanal Footwear Atelier';
+    } else if (rawCat === 'accessories' || rawCat.includes('jewel') || rawCat.includes('watch') || rawCat.includes('cap') || rawCat.includes('bag')) {
+      catIcon = 'gem';
+      catName = 'Fine Jewelry & Luxury Accessories';
+    } else if (rawCat === 'outerwear' || rawCat.includes('agbada')) {
+      catName = 'Men & Unisex Native Grandeur';
+    } else if (rawCat === 'dresses' || rawCat.includes('boubou') || rawCat.includes('gown')) {
+      catName = "Women's Couture & Silks";
+    }
+
+    const fallbackImg = CURATED_EDITORIAL_SLIDES[idx % CURATED_EDITORIAL_SLIDES.length].imageUrl;
+    const finalImg = p.imageUrl || p.image_url || fallbackImg;
+    const location = p.vendorLocation || (p.vendorCity && p.vendorState ? `${p.vendorCity}, ${p.vendorState}` : p.vendorCity || p.vendorState || 'Nigeria');
+
+    return {
+      id: `live-prod-${p.id || idx}`,
+      title: p.name || 'Artisanal Drop Piece',
+      categoryName: catName,
+      categoryIcon: catIcon,
+      atelierName: p.vendorName || p.vendor_name || 'Veyra Atelier Partner',
+      price: Number(p.price) || 35000,
+      imageUrl: finalImg,
+      description: p.description || p.fitNotes || 'Handcrafted contemporary Nigerian luxury piece ready for immediate delivery.',
+      location,
+      linkUrl: `/shop/${p.id}`
+    };
+  }, []);
+
+  // Fetch live products directly on mount to guarantee 100% real products
+  useEffect(() => {
+    async function loadLiveProducts() {
+      try {
+        const res = await fetch('/api/products?limit=20');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+          const liveSlides: EditorialSlide[] = data.products.map((p: any, idx: number) => mapProductToSlide(p, idx));
+          // Put real live products first, followed by curated editorial drops as backdrops
+          setSlides([...liveSlides, ...CURATED_EDITORIAL_SLIDES]);
+        }
+      } catch (err) {
+        console.error('Failed to load live products for screensaver:', err);
+      }
+    }
+    loadLiveProducts();
+  }, [mapProductToSlide]);
+
+  // Sync if allProducts in store updates
   useEffect(() => {
     if (allProducts && allProducts.length > 0) {
-      const dynamicSlides: EditorialSlide[] = allProducts.slice(0, 6).map((p, idx) => ({
-        id: `prod-slide-${p.id || idx}`,
-        title: p.name,
-        categoryName: p.category === 'footwear' ? 'Footwear & Slides' : p.category === 'accessories' ? 'Jewelry & Accessories' : 'Ready-to-Wear Fashion',
-        categoryIcon: p.category === 'footwear' ? 'footwear' : p.category === 'accessories' ? 'gem' : 'apparel',
-        atelierName: p.vendorName || 'Veyra Partner Atelier',
-        price: Number(p.price) || 45000,
-        imageUrl: p.imageUrl || CURATED_EDITORIAL_SLIDES[idx % CURATED_EDITORIAL_SLIDES.length].imageUrl,
-        description: p.description || p.fitNotes || 'Handcrafted contemporary Nigerian design available for immediate delivery.',
-        location: p.vendorLocation || p.vendorCity ? `${p.vendorCity || ''}, ${p.vendorState || ''}` : 'Nigeria',
-        linkUrl: `/shop/${p.id}`
-      }));
-      setSlides([...CURATED_EDITORIAL_SLIDES, ...dynamicSlides]);
+      const dynamicSlides: EditorialSlide[] = allProducts.slice(0, 15).map((p, idx) => mapProductToSlide(p, idx));
+      setSlides([...dynamicSlides, ...CURATED_EDITORIAL_SLIDES]);
     }
-  }, [allProducts]);
+  }, [allProducts, mapProductToSlide]);
 
   // Inactivity Detection Engine
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
