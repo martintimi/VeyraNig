@@ -80,6 +80,12 @@ function cleanFileNameToTitle(fileName: string): string {
     .join(' ');
 }
 
+function formatPriceString(val: string): string {
+  const digits = (val || '').replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  return Number(digits).toLocaleString();
+}
+
 export default function BatchProductUploadView({
   vendorProfile,
   getActiveVendorId,
@@ -426,11 +432,12 @@ export default function BatchProductUploadView({
                   <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={bulkPrice}
-                      onChange={(e) => setBulkPrice(e.target.value)}
-                      placeholder="e.g. 30000"
-                      className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold"
+                      onChange={(e) => setBulkPrice(formatPriceString(e.target.value))}
+                      placeholder="30,000"
+                      className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury"
                     />
                   </div>
                   <button
@@ -565,11 +572,12 @@ export default function BatchProductUploadView({
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
                             value={item.price}
-                            onChange={(e) => updateItem(item.id, { price: e.target.value })}
-                            placeholder="Price in ₦"
-                            className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+                            onChange={(e) => updateItem(item.id, { price: formatPriceString(e.target.value) })}
+                            placeholder="30,000"
+                            className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
                           />
                         </div>
 
