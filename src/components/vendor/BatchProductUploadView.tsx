@@ -1041,12 +1041,12 @@ export default function BatchProductUploadView({
               })}
             </div>
 
-            {/* STICKY BOTTOM ACTION BAR (Clean 2 Buttons, No Cluttered Truncated Text) */}
-            <div className="sticky bottom-4 z-20 p-2.5 sm:p-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] shadow-2xl flex items-center justify-between gap-2.5 backdrop-blur-xl bg-[var(--bg-primary)]/95">
+            {/* STICKY BOTTOM ACTION BAR (Compact & Sleek) */}
+            <div className="sticky bottom-3 z-20 p-2 rounded-xl surface-card border border-[var(--border-subtle)] shadow-xl flex items-center justify-between gap-2 backdrop-blur-xl bg-[var(--bg-primary)]/95 max-w-lg mx-auto">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 sm:flex-initial px-4 py-3 rounded-xl surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] font-bold hover:border-[var(--gold-accent)] cursor-pointer text-center"
+                className="px-3.5 py-2 rounded-lg surface-card border border-[var(--border-subtle)] text-[11px] font-mono-luxury text-[var(--text-primary)] font-bold hover:border-[var(--gold-accent)] cursor-pointer whitespace-nowrap"
               >
                 + Add Photos
               </button>
@@ -1055,17 +1055,17 @@ export default function BatchProductUploadView({
                 type="button"
                 onClick={handlePublishAll}
                 disabled={isSubmitting}
-                className="flex-[2] sm:flex-initial px-6 py-3 rounded-xl bg-[var(--gold-accent)] text-black font-mono-luxury font-bold text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2 rounded-lg bg-[var(--gold-accent)] text-black font-mono-luxury font-bold text-[11px] uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     <span>Publishing ({publishProgress?.current || 1}/{publishProgress?.total || items.length})...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4 fill-black" />
-                    <span>Publish All ({items.length} {items.length === 1 ? 'Piece' : 'Pieces'})</span>
+                    <Sparkles className="h-3.5 w-3.5 fill-black" />
+                    <span>Publish ({items.length} {items.length === 1 ? 'Piece' : 'Pieces'})</span>
                   </>
                 )}
               </button>
