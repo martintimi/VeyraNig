@@ -167,13 +167,6 @@ export default function VendorAtelierProfilePage() {
       const payload = {
         ...form,
         location: cleanLoc,
-        shippingRates: {
-          sameCity: Number(form.sameCityFee) || 0,
-          closeHub: Number(form.closeHubFee) || 2500,
-          interstate: Number(form.interstateFee) || 4500,
-          parkPickup: Number(form.parkPickupFee) || 1500,
-          parkPickupEnabled: !!form.parkPickupEnabled,
-        },
         approvalStatus: 'pending'
       };
 
@@ -706,8 +699,8 @@ export default function VendorAtelierProfilePage() {
                 <span className="font-bold text-[var(--text-primary)]">{form.dispatchDays}</span>
               </div>
               <div>
-                <span className="text-[10px] text-[var(--text-secondary)] block">Local Dispatch Fee</span>
-                <span className="font-bold text-[var(--gold-accent)]">₦{Number(form.sameCityFee).toLocaleString()}</span>
+                <span className="text-[10px] text-[var(--text-secondary)] block">Logistics Partner</span>
+                <span className="font-bold text-[var(--gold-accent)]">Shipbubble Express</span>
               </div>
             </div>
           </div>

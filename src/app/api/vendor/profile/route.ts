@@ -42,13 +42,6 @@ export async function GET(request: Request) {
     let city = '';
     let state = '';
     let dispatchDays = '1-2 business days';
-    let shippingRates = {
-      sameCity: 1000,
-      closeHub: 2500,
-      interstate: 4500,
-      parkPickup: 1500,
-      parkPickupEnabled: true,
-    };
 
     let socialLinks: any = {
       instagram: '',
@@ -70,9 +63,6 @@ export async function GET(request: Request) {
         state = parsed.state || '';
         dispatchDays = parsed.dispatchDays || '1-2 business days';
         vendorSpecialty = parsed.specialty || parsed.vendorSpecialty || (vendor?.vendor_type === 'fashion_designer' ? 'apparel' : 'multi_department');
-        if (parsed.shippingRates) {
-          shippingRates = { ...shippingRates, ...parsed.shippingRates };
-        }
       } catch (e) {}
     } else if (bioText && bioText.trim().length > 0) {
       isProfileSaved = true;
@@ -94,7 +84,6 @@ export async function GET(request: Request) {
         city,
         state,
         dispatchDays,
-        shippingRates,
         isProfileSaved: isProfileSaved || verified,
         approvalStatus: finalApprovalStatus,
         rejectionReason,
@@ -137,13 +126,6 @@ export async function POST(request: Request) {
       city: body.city || '',
       state: body.state || '',
       dispatchDays: body.dispatchDays || '1-2 business days',
-      shippingRates: body.shippingRates || {
-        sameCity: 1000,
-        closeHub: 2500,
-        interstate: 4500,
-        parkPickup: 1500,
-        parkPickupEnabled: true,
-      },
       isProfileSaved: true,
       approvalStatus: 'pending'
     });

@@ -10,12 +10,13 @@ import { useStore } from '@/lib/store/useStore';
 import {
   LayoutDashboard, UploadCloud, PackageCheck, BarChart3,
   Building, MessageSquare, DollarSign, LogOut, Sun, Moon,
-  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle, Star, Menu, X
+  ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle, Star, Menu, X,
+  Gem, Footprints, Shirt
 } from 'lucide-react';
 import VendorNotificationBell from '@/components/vendor/VendorNotificationBell';
 import Image from 'next/image';
 
-import { isBoutiqueVendor } from '@/types';
+import { isBoutiqueVendor, getVendorSpecialty } from '@/types';
 
 export default function VendorPortalLayout({
   children,
@@ -86,6 +87,7 @@ export default function VendorPortalLayout({
   }
 
   const isBoutique = isBoutiqueVendor(vendorProfile);
+  const specialty = getVendorSpecialty(vendorProfile);
 
   const navItems = [
     {
@@ -95,7 +97,7 @@ export default function VendorPortalLayout({
       active: pathname === '/vendor-portal'
     },
     {
-      label: isBoutique ? 'Add RTW Product' : 'Publish Bespoke Garment',
+      label: specialty === 'jewelry' ? 'Add Jewelry Drop' : specialty === 'footwear' ? 'Add Footwear Drop' : isBoutique ? 'Add RTW Product' : 'Publish Bespoke Garment',
       href: '/vendor-portal/publish',
       icon: UploadCloud,
       active: pathname === '/vendor-portal/publish'
@@ -107,7 +109,7 @@ export default function VendorPortalLayout({
       active: pathname === '/vendor-portal/stories'
     },
     {
-      label: isBoutique ? 'Orders to Pack & Dispatch' : 'Tailoring Orders to Cut',
+      label: specialty === 'jewelry' ? 'Jewelry Orders to Pack' : specialty === 'footwear' ? 'Footwear Orders to Pack' : isBoutique ? 'Orders to Pack & Dispatch' : 'Tailoring Orders to Cut',
       href: '/vendor-portal/orders',
       icon: PackageCheck,
       active: pathname === '/vendor-portal/orders'
@@ -119,7 +121,7 @@ export default function VendorPortalLayout({
       active: pathname === '/vendor-portal/reports'
     },
     {
-      label: isBoutique ? 'Boutique Store Profile' : 'Atelier Store Profile',
+      label: specialty === 'jewelry' ? 'Jewelry Store Profile' : specialty === 'footwear' ? 'Footwear Store Profile' : isBoutique ? 'Boutique Store Profile' : 'Atelier Store Profile',
       href: '/vendor-portal/atelier',
       icon: Building,
       active: pathname === '/vendor-portal/atelier'
@@ -187,7 +189,7 @@ export default function VendorPortalLayout({
               className="hidden sm:block h-8 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105"
             />
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20">
-              {isBoutique ? 'Boutique Merchant' : 'Bespoke Atelier'}
+              {specialty === 'jewelry' ? 'Jewelry & Watches' : specialty === 'footwear' ? 'Footwear & Slides' : specialty === 'apparel' ? 'Apparel Designer' : isBoutique ? 'Boutique Merchant' : 'Bespoke Atelier'}
             </span>
           </Link>
 
@@ -289,7 +291,17 @@ export default function VendorPortalLayout({
             <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-[var(--gold-accent)]/15 text-[var(--gold-accent)] flex items-center justify-center font-editorial font-bold text-lg shrink-0">
-                  {isBoutique ? <ShoppingBag className="h-5 w-5" /> : <Scissors className="h-5 w-5" />}
+                  {specialty === 'jewelry' ? (
+                    <Gem className="h-5 w-5" />
+                  ) : specialty === 'footwear' ? (
+                    <Footprints className="h-5 w-5" />
+                  ) : specialty === 'apparel' ? (
+                    <Shirt className="h-5 w-5" />
+                  ) : isBoutique ? (
+                    <ShoppingBag className="h-5 w-5" />
+                  ) : (
+                    <Scissors className="h-5 w-5" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-xs text-[var(--text-primary)] truncate font-editorial">
@@ -304,7 +316,15 @@ export default function VendorPortalLayout({
               <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-mono-luxury">
                 <span className="text-[var(--text-muted)]">Type:</span>
                 <span className="text-[var(--gold-accent)] font-bold truncate">
-                  {isBoutique ? 'Ready-Made Boutique' : 'Bespoke Atelier'}
+                  {specialty === 'jewelry'
+                    ? 'Fine Jewelry Merchant'
+                    : specialty === 'footwear'
+                    ? 'Footwear & Slides'
+                    : specialty === 'apparel'
+                    ? 'Designer Apparel'
+                    : isBoutique
+                    ? 'Ready-Made Boutique'
+                    : 'Bespoke Atelier'}
                 </span>
               </div>
             </div>

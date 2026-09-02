@@ -21,6 +21,8 @@ export async function POST(request: Request) {
       designerName,
       location,
       vendorType,
+      specialty,
+      vendorSpecialty,
       bankName,
       accountNumber,
       accountName,
@@ -113,8 +115,11 @@ export async function POST(request: Request) {
 
     if (userType === 'vendor') {
       const vendorId = (brandName || 'atelier').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const finalSpecialty = specialty || vendorSpecialty || (vendorType === 'fashion_designer' ? 'apparel' : 'multi_department');
       const initialBioObj = {
         bio: '',
+        specialty: finalSpecialty,
+        vendorSpecialty: finalSpecialty,
         socialLinks: {
           instagram: '',
           tiktok: '',

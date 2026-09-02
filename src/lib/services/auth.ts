@@ -20,6 +20,8 @@ export interface VendorSignUpData {
   phone: string;
   location: string;
   vendorType: 'fashion_designer' | 'boutique_seller';
+  specialty?: 'jewelry' | 'footwear' | 'apparel' | 'multi_department';
+  vendorSpecialty?: string;
   bankName?: string;
   accountNumber?: string;
   accountName?: string;
@@ -100,6 +102,8 @@ export async function signUpVendor(data: VendorSignUpData) {
         phone: data.phone,
         location: data.location,
         vendorType: data.vendorType,
+        specialty: data.specialty || data.vendorSpecialty || 'multi_department',
+        vendorSpecialty: data.specialty || data.vendorSpecialty || 'multi_department',
         bankName: data.bankName,
         accountNumber: data.accountNumber,
         accountName: data.accountName,
