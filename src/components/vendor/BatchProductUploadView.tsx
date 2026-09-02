@@ -21,9 +21,10 @@ interface BatchItem {
   genderTarget: GenderTarget;
   imageFile: File | null;
   imagePreview: string;
-  selectedColor: { name: string; hex: string };
+  selectedColors: { name: string; hex: string }[];
   isCustomColorOpen?: boolean;
   customColorText?: string;
+  customColorHex?: string;
   sizeStock: { [size: string]: number | string }; // Allows empty string while typing
 }
 
@@ -142,9 +143,10 @@ export default function BatchProductUploadView({
             genderTarget: defaultCat.dept,
             imageFile: file,
             imagePreview: previewUrl,
-            selectedColor: POPULAR_SWATCHES[0],
+            selectedColors: [POPULAR_SWATCHES[0]],
             isCustomColorOpen: false,
             customColorText: '',
+            customColorHex: '#2563eb',
             sizeStock: initSizeStock,
           }
         ]);
@@ -165,6 +167,38 @@ export default function BatchProductUploadView({
   // Remove an item from the batch
   const removeItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Multi-Color Toggle for an Item
+  const toggleItemColor = (itemId: string, color: { name: string; hex: string }) => {
+    setItems(prev => prev.map(item => {
+      if (item.id !== itemId) return item;
+      const exists = item.selectedColors.some(sc => sc.name.toLowerCase() === color.name.toLowerCase());
+      let updatedColors: { name: string; hex: string }[] = [];
+      if (exists) {
+        if (item.selectedColors.length > 1) {
+          updatedColors = item.selectedColors.filter(sc => sc.name.toLowerCase() !== color.name.toLowerCase());
+        } else {
+          updatedColors = item.selectedColors; // Keep at least one
+        }
+      } else {
+        updatedColors = [...item.selectedColors, color];
+      }
+      return { ...item, selectedColors: updatedColors };
+    }));
+  };
+
+  // Add Custom Color from Color Wheel / Input
+  const addCustomColorToItem = (itemId: string, colorName: string, hex: string) => {
+    setItems(prev => prev.map(item => {
+      if (item.id !== itemId) return item;
+      const cleanName = colorName.trim() || 'Custom Shade';
+      const exists = item.selectedColors.some(sc => sc.name.toLowerCase() === cleanName.toLowerCase());
+      const updatedColors = exists
+        ? item.selectedColors.map(sc => sc.name.toLowerCase() === cleanName.toLowerCase() ? { name: cleanName, hex } : sc)
+        : [...item.selectedColors, { name: cleanName, hex }];
+      return { ...item, selectedColors: updatedColors, isCustomColorOpen: false, customColorText: '' };
+    }));
   };
 
   // Update size stock for an item (allows empty string while erasing, no stuck 0s!)
@@ -294,7 +328,7 @@ export default function BatchProductUploadView({
           image_url: item.imagePreview,
           description: '',
           tags: ['Ready-to-Wear', 'Collection Drop'],
-          colors: item.category === 'accessories' ? [] : [{ name: item.selectedColor.name.trim() || 'Standard', hex: item.selectedColor.hex || '#111111' }],
+          colors: item.category === 'accessories' ? [] : item.selectedColors.map(c => ({ name: c.name.trim() || 'Standard', hex: c.hex || '#111111' })),
           sizes: item.category === 'accessories' ? ['One Size'] : (activeSizes.length > 0 ? activeSizes : ['M', 'L', 'XL']),
           sizeStock: sizeStockObj,
           stockQuantity: totalItemStock,
@@ -602,7 +636,6 @@ export default function BatchProductUploadView({
               {items.map((item, index) => {
                 const totalItemStock = calculateTotalStock(item);
                 const sizeList = item.category === 'footwear' ? FOOTWEAR_SIZES : APPAREL_SIZES;
-                const isMulti = item.selectedColor?.name?.toLowerCase().includes('multi');
 
                 return (
                   <div
@@ -686,86 +719,101 @@ export default function BatchProductUploadView({
                           </select>
                         </div>
 
-                        {/* Visual Swatch Color Palette + Native Color Wheel Picker */}
+                        {/* Multi-Color Swatch Selector with Tap-to-Toggle and Color Wheel */}
                         {item.category !== 'accessories' && (
                           <div className="space-y-1.5 pt-1">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5 text-xs font-mono-luxury">
-                                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Color:</span>
-                                <span className="font-bold text-[var(--text-primary)] text-xs flex items-center gap-1.5">
-                                  <span
-                                    className="inline-block h-3 w-3 rounded-full border border-white/20 shadow-sm"
-                                    style={{
-                                      background: isMulti
-                                        ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
-                                        : (item.selectedColor?.hex || '#111111')
-                                    }}
-                                  />
-                                  <span>{item.selectedColor?.name || 'Black'}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap text-xs font-mono-luxury">
+                                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
+                                  Colors ({item.selectedColors.length}):
                                 </span>
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {item.selectedColors.map((sc, scIdx) => (
+                                    <span
+                                      key={scIdx}
+                                      className="font-bold text-[var(--text-primary)] text-[11px] inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)]"
+                                    >
+                                      <span
+                                        className="inline-block h-2.5 w-2.5 rounded-full border border-white/20 shadow-sm shrink-0"
+                                        style={{
+                                          background: sc.name.toLowerCase().includes('multi')
+                                            ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                                            : sc.hex
+                                        }}
+                                      />
+                                      <span>{sc.name}</span>
+                                      {item.selectedColors.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleItemColor(item.id, sc)}
+                                          className="text-[var(--text-muted)] hover:text-rose-400 ml-0.5 text-xs font-bold cursor-pointer"
+                                        >
+                                          ×
+                                        </button>
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
 
                               <button
                                 type="button"
                                 onClick={() => updateItem(item.id, {
                                   isCustomColorOpen: !item.isCustomColorOpen,
-                                  customColorText: item.selectedColor?.name || ''
+                                  customColorText: ''
                                 })}
-                                className="text-[10px] text-[var(--gold-accent)] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                className="text-[10px] text-[var(--gold-accent)] hover:underline font-bold flex items-center gap-1 cursor-pointer shrink-0"
                               >
-                                <Edit3 className="h-2.5 w-2.5" />
-                                <span>{item.isCustomColorOpen ? 'Close edit' : 'Edit name'}</span>
+                                <Plus className="h-3 w-3" />
+                                <span>{item.isCustomColorOpen ? 'Close custom' : '+ Custom'}</span>
                               </button>
                             </div>
 
-                            {/* 1-Line Visual Circular Swatches */}
+                            {/* Circular Multi-Select Swatches */}
                             <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
                               {POPULAR_SWATCHES.map(c => {
-                                const isSelected = item.selectedColor?.name === c.name && !item.isCustomColorOpen;
+                                const isSelected = item.selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
                                 const isSwatchMulti = c.name.toLowerCase().includes('multi');
                                 return (
                                   <button
                                     key={c.name}
                                     type="button"
                                     title={c.name}
-                                    onClick={() => updateItem(item.id, {
-                                      selectedColor: c,
-                                      isCustomColorOpen: false
-                                    })}
-                                    className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full shrink-0 transition-all cursor-pointer relative ${
+                                    onClick={() => toggleItemColor(item.id, c)}
+                                    className={`h-6 w-6 rounded-full shrink-0 transition-all cursor-pointer relative flex items-center justify-center ${
                                       isSelected
                                         ? 'ring-2 ring-[var(--gold-accent)] ring-offset-2 ring-offset-black scale-110 shadow-md'
-                                        : 'hover:scale-105 border border-white/20 opacity-80 hover:opacity-100'
+                                        : 'hover:scale-105 border border-white/20 opacity-60 hover:opacity-100'
                                     }`}
                                     style={{
                                       background: isSwatchMulti
                                         ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
                                         : c.hex
                                     }}
-                                  />
+                                  >
+                                    {isSelected && (
+                                      <Check className={`h-3 w-3 drop-shadow stroke-[3] ${c.name === 'White' || c.name === 'Off-White / Cream' ? 'text-black' : 'text-white'}`} />
+                                    )}
+                                  </button>
                                 );
                               })}
 
                               {/* Native Visual Color Wheel Swatch */}
                               <label
-                                title="Custom Visual Color Wheel"
-                                className="relative h-5 w-5 sm:h-6 sm:w-6 rounded-full shrink-0 border border-white/30 cursor-pointer overflow-hidden flex items-center justify-center hover:scale-110 transition-all shadow-sm group"
+                                title="Pick any custom shade wheel"
+                                className="relative h-6 w-6 rounded-full shrink-0 border border-white/30 cursor-pointer overflow-hidden flex items-center justify-center hover:scale-110 transition-all shadow-sm group"
                                 style={{
                                   background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'
                                 }}
                               >
                                 <input
                                   type="color"
-                                  value={item.selectedColor?.hex || '#2563eb'}
+                                  value={item.customColorHex || '#2563eb'}
                                   onChange={(e) => {
                                     const hex = e.target.value;
                                     updateItem(item.id, {
-                                      selectedColor: {
-                                        name: item.customColorText?.trim() || 'Custom Shade',
-                                        hex
-                                      },
-                                      isCustomColorOpen: true,
-                                      customColorText: item.customColorText || 'Custom Shade'
+                                      customColorHex: hex,
+                                      isCustomColorOpen: true
                                     });
                                   }}
                                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
@@ -777,30 +825,26 @@ export default function BatchProductUploadView({
                             {/* Inline Custom Color Name Input */}
                             {item.isCustomColorOpen && (
                               <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/40 animate-fadeIn">
-                                <span
-                                  className="h-4 w-4 rounded-full border border-white/20 shrink-0"
-                                  style={{ backgroundColor: item.selectedColor?.hex || '#111111' }}
+                                <input
+                                  type="color"
+                                  value={item.customColorHex || '#2563eb'}
+                                  onChange={(e) => updateItem(item.id, { customColorHex: e.target.value })}
+                                  className="h-6 w-6 rounded-md border border-white/20 cursor-pointer bg-transparent shrink-0"
                                 />
                                 <input
                                   type="text"
-                                  value={item.customColorText !== undefined ? item.customColorText : item.selectedColor?.name}
-                                  onChange={(e) => {
-                                    const text = e.target.value;
-                                    updateItem(item.id, {
-                                      customColorText: text,
-                                      selectedColor: { name: text.trim() || 'Custom Shade', hex: item.selectedColor?.hex || '#111111' }
-                                    });
-                                  }}
-                                  placeholder="Type color/pattern (e.g. Sage Green, Black & White Fleece, Tie Dye)"
+                                  value={item.customColorText || ''}
+                                  onChange={(e) => updateItem(item.id, { customColorText: e.target.value })}
+                                  placeholder="Color name (e.g. Sage Green, Black & White, Tie Dye)"
                                   className="w-full px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
                                   autoFocus
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => updateItem(item.id, { isCustomColorOpen: false })}
-                                  className="px-2.5 py-1 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer"
+                                  onClick={() => addCustomColorToItem(item.id, item.customColorText || 'Custom Shade', item.customColorHex || '#2563eb')}
+                                  className="px-3 py-1 rounded-lg bg-[var(--gold-accent)] text-black text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer"
                                 >
-                                  Done
+                                  Add Color
                                 </button>
                               </div>
                             )}
