@@ -133,12 +133,23 @@ export default function ProductDetailPage() {
 
   const isSaved = isInVault(product.id);
 
-  // Stock for chosen size
-  const currentSizeStock = product.sizeStock && selectedSize && product.sizeStock[selectedSize] !== undefined
-    ? product.sizeStock[selectedSize]
-    : (product.stockQuantity ?? 15);
+  // Stock for chosen color and size
+  const currentVariantStock = (() => {
+    if (product.sizeStock && typeof product.sizeStock === 'object') {
+      const anyStock: any = product.sizeStock;
+      const variantKey = selectedColor?.name && selectedSize ? `${selectedColor.name.trim()}_${selectedSize.trim()}` : null;
+      if (variantKey && anyStock.variants && anyStock.variants[variantKey] !== undefined) {
+        return anyStock.variants[variantKey];
+      }
+      if (selectedSize && anyStock[selectedSize] !== undefined) {
+        return typeof anyStock[selectedSize] === 'number' ? anyStock[selectedSize] : (anyStock[selectedSize]?.quantity ?? 15);
+      }
+    }
+    return product.stockQuantity ?? 15;
+  })();
 
-  const isOutOfStock = currentSizeStock === 0;
+  const currentSizeStock = currentVariantStock;
+  const isOutOfStock = currentVariantStock === 0;
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -404,8 +415,20 @@ export default function ProductDetailPage() {
               <div className="flex flex-wrap gap-2.5 font-mono-luxury text-xs pt-1">
                 {(Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : (product.sizeStock && Object.keys(product.sizeStock).length > 0 ? Object.keys(product.sizeStock) : ['M', 'L', 'XL'])).map((size: string) => {
                   const isChosen = size === selectedSize;
-                  const szStock = product.sizeStock?.[size];
-                  const szOutOfStock = typeof szStock === 'object' ? szStock?.enabled === false || Number(szStock?.quantity) === 0 : szStock === 0;
+                  const szOutOfStock = (() => {
+                    if (product.sizeStock && typeof product.sizeStock === 'object') {
+                      const anyStock: any = product.sizeStock;
+                      const variantKey = selectedColor?.name ? `${selectedColor.name.trim()}_${size.trim()}` : null;
+                      if (variantKey && anyStock.variants && anyStock.variants[variantKey] !== undefined) {
+                        return anyStock.variants[variantKey] === 0;
+                      }
+                      const szStock = anyStock[size];
+                      if (szStock !== undefined) {
+                        return typeof szStock === 'object' ? szStock?.enabled === false || Number(szStock?.quantity) === 0 : szStock === 0;
+                      }
+                    }
+                    return false;
+                  })();
 
                   return (
                     <button

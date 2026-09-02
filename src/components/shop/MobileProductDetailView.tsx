@@ -57,12 +57,23 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   const [addedToast, setAddedToast] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-  // Stock for chosen size
-  const currentSizeStock = product.sizeStock && selectedSize && product.sizeStock[selectedSize] !== undefined
-    ? product.sizeStock[selectedSize]
-    : (product.stockQuantity ?? 15);
+  // Stock for chosen color and size
+  const currentVariantStock = (() => {
+    if (product.sizeStock && typeof product.sizeStock === 'object') {
+      const anyStock: any = product.sizeStock;
+      const variantKey = selectedColor?.name && selectedSize ? `${selectedColor.name.trim()}_${selectedSize.trim()}` : null;
+      if (variantKey && anyStock.variants && anyStock.variants[variantKey] !== undefined) {
+        return anyStock.variants[variantKey];
+      }
+      if (selectedSize && anyStock[selectedSize] !== undefined) {
+        return typeof anyStock[selectedSize] === 'number' ? anyStock[selectedSize] : (anyStock[selectedSize]?.quantity ?? 15);
+      }
+    }
+    return product.stockQuantity ?? 15;
+  })();
 
-  const isOutOfStock = currentSizeStock === 0;
+  const currentSizeStock = currentVariantStock;
+  const isOutOfStock = currentVariantStock === 0;
 
   const rates = product.shippingRates || {
     sameCity: 1000,
@@ -309,8 +320,20 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
             <div className="flex flex-wrap gap-2 font-mono-luxury text-xs">
               {availableSizes.map((size: string) => {
                 const isChosen = size === selectedSize;
-                const szStock = product.sizeStock?.[size];
-                const szOutOfStock = typeof szStock === 'object' ? szStock?.enabled === false || Number(szStock?.quantity) === 0 : szStock === 0;
+                const szOutOfStock = (() => {
+                  if (product.sizeStock && typeof product.sizeStock === 'object') {
+                    const anyStock: any = product.sizeStock;
+                    const variantKey = selectedColor?.name ? `${selectedColor.name.trim()}_${size.trim()}` : null;
+                    if (variantKey && anyStock.variants && anyStock.variants[variantKey] !== undefined) {
+                      return anyStock.variants[variantKey] === 0;
+                    }
+                    const szStock = anyStock[size];
+                    if (szStock !== undefined) {
+                      return typeof szStock === 'object' ? szStock?.enabled === false || Number(szStock?.quantity) === 0 : szStock === 0;
+                    }
+                  }
+                  return false;
+                })();
 
                 return (
                   <button

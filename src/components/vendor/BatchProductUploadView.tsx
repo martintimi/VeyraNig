@@ -4,13 +4,14 @@ import React, { useState, useRef } from 'react';
 import { GarmentCategory, GenderTarget } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2, Check,
-  Layers, ChevronDown, CheckCircle2, ArrowRight,
-  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck
+  Layers, ChevronDown, ChevronUp, CheckCircle2, ArrowRight,
+  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck, Sliders
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { vendorFetch } from '@/lib/services/apiClient';
+import VariantStockMatrix, { getVariantKey } from '@/components/vendor/VariantStockMatrix';
 
 interface BatchItem {
   id: string;
@@ -24,6 +25,8 @@ interface BatchItem {
   imagePreview: string;
   selectedColors: { name: string; hex: string }[];
   selectedSizes: string[];
+  stockMatrix: { [variantKey: string]: number };
+  showMatrix?: boolean;
 }
 
 interface BatchProductUploadViewProps {
@@ -119,6 +122,15 @@ export default function BatchProductUploadView({
       reader.onloadend = () => {
         const previewUrl = reader.result as string;
         const defaultCat = CATEGORY_OPTIONS[0];
+        const defaultSizes = bulkSizes.length > 0 ? [...bulkSizes] : ['M', 'L', 'XL'];
+        const defaultColors = [{ name: 'Black', hex: '#111111' }];
+        
+        const initMatrix: { [k: string]: number } = {};
+        defaultColors.forEach(c => {
+          defaultSizes.forEach(s => {
+            initMatrix[getVariantKey(c.name, s)] = defaultQty;
+          });
+        });
 
         setItems(prev => [
           ...prev,
@@ -132,8 +144,10 @@ export default function BatchProductUploadView({
             genderTarget: defaultCat.dept,
             imageFile: file,
             imagePreview: previewUrl,
-            selectedColors: [{ name: 'Black', hex: '#111111' }],
-            selectedSizes: bulkSizes.length > 0 ? [...bulkSizes] : ['M', 'L', 'XL'],
+            selectedColors: defaultColors,
+            selectedSizes: defaultSizes,
+            stockMatrix: initMatrix,
+            showMatrix: false,
           }
         ]);
       };
@@ -163,7 +177,18 @@ export default function BatchProductUploadView({
       const newColors = exists
         ? (item.selectedColors.length > 1 ? item.selectedColors.filter(c => c.name !== color.name) : item.selectedColors)
         : [...item.selectedColors, color];
-      return { ...item, selectedColors: newColors };
+      
+      const newMatrix = { ...item.stockMatrix };
+      if (!exists) {
+        item.selectedSizes.forEach(s => {
+          const k = getVariantKey(color.name, s);
+          if (newMatrix[k] === undefined) {
+            newMatrix[k] = item.quantityPerSize || 10;
+          }
+        });
+      }
+
+      return { ...item, selectedColors: newColors, stockMatrix: newMatrix };
     }));
   };
 
@@ -175,7 +200,18 @@ export default function BatchProductUploadView({
       const newSizes = exists
         ? (item.selectedSizes.length > 1 ? item.selectedSizes.filter(s => s !== size) : item.selectedSizes)
         : [...item.selectedSizes, size];
-      return { ...item, selectedSizes: newSizes };
+
+      const newMatrix = { ...item.stockMatrix };
+      if (!exists) {
+        item.selectedColors.forEach(c => {
+          const k = getVariantKey(c.name, size);
+          if (newMatrix[k] === undefined) {
+            newMatrix[k] = item.quantityPerSize || 10;
+          }
+        });
+      }
+
+      return { ...item, selectedSizes: newSizes, stockMatrix: newMatrix };
     }));
   };
 
@@ -187,7 +223,15 @@ export default function BatchProductUploadView({
 
   const applyQuantityToAll = () => {
     const qty = Math.max(1, Number(bulkQuantity) || 1);
-    setItems(prev => prev.map(item => ({ ...item, quantityPerSize: qty })));
+    setItems(prev => prev.map(item => {
+      const newMatrix: { [k: string]: number } = {};
+      item.selectedColors.forEach(c => {
+        item.selectedSizes.forEach(s => {
+          newMatrix[getVariantKey(c.name, s)] = qty;
+        });
+      });
+      return { ...item, quantityPerSize: qty, stockMatrix: newMatrix };
+    }));
   };
 
   const applyCategoryToAll = () => {
@@ -203,11 +247,38 @@ export default function BatchProductUploadView({
 
   const applySizesToAll = () => {
     if (bulkSizes.length === 0) return;
-    setItems(prev => prev.map(item => ({ ...item, selectedSizes: [...bulkSizes] })));
+    setItems(prev => prev.map(item => {
+      const newMatrix = { ...item.stockMatrix };
+      item.selectedColors.forEach(c => {
+        bulkSizes.forEach(s => {
+          const k = getVariantKey(c.name, s);
+          if (newMatrix[k] === undefined) {
+            newMatrix[k] = item.quantityPerSize || 10;
+          }
+        });
+      });
+      return { ...item, selectedSizes: [...bulkSizes], stockMatrix: newMatrix };
+    }));
   };
 
   const toggleBulkSize = (sz: string) => {
     setBulkSizes(prev => prev.includes(sz) ? prev.filter(s => s !== sz) : [...prev, sz]);
+  };
+
+  // Calculate total item stock
+  const calculateItemTotalStock = (item: BatchItem): number => {
+    if (item.category === 'accessories') {
+      const k = getVariantKey('Standard', 'One Size');
+      return item.stockMatrix[k] !== undefined ? item.stockMatrix[k] : item.quantityPerSize;
+    }
+    let total = 0;
+    item.selectedColors.forEach(c => {
+      item.selectedSizes.forEach(s => {
+        const k = getVariantKey(c.name, s);
+        total += item.stockMatrix[k] !== undefined ? item.stockMatrix[k] : (item.quantityPerSize || 10);
+      });
+    });
+    return total;
   };
 
   // PUBLISH ALL ITEMS TO DATABASE
@@ -230,18 +301,33 @@ export default function BatchProductUploadView({
 
       const payloadItems = items.map(item => {
         const cleanPrice = Number(String(item.price).replace(/[^0-9.]/g, '')) || 10000;
-        const qtyPerSize = Math.max(1, item.quantityPerSize || 10);
-        const sizeStockObj: { [k: string]: { enabled: boolean; quantity: number } } = {};
-        
+        const sizeStockObj: { [k: string]: any } = {};
+        const variantsObj: { [k: string]: number } = {};
+        const colorStockObj: { [k: string]: number } = {};
+
         if (item.category === 'accessories') {
-          sizeStockObj['One Size'] = { enabled: true, quantity: qtyPerSize };
+          const accQty = item.quantityPerSize || 20;
+          sizeStockObj['One Size'] = { enabled: true, quantity: accQty };
         } else {
+          // Per-size total sum
           item.selectedSizes.forEach(sz => {
-            sizeStockObj[sz] = { enabled: true, quantity: qtyPerSize };
+            let sizeQty = 0;
+            item.selectedColors.forEach(c => {
+              const k = getVariantKey(c.name, sz);
+              const q = item.stockMatrix[k] !== undefined ? item.stockMatrix[k] : (item.quantityPerSize || 10);
+              sizeQty += q;
+              variantsObj[k] = q;
+              colorStockObj[c.name] = (colorStockObj[c.name] || 0) + q;
+            });
+            sizeStockObj[sz] = { enabled: sizeQty > 0, quantity: sizeQty };
           });
+
+          // Embed full variant matrix
+          sizeStockObj['variants'] = variantsObj;
+          sizeStockObj['colorStock'] = colorStockObj;
         }
 
-        const totalItemStock = Object.values(sizeStockObj).reduce((sum, s) => sum + s.quantity, 0);
+        const totalItemStock = calculateItemTotalStock(item);
 
         return {
           name: item.name.trim(),
@@ -557,9 +643,7 @@ export default function BatchProductUploadView({
 
             <div className="space-y-3">
               {items.map((item, index) => {
-                const totalItemStock = item.category === 'accessories'
-                  ? item.quantityPerSize
-                  : item.selectedSizes.length * (item.quantityPerSize || 1);
+                const totalItemStock = calculateItemTotalStock(item);
 
                 return (
                   <div
@@ -620,14 +704,24 @@ export default function BatchProductUploadView({
                             />
                           </div>
 
-                          {/* Stock Quantity per Size */}
+                          {/* Default Stock Quantity per Size */}
                           <div className="relative flex items-center gap-1.5">
-                            <span className="text-[10px] text-[var(--text-secondary)] font-bold shrink-0">Qty / Size:</span>
+                            <span className="text-[10px] text-[var(--text-secondary)] font-bold shrink-0">Default Qty:</span>
                             <input
                               type="number"
                               min="1"
                               value={item.quantityPerSize}
-                              onChange={(e) => updateItem(item.id, { quantityPerSize: Math.max(1, Number(e.target.value)) })}
+                              onChange={(e) => {
+                                const newQty = Math.max(1, Number(e.target.value));
+                                const updatedMatrix = { ...item.stockMatrix };
+                                item.selectedColors.forEach(c => {
+                                  item.selectedSizes.forEach(s => {
+                                    const k = getVariantKey(c.name, s);
+                                    updatedMatrix[k] = newQty;
+                                  });
+                                });
+                                updateItem(item.id, { quantityPerSize: newQty, stockMatrix: updatedMatrix });
+                              }}
                               className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
                             />
                           </div>
@@ -705,12 +799,31 @@ export default function BatchProductUploadView({
                               </div>
                             )}
 
-                            <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                              {totalItemStock} in Stock
-                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateItem(item.id, { showMatrix: !item.showMatrix })}
+                              className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/50 transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>{totalItemStock} in Stock</span>
+                              {item.showMatrix ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </button>
                           </div>
 
                         </div>
+
+                        {/* Expandable Variant Stock Matrix for this Item */}
+                        {item.showMatrix && (
+                          <div className="pt-2">
+                            <VariantStockMatrix
+                              colors={item.selectedColors}
+                              sizes={item.selectedSizes}
+                              stockMatrix={item.stockMatrix}
+                              defaultQty={item.quantityPerSize}
+                              isAccessory={item.category === 'accessories'}
+                              onChange={(newMatrix) => updateItem(item.id, { stockMatrix: newMatrix })}
+                            />
+                          </div>
+                        )}
 
                       </div>
                     </div>
