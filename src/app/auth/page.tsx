@@ -14,21 +14,27 @@ import { signUpCustomer, signInCustomer, verifyOtpCode, resendOtpCode } from '@/
 
 const editorialSlides = [
   {
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1200&auto=format&fit=crop',
-    title: 'Bespoke Nigerian Tailoring',
-    subtitle: 'Custom-fitted Senator Kaftans & Ceremonial Native Wear crafted in Victoria Island ateliers.',
-    tag: 'Handmade Tailoring'
+    image: '/images/products/BlackAgbada.jpg',
+    title: 'Bespoke Nigerian Couture',
+    subtitle: 'Hand-tailored Senator Kaftans, Royal Agbada robes, and silk Boubous from top verified Lagos ateliers.',
+    tag: 'Luxury Native Wear'
   },
   {
-    image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1200&auto=format&fit=crop',
-    title: 'Artisanal Silk & Adire Heritage',
-    subtitle: 'Flowing hand-dyed silk Bubu and Boubou gowns tailored to your silhouette.',
-    tag: 'Contemporary Luxury'
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop',
+    title: 'Fine Jewelry & Luxury Timepieces',
+    subtitle: 'Solid gold Cuban chains, iced pendants, custom signet rings, and luxury watches.',
+    tag: 'Jewelry & Accessories'
   },
   {
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop',
-    title: 'Urban Streetwear & Baggy Denim',
-    subtitle: 'Heavyweight oversized fleece hoodies and raw selvedge denim from top Lagos boutique creators.',
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=1200&auto=format&fit=crop',
+    title: 'Artisanal Leather Bags & Footwear',
+    subtitle: 'Full-grain leather crossbodies, luxury tote bags, handcrafted slides, and statement footwear.',
+    tag: 'Footwear & Bags'
+  },
+  {
+    image: '/images/products/BlackTrapStarHoodie.jpg',
+    title: 'Urban Streetwear & Heavyweight Drops',
+    subtitle: 'Heavyweight 480GSM fleece hoodies, raw selvedge denim, cargo utility sets, and designer headwear.',
     tag: 'Ready-to-Wear Street'
   }
 ];
