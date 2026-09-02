@@ -169,12 +169,22 @@ export default function VendorPortalLayout({
           </button>
           
           <Link href="/vendor-portal" className="flex items-center gap-2 sm:gap-3 group shrink-0">
+            {/* Mobile App Icon (Customer-matched emblem) */}
+            <Image
+              src="/images/logo/veyra-emblem.png"
+              alt="Veyra"
+              width={34}
+              height={34}
+              priority
+              className="h-8 w-8 object-contain transition-transform group-hover:scale-105 sm:hidden drop-shadow-sm"
+            />
+            {/* Desktop Brand Logo */}
             <Image
               src="/images/logo/veyra-logo-horizontal.png"
               alt="Veyra"
               width={140}
               height={38}
-              className="h-8 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105"
+              className="hidden sm:block h-8 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105"
             />
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20">
               {isBoutique ? 'Boutique Merchant' : 'Bespoke Atelier'}
@@ -255,12 +265,15 @@ export default function VendorPortalLayout({
             <div className="flex items-center justify-between md:hidden pb-3 border-b border-[var(--border-subtle)]">
               <div className="flex items-center gap-2">
                 <Image
-                  src="/images/logo/veyra-logo-horizontal.png"
+                  src="/images/logo/veyra-emblem.png"
                   alt="Veyra"
-                  width={110}
-                  height={30}
-                  className="h-7 w-auto object-contain"
+                  width={34}
+                  height={34}
+                  className="h-8 w-8 object-contain"
                 />
+                <span className="font-editorial text-sm font-bold text-[var(--text-primary)] tracking-widest uppercase">
+                  Veyra Atelier
+                </span>
               </div>
               <button
                 type="button"
