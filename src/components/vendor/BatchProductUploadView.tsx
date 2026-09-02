@@ -573,26 +573,17 @@ export default function BatchProductUploadView({
 
           {/* STREAMLINED QUICK BULK TOOLBAR (Clean, Compact & Effortless on Mobile) */}
           <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setIsPresetsExpanded(!isPresetsExpanded)}
-                className="flex items-center gap-2 font-mono-luxury font-bold text-xs uppercase tracking-wider text-[var(--gold-accent)] cursor-pointer"
-              >
+            <button
+              type="button"
+              onClick={() => setIsPresetsExpanded(!isPresetsExpanded)}
+              className="w-full flex items-center justify-between font-mono-luxury font-bold text-xs uppercase tracking-wider text-[var(--gold-accent)] cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>Bulk Presets ({items.length} Pieces)</span>
-                {isPresetsExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] cursor-pointer"
-              >
-                <Plus className="h-3 w-3 text-[var(--gold-accent)]" />
-                <span>Add Photos</span>
-              </button>
-            </div>
+              </div>
+              {isPresetsExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
 
             {isPresetsExpanded && (
               <div className="space-y-3 pt-1 animate-fadeIn text-xs font-mono-luxury">
@@ -691,8 +682,8 @@ export default function BatchProductUploadView({
                             onClick={() => toggleBulkSize(sz)}
                             className={`h-7 px-2.5 rounded-lg border text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                               isSelected
-                                ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-sm'
-                                : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                                ? 'bg-transparent border-[var(--gold-accent)] text-[var(--gold-accent)] font-extrabold shadow-sm ring-1 ring-[var(--gold-accent)]'
+                                : 'bg-transparent border-[var(--border-subtle)] text-[var(--text-muted)]'
                             }`}
                           >
                             <span>{sz}</span>
@@ -1012,15 +1003,15 @@ export default function BatchProductUploadView({
                                 key={sz}
                                 className={`flex items-center rounded-lg border transition-all ${
                                   isEnabled
-                                    ? 'bg-[var(--bg-primary)] border-[var(--gold-accent)] shadow-sm'
-                                    : 'bg-[var(--bg-primary)]/40 border-[var(--border-subtle)] opacity-50'
+                                    ? 'bg-transparent border-[var(--gold-accent)] shadow-sm ring-1 ring-[var(--gold-accent)]'
+                                    : 'bg-transparent border-[var(--border-subtle)] opacity-40'
                                 }`}
                               >
                                 <button
                                   type="button"
                                   onClick={() => toggleItemSize(item.id, sz)}
                                   className={`px-2 py-1 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                                    isEnabled ? 'text-[var(--gold-accent)]' : 'text-[var(--text-muted)]'
+                                    isEnabled ? 'text-[var(--gold-accent)] font-extrabold' : 'text-[var(--text-muted)]'
                                   }`}
                                 >
                                   <span>{sz}</span>
@@ -1050,46 +1041,34 @@ export default function BatchProductUploadView({
               })}
             </div>
 
-            {/* STICKY BOTTOM ACTION BAR */}
-            <div className="sticky bottom-4 z-20 p-3.5 sm:p-4 rounded-2xl surface-card border border-[var(--border-subtle)] shadow-2xl flex items-center justify-between gap-3 backdrop-blur-xl bg-[var(--bg-primary)]/90">
-              <div className="min-w-0">
-                <span className="font-editorial text-sm sm:text-base font-bold text-[var(--text-primary)] truncate block">
-                  {items.length} {items.length === 1 ? 'Piece' : 'Pieces'} in Drop
-                </span>
-                <span className="text-[10px] font-mono-luxury text-emerald-400 font-bold flex items-center gap-1 truncate">
-                  <ShieldCheck className="h-3 w-3 shrink-0" />
-                  <span>Instant live publish</span>
-                </span>
-              </div>
+            {/* STICKY BOTTOM ACTION BAR (Clean 2 Buttons, No Cluttered Truncated Text) */}
+            <div className="sticky bottom-4 z-20 p-2.5 sm:p-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] shadow-2xl flex items-center justify-between gap-2.5 backdrop-blur-xl bg-[var(--bg-primary)]/95">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 sm:flex-initial px-4 py-3 rounded-xl surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] font-bold hover:border-[var(--gold-accent)] cursor-pointer text-center"
+              >
+                + Add Photos
+              </button>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-2 rounded-xl surface-card border border-[var(--border-subtle)] text-[11px] font-mono-luxury text-[var(--text-primary)] font-bold hover:border-[var(--gold-accent)] cursor-pointer"
-                >
-                  + Photos
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handlePublishAll}
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-[var(--gold-accent)] text-black font-mono-luxury font-bold text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>({publishProgress?.current || 1}/{publishProgress?.total || items.length})...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-3.5 w-3.5 fill-black" />
-                      <span>Publish All</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handlePublishAll}
+                disabled={isSubmitting}
+                className="flex-[2] sm:flex-initial px-6 py-3 rounded-xl bg-[var(--gold-accent)] text-black font-mono-luxury font-bold text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Publishing ({publishProgress?.current || 1}/{publishProgress?.total || items.length})...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 fill-black" />
+                    <span>Publish All ({items.length} {items.length === 1 ? 'Piece' : 'Pieces'})</span>
+                  </>
+                )}
+              </button>
             </div>
 
           </div>
