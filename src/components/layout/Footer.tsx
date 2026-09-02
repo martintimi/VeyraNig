@@ -34,7 +34,7 @@ export default function Footer() {
             </div>
             <div>
               <h4 className="text-xs font-mono-luxury uppercase tracking-wider font-bold text-[var(--text-primary)]">
-                24-48hr Lagos Delivery
+                Doorstep Nationwide Delivery
               </h4>
               <p className="text-xs text-[var(--text-secondary)] mt-1 font-light leading-relaxed">
                 Combined express delivery from all Nigerian brands in one single package.
@@ -51,7 +51,7 @@ export default function Footer() {
                 Authentic Nigerian Craft
               </h4>
               <p className="text-xs text-[var(--text-secondary)] mt-1 font-light leading-relaxed">
-                Direct partnerships with verified tailoring houses across Lagos, Abeokuta, and Kano.
+                Direct partnerships with verified tailoring houses, footwear artisans, and jewelry ateliers.
               </p>
             </div>
           </div>

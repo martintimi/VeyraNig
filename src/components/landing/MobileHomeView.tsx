@@ -146,12 +146,12 @@ export default function MobileHomeView() {
   const editorsPicks = (allProducts || []).slice(0, 3);
 
   const featuredAteliers = [
-    { id: 'moji-wears', name: 'Moji Wears', origin: 'Lagos', tagline: 'Heavyweight Urban Streetwear & Sets', image: '/images/products/BlackTrapStarHoodie.jpg', dispatch: '24–48h' },
-    { id: 'arike-brand', name: 'Arike Brand', origin: 'Kano & Lagos', tagline: 'Hand-Embroidered Royal Senator & Agbada', image: '/images/products/BlackAgbada.jpg', dispatch: 'Express' },
-    { id: 'sartorial-lagos', name: 'Sartorial Lagos', origin: 'Victoria Island', tagline: 'Bespoke Contemporary Tailoring', image: '/images/products/BlackSmartShoes.jpg', dispatch: 'Same-day' },
-    { id: 'lagos-streetwear', name: 'Street Souk Co.', origin: 'Lekki Phase 1', tagline: 'Afro-Streetwear & Heavyweight Drops', image: '/images/products/BlueAndWhiteLosAngelisHoddie.jpg', dispatch: '24–48h' },
-    { id: 'adire-heritage', name: 'Adire Silk Atelier', origin: 'Abeokuta & Ikoyi', tagline: 'Hand-Dyed Artisanal Silks & Boubous', image: '/images/products/PurpleAgbada.jpg', dispatch: 'Express' },
-    { id: 'yaba-denim', name: 'Yaba Denim Works', origin: 'Yaba, Lagos', tagline: 'Street Denim & Tailored Cargo Fits', image: '/images/products/BaggyJean.jpg', dispatch: 'Same-day' },
+    { id: 'moji-wears', name: 'Moji Wears', origin: 'Streetwear & Drops', tagline: 'Heavyweight Urban Streetwear & Sets', image: '/images/products/BlackTrapStarHoodie.jpg', dispatch: '24–48h' },
+    { id: 'arike-brand', name: 'Arike Brand', origin: 'Native & Couture', tagline: 'Hand-Embroidered Royal Senator & Agbada', image: '/images/products/BlackAgbada.jpg', dispatch: 'Express' },
+    { id: 'sartorial-lagos', name: 'Sartorial Lagos', origin: 'Bespoke Tailoring', tagline: 'Bespoke Contemporary Tailoring', image: '/images/products/BlackSmartShoes.jpg', dispatch: 'Fast' },
+    { id: 'vee-collection', name: 'Vee Collection', origin: 'Jewelry & Watches', tagline: 'Fine Jewelry, Chains & Luxury Timepieces', image: '/images/products/GucciCap.jpg', dispatch: 'Express' },
+    { id: 'kano-footwear', name: 'Kano Artisan Footwear', origin: 'Handcrafted Footwear', tagline: 'Cowhide Leather Slides & Palms', image: '/images/products/UnisexSlides.jpg', dispatch: 'Fast' },
+    { id: 'yaba-denim', name: 'Yaba Denim Works', origin: 'Streetwear Denim', tagline: 'Street Denim & Tailored Cargo Fits', image: '/images/products/BaggyJean.jpg', dispatch: '24–48h' },
   ];
 
   const departments = [
@@ -226,10 +226,10 @@ export default function MobileHomeView() {
 
   const marqueeItems = [
     '100% Escrow via Paystack',
-    '24–48h Interstate Dispatch',
+    'Doorstep Nationwide Delivery',
     'Verified Nigerian Designers',
     '3D Body Twin Sizing',
-    'Same-day Lagos Delivery',
+    'Fast Dispatch Logistics',
     'Bespoke Handmade Pieces',
   ];
 

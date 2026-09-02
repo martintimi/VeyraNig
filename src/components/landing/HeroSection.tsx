@@ -27,18 +27,18 @@ const flipGalleryItems: GalleryItem[] = [
     id: 'senator',
     name: 'Onyx Wool Senator Kaftan',
     category: 'Handmade Native Top',
-    designer: 'Sartorial Lagos (Victoria Island)',
+    designer: 'Sartorial Lagos',
     price: 65000,
     image: '/images/products/BlackSenator.jpg',
     fitScore: 99.4,
-    specs: 'Italian Merino Wool · 48cm Broad Shoulder Drape',
+    specs: 'Italian Merino Wool · Broad Shoulder Drape',
     badge: 'Bespoke Handmade'
   },
   {
     id: 'agbada',
     name: 'Midnight Black Embroidered Agbada',
     category: 'Occasion Ceremonial Robe',
-    designer: 'Sartorial Lagos (Victoria Island)',
+    designer: 'Sartorial Lagos',
     price: 98000,
     image: '/images/products/BlackAgbada.jpg',
     fitScore: 99.8,
@@ -49,7 +49,7 @@ const flipGalleryItems: GalleryItem[] = [
     id: 'hoodie',
     name: 'Trapstar Cyber Heavyweight Hoodie',
     category: 'Ready-to-Wear Streetwear',
-    designer: 'Street Souk Co. (Lekki Phase 1)',
+    designer: 'Moji Wears',
     price: 48000,
     image: '/images/products/BlackTrapStarHoodie.jpg',
     fitScore: 97.8,
@@ -58,9 +58,9 @@ const flipGalleryItems: GalleryItem[] = [
   },
   {
     id: 'denim',
-    name: 'Lagos Wide-Leg Baggy Denim Jeans',
+    name: 'Wide-Leg Baggy Denim Jeans',
     category: 'Streetwear Denim',
-    designer: 'Yaba Denim Works (Yaba)',
+    designer: 'Moji Wears',
     price: 38000,
     image: '/images/products/BaggyJean.jpg',
     fitScore: 98.2,
@@ -69,25 +69,25 @@ const flipGalleryItems: GalleryItem[] = [
   },
   {
     id: 'slides',
-    name: 'Kano Full-Grain Leather Slides',
+    name: 'Handcrafted Cowhide Leather Slides',
     category: 'Handcrafted Footwear',
-    designer: 'Kano Artisan Footwear (Kano & Lagos)',
+    designer: 'Kano Artisan Footwear',
     price: 35000,
     image: '/images/products/UnisexSlides.jpg',
     fitScore: 99.1,
-    specs: '100% Full-Grain Calf Leather · Anatomical Footbed',
+    specs: '100% Full-Grain Hide · Anatomical Footbed',
     badge: 'Handmade Leather'
   },
   {
-    id: 'fila',
-    name: 'Royal Velvet Embroidered Fila Cap',
-    category: 'Native Headwear',
-    designer: 'Sartorial Lagos (Victoria Island)',
-    price: 18000,
-    image: '/images/products/Cap1.png',
+    id: 'jewelry',
+    name: '18K Cuban Chain & Luxury Watch',
+    category: 'Fine Jewelry & Luxury Accessories',
+    designer: 'Vee Collection Luxury',
+    price: 85000,
+    image: '/images/products/GucciCap.jpg',
     fitScore: 100,
-    specs: 'Royal Cotton Velvet · Traditional Pleats',
-    badge: 'Handmade Accessory'
+    specs: 'Double-Micro Gold Plated · Pave Accents',
+    badge: 'Luxury Jewelry'
   }
 ];
 
@@ -114,22 +114,22 @@ export default function HeroSection() {
           {/* Left Column: Value proposition & CTAs */}
           <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
             
-            {/* Location Pill */}
+            {/* Pill Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs font-mono-luxury tracking-wider uppercase">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Lagos & Nationwide Delivery · Top Nigerian Designers</span>
+              <span>Doorstep Nationwide Delivery · Top Independent Ateliers</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-[var(--text-primary)] leading-[1.1]">
-              Mix Nigerian Brands.<br />
+              Mix Independent Ateliers.<br />
               <span className="italic font-normal shimmer-gold">See It On Your Body.</span><br />
               Order in 1 Single Delivery.
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
-              Experience Nigeria&apos;s first cross-brand virtual fitting room. Mix handmade Senator kaftans from Victoria Island, Adire silks from Abeokuta, and streetwear hoodies—tested on your digital body model before buying.
+              Experience Nigeria&apos;s first cross-brand virtual fitting room. Mix bespoke native wear, streetwear drops, handcrafted footwear, and fine jewelry—tested on your digital body model before buying.
             </p>
 
             {/* Action Buttons */}
@@ -148,7 +148,7 @@ export default function HeroSection() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-medium text-xs tracking-widest uppercase hover:border-[var(--border-hover)] transition-all"
               >
                 <ShoppingBag className="h-4 w-4 text-[var(--gold-accent)]" />
-                <span>Shop All Clothes</span>
+                <span>Shop All Drops</span>
               </Link>
             </div>
 
@@ -159,8 +159,8 @@ export default function HeroSection() {
                 <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Sized to Your Body</div>
               </div>
               <div>
-                <div className="text-xl sm:text-2xl font-editorial font-medium text-emerald-500">24 - 48 Hrs</div>
-                <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Lagos Delivery</div>
+                <div className="text-xl sm:text-2xl font-editorial font-medium text-emerald-500">Fast Dispatch</div>
+                <div className="text-[11px] text-[var(--text-muted)] font-mono-luxury uppercase mt-0.5">Doorstep Delivery</div>
               </div>
               <div>
                 <div className="text-xl sm:text-2xl font-editorial font-medium text-[var(--text-primary)]">1 Checkout</div>

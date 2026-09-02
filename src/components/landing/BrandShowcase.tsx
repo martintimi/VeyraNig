@@ -21,7 +21,7 @@ export default function BrandShowcase() {
               Partner Designers & Houses
             </h2>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light max-w-xl">
-              From Victoria Island bespoke tailors to Kano artisan leather workshops.
+              Verified independent fashion ateliers, artisanal footwear houses, and fine jewelry brands.
             </p>
           </div>
 

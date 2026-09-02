@@ -14,14 +14,14 @@ export default function ProblemSolution() {
     {
       icon: Layers,
       title: 'Cross-Brand Wardrobe Styling',
-      desc: 'Assemble complete luxury looks combining Victoria Island Senator kaftans, Abeokuta silk Adire, and Kano handcrafted leather slides.',
+      desc: 'Assemble complete luxury looks combining tailored Senator kaftans, urban streetwear drops, handcrafted leather slides, and fine jewelry.',
       tag: 'Unified Try-On'
     },
     {
       icon: Truck,
       title: 'Consolidated White-Glove Logistics',
-      desc: 'All garments from distinct designers are inspected for quality at our central Lagos hub and delivered together in a single Veyra luxury box.',
-      tag: '24-48hr Lagos Delivery'
+      desc: 'All pieces from distinct designers are quality-checked and dispatched directly to your doorstep in a single luxury box.',
+      tag: 'Doorstep Delivery'
     },
     {
       icon: ShieldCheck,
