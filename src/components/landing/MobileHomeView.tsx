@@ -243,10 +243,16 @@ export default function MobileHomeView() {
         transition={{ duration: 0.4 }}
         className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-xl sticky top-0 z-30"
       >
-        <div className="flex items-center gap-2.5">
-          <span className="font-editorial text-xl font-bold tracking-[0.25em] text-[var(--text-primary)]">VEYRA</span>
-          <span className="text-[8px] font-mono-luxury uppercase tracking-[0.2em] text-[var(--gold-accent)] font-bold">Atelier</span>
-        </div>
+        <Link href="/" className="flex items-center group">
+          <Image
+            src="/images/logo/veyra-emblem.png"
+            alt="Veyra"
+            width={34}
+            height={34}
+            priority
+            className="h-8 w-8 object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
+          />
+        </Link>
         <div className="flex items-center gap-2">
           <Link href="/shop" className="p-2 rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer">
             <Search className="h-4 w-4" />

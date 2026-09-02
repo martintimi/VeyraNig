@@ -36,12 +36,12 @@ export default function MobileHeader() {
         {/* Left: Official Brand Logo */}
         <Link href="/" className="flex items-center group">
           <Image
-            src="/images/logo/veyra-logo-horizontal.png"
+            src="/images/logo/veyra-emblem.png"
             alt="Veyra Nigeria"
-            width={180}
-            height={48}
+            width={34}
+            height={34}
             priority
-            className="h-10 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-sm"
+            className="h-8 w-8 object-contain transition-transform group-hover:scale-105 drop-shadow-sm"
           />
         </Link>
 
