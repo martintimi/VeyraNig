@@ -21,21 +21,45 @@ const editorialSlides = [
   },
   {
     image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop',
-    title: 'Fine Jewelry & Luxury Timepieces',
-    subtitle: 'Solid gold Cuban chains, iced pendants, custom signet rings, and luxury watches.',
-    tag: 'Jewelry & Accessories'
+    title: 'Fine Jewelry & Luxury Watches',
+    subtitle: 'Solid gold Cuban links, iced pendants, custom signet rings, and luxury chronographs.',
+    tag: 'Jewelry & Timepieces'
   },
   {
     image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=1200&auto=format&fit=crop',
-    title: 'Artisanal Leather Bags & Footwear',
-    subtitle: 'Full-grain leather crossbodies, luxury tote bags, handcrafted slides, and statement footwear.',
-    tag: 'Footwear & Bags'
+    title: 'Designer Backpacks & Leather Totes',
+    subtitle: 'Full-grain structured leather backpacks, crossbodies, travel duffels, and everyday luxury totes.',
+    tag: 'Backpacks & Bags'
+  },
+  {
+    image: '/images/products/UnisexSlides.jpg',
+    title: 'Handcrafted Leather Slides & Palms',
+    subtitle: 'Authentic cowhide Kano leather slides, ergonomic palms, and cushioned slip-ons made in Nigeria.',
+    tag: 'Artisanal Slides'
+  },
+  {
+    image: '/images/products/BlackSmartShoes.jpg',
+    title: 'Smart Shoes & Luxury Footwear',
+    subtitle: 'Hand-burnished leather loafers, Italian-cut dress shoes, and contemporary streetwear sneakers.',
+    tag: 'Shoes & Footwear'
+  },
+  {
+    image: '/images/products/BaggyJean.jpg',
+    title: 'Raw Selvedge Denim & Cargo Pants',
+    subtitle: 'Heavyweight 14oz wide-leg baggy denim, tailored multi-pocket cargo pants, and relaxed trousers.',
+    tag: 'Pants & Denim'
   },
   {
     image: '/images/products/BlackTrapStarHoodie.jpg',
     title: 'Urban Streetwear & Heavyweight Drops',
-    subtitle: 'Heavyweight 480GSM fleece hoodies, raw selvedge denim, cargo utility sets, and designer headwear.',
-    tag: 'Ready-to-Wear Street'
+    subtitle: 'Heavyweight 480GSM fleece hoodies, graphic co-ord sets, and statement streetwear drops.',
+    tag: 'Streetwear & Hoodies'
+  },
+  {
+    image: '/images/products/PoloCap.jpg',
+    title: 'Designer Caps, Fila & Headwear',
+    subtitle: 'Handwoven Aso-Oke Fila caps, structured luxury dad hats, and designer embroidered headwear.',
+    tag: 'Caps & Headwear'
   }
 ];
 
