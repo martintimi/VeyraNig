@@ -74,6 +74,7 @@ export default function VendorAuthPage() {
     confirmPassword: '',
     location: 'Victoria Island, Lagos',
     vendorType: 'boutique_seller' as 'fashion_designer' | 'boutique_seller',
+    specialty: 'jewelry' as 'jewelry' | 'footwear' | 'apparel' | 'multi_department',
     bankName: 'Guaranty Trust Bank (GTBank)',
     accountNumber: '',
     accountName: '',
@@ -680,15 +681,24 @@ export default function VendorAuthPage() {
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1 font-bold">
-                  Business Category
+                  Store Specialty &amp; Department
                 </label>
                 <select
-                  value={regForm.vendorType}
-                  onChange={(e) => setRegForm({ ...regForm, vendorType: e.target.value as any })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
+                  value={regForm.specialty || 'multi_department'}
+                  onChange={(e) => {
+                    const spec = e.target.value;
+                    setRegForm({
+                      ...regForm,
+                      specialty: spec as any,
+                      vendorType: spec === 'apparel' ? 'fashion_designer' : 'boutique_seller'
+                    });
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer font-bold"
                 >
-                  <option value="boutique_seller">🛍️ Boutique Seller (Ready-to-Wear / Streetwear / Footwear)</option>
-                  <option value="fashion_designer">🧵 Fashion Designer (Ready-to-Wear / Kaftans / Native Wear)</option>
+                  <option value="jewelry">Jewelry, Watches &amp; Luxury Accessories (Chains, Bracelets, Rings, Watches, Caps, Bags)</option>
+                  <option value="footwear">Footwear &amp; Slides Atelier (Slides, Palms, Loafers, Sneakers, Heels)</option>
+                  <option value="apparel">Clothing &amp; Streetwear Boutique (Kaftans, Hoodies, Two-Piece Sets, Native, Dresses)</option>
+                  <option value="multi_department">Multi-Department Boutique (All Fashion &amp; Accessories)</option>
                 </select>
               </div>
 

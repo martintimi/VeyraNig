@@ -57,6 +57,7 @@ export async function GET(request: Request) {
       whatsapp: vendor?.phone || ''
     };
 
+    let vendorSpecialty = 'multi_department';
     if (bioText.startsWith('{') && bioText.endsWith('}')) {
       try {
         const parsed = JSON.parse(bioText);
@@ -68,6 +69,7 @@ export async function GET(request: Request) {
         city = parsed.city || '';
         state = parsed.state || '';
         dispatchDays = parsed.dispatchDays || '1-2 business days';
+        vendorSpecialty = parsed.specialty || parsed.vendorSpecialty || (vendor?.vendor_type === 'fashion_designer' ? 'apparel' : 'multi_department');
         if (parsed.shippingRates) {
           shippingRates = { ...shippingRates, ...parsed.shippingRates };
         }
@@ -86,6 +88,8 @@ export async function GET(request: Request) {
         is_verified: verified,
         isVerified: verified,
         bio: bioText,
+        specialty: vendorSpecialty,
+        vendorSpecialty,
         socialLinks,
         city,
         state,
@@ -123,8 +127,12 @@ export async function POST(request: Request) {
       whatsapp: body.whatsapp || body.socialLinks?.whatsapp || body.phone || ''
     };
 
+    const specialty = body.specialty || body.vendorSpecialty || 'multi_department';
+
     const bioPayload = JSON.stringify({
       bio: body.bio || '',
+      specialty,
+      vendorSpecialty: specialty,
       socialLinks,
       city: body.city || '',
       state: body.state || '',

@@ -73,7 +73,8 @@ export default function VendorAtelierProfilePage() {
     snapchat: '',
     whatsapp: '',
     bio: '',
-    vendorType: vendorProfile.vendorType || 'fashion_designer'
+    vendorType: vendorProfile.vendorType || 'fashion_designer',
+    specialty: 'multi_department' as 'jewelry' | 'footwear' | 'apparel' | 'multi_department'
   });
 
   // Auto-dismiss alert messages after 10 seconds
@@ -99,6 +100,7 @@ export default function VendorAtelierProfilePage() {
       if (res.ok && data.success && data.vendor) {
         const v = data.vendor;
         const rates = v.shippingRates || {};
+        const spec = v.specialty || v.vendorSpecialty || (v.vendor_type === 'fashion_designer' ? 'apparel' : 'multi_department');
         setForm({
           brandName: v.brandName || v.brand_name || '',
           designerName: v.designerName || v.designer_name || v.contact_person || '',
@@ -118,7 +120,8 @@ export default function VendorAtelierProfilePage() {
           snapchat: v.snapchat || v.socialLinks?.snapchat || '',
           whatsapp: v.whatsapp || v.socialLinks?.whatsapp || v.phone || '',
           bio: v.bio || '',
-          vendorType: isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer'
+          vendorType: isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer',
+          specialty: spec
         });
 
         setIsProfileSaved(!!v.isProfileSaved);
@@ -135,6 +138,7 @@ export default function VendorAtelierProfilePage() {
           phone: v.phone || '',
           location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : '') || 'Lagos, Nigeria',
           vendorType: normalizedType,
+          specialty: spec,
           bankName: v.bankName || v.bank_name || 'Guaranty Trust Bank (GTBank)',
           accountNumber: v.accountNumber || v.account_number || '',
           accountName: v.accountName || v.account_name || '',
@@ -346,8 +350,25 @@ export default function VendorAtelierProfilePage() {
           {/* 1. Basic Identity */}
           <div className="space-y-4">
             <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold block">
-              1. Store Identity & Contacts
+              1. Store Identity &amp; Specialty
             </span>
+
+            <div>
+              <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+                Store Department &amp; Specialty
+              </label>
+              <select
+                disabled={isFieldsDisabled}
+                value={form.specialty || 'multi_department'}
+                onChange={(e) => setForm({ ...form, specialty: e.target.value as any })}
+                className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <option value="jewelry">Jewelry, Watches &amp; Luxury Accessories (Chains, Bracelets, Rings, Watches, Caps, Bags)</option>
+                <option value="footwear">Footwear &amp; Slides Atelier (Slides, Palms, Loafers, Sneakers, Heels)</option>
+                <option value="apparel">Clothing &amp; Streetwear Boutique (Kaftans, Hoodies, Two-Piece Sets, Native, Dresses)</option>
+                <option value="multi_department">Multi-Department Boutique (All Fashion &amp; Accessories)</option>
+              </select>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
@@ -513,13 +534,13 @@ export default function VendorAtelierProfilePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div className="p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
-                  <span className="text-xs font-bold text-[var(--text-primary)] block">🚚 Doorstep Courier Delivery</span>
+                  <span className="text-xs font-bold text-[var(--text-primary)] block">Doorstep Courier Delivery</span>
                   <p className="text-[11px] text-[var(--text-secondary)]">
                     Calculated automatically and prepaid by the customer at online checkout.
                   </p>
                 </div>
                 <div className="p-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
-                  <span className="text-xs font-bold text-[var(--text-primary)] block">🚌 Motor Park Bus Waybill</span>
+                  <span className="text-xs font-bold text-[var(--text-primary)] block">Motor Park Bus Waybill</span>
                   <p className="text-[11px] text-[var(--text-secondary)]">
                     Customer pays the bus driver directly upon collection at their city motor park.
                   </p>

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { GarmentCategory, GenderTarget } from '@/types';
+import React, { useState, useRef, useEffect } from 'react';
+import { GarmentCategory, GenderTarget, getVendorSpecialty, VendorSpecialty } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2, Check,
   Layers, ChevronDown, CheckCircle2, ArrowRight,
-  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette
+  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette,
+  Shirt, Footprints, Gem
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -34,26 +35,29 @@ interface BatchProductUploadViewProps {
   onSwitchToSingle?: () => void;
 }
 
-const CATEGORY_OPTIONS = [
+type DropMode = 'apparel' | 'footwear' | 'jewelry';
+
+const ALL_CATEGORY_OPTIONS = [
   // Tops / Streetwear
-  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory, dept: 'unisex' as GenderTarget },
-  { id: 'unisex_tees', label: 'Graphic Tees & Shirts', generalCat: 'tops' as GarmentCategory, dept: 'unisex' as GenderTarget },
-  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory, dept: 'male' as GenderTarget },
-  { id: 'boubou_kaftans', label: 'Silk Boubou & Kaftans', generalCat: 'outerwear' as GarmentCategory, dept: 'female' as GenderTarget },
-  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory, dept: 'female' as GenderTarget },
-  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory, dept: 'female' as GenderTarget },
-  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory, dept: 'male' as GenderTarget },
+  { id: 'streetwear_hoodie', label: 'Streetwear Hoodies & Sweaters', generalCat: 'outerwear' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'apparel' },
+  { id: 'unisex_tees', label: 'Graphic Tees & Shirts', generalCat: 'tops' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'apparel' },
+  { id: 'senator_kaftan', label: 'Senator & Kaftan Sets', generalCat: 'tops' as GarmentCategory, dept: 'male' as GenderTarget, group: 'apparel' },
+  { id: 'boubou_kaftans', label: 'Silk Boubou & Kaftans', generalCat: 'outerwear' as GarmentCategory, dept: 'female' as GenderTarget, group: 'apparel' },
+  { id: 'two_piece_sets', label: 'Two-Piece Co-ord Sets', generalCat: 'tops' as GarmentCategory, dept: 'female' as GenderTarget, group: 'apparel' },
+  { id: 'dresses_gowns', label: 'Dresses, Gowns & Maxis', generalCat: 'tops' as GarmentCategory, dept: 'female' as GenderTarget, group: 'apparel' },
+  { id: 'suits_blazers', label: 'Suits, Tuxedos & Blazers', generalCat: 'outerwear' as GarmentCategory, dept: 'male' as GenderTarget, group: 'apparel' },
   // Bottoms
-  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, dept: 'unisex' as GenderTarget },
-  { id: 'skirts_minis', label: 'Skirts & Mini Skirts', generalCat: 'bottoms' as GarmentCategory, dept: 'female' as GenderTarget },
+  { id: 'unisex_denim', label: 'Denim Jeans & Cargo Pants', generalCat: 'bottoms' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'apparel' },
+  { id: 'skirts_minis', label: 'Skirts & Mini Skirts', generalCat: 'bottoms' as GarmentCategory, dept: 'female' as GenderTarget, group: 'apparel' },
   // Footwear
-  { id: 'unisex_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, dept: 'unisex' as GenderTarget },
-  { id: 'unisex_sneakers', label: 'Sneakers & Shoes', generalCat: 'footwear' as GarmentCategory, dept: 'unisex' as GenderTarget },
-  { id: 'women_heels_mules', label: 'Heels & Mules', generalCat: 'footwear' as GarmentCategory, dept: 'female' as GenderTarget },
-  // Accessories
-  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Hats', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget },
-  { id: 'unisex_jewelry', label: 'Jewelry & Chains', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget },
-  { id: 'unisex_bags', label: 'Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget },
+  { id: 'unisex_slides_palms', label: 'Slides, Palms & Slippers', generalCat: 'footwear' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'footwear' },
+  { id: 'unisex_sneakers', label: 'Sneakers & Shoes', generalCat: 'footwear' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'footwear' },
+  { id: 'women_heels_mules', label: 'Heels & Mules', generalCat: 'footwear' as GarmentCategory, dept: 'female' as GenderTarget, group: 'footwear' },
+  // Accessories & Jewelry
+  { id: 'unisex_jewelry', label: 'Jewelry, Chains & Bracelets', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'jewelry' },
+  { id: 'unisex_watches', label: 'Luxury Watches & Timepieces', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'jewelry' },
+  { id: 'unisex_caps_hats', label: 'Caps, Beanies & Hats', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'jewelry' },
+  { id: 'unisex_bags', label: 'Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget, group: 'jewelry' },
 ];
 
 const POPULAR_SWATCHES = [
@@ -98,6 +102,14 @@ export default function BatchProductUploadView({
   getActiveVendorId,
   onSwitchToSingle,
 }: BatchProductUploadViewProps) {
+  const vendorSpecialty: VendorSpecialty = getVendorSpecialty(vendorProfile);
+
+  // Initial Drop Mode based on store profile
+  const initialDropMode: DropMode = 
+    vendorSpecialty === 'jewelry' ? 'jewelry' :
+    vendorSpecialty === 'footwear' ? 'footwear' : 'apparel';
+
+  const [dropMode, setDropMode] = useState<DropMode>(initialDropMode);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<BatchItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,11 +118,38 @@ export default function BatchProductUploadView({
   const [publishedCount, setPublishedCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Filter Categories by Active Drop Mode / Specialty
+  const availableCategories = ALL_CATEGORY_OPTIONS.filter(c => {
+    if (vendorSpecialty === 'jewelry' || dropMode === 'jewelry') return c.group === 'jewelry';
+    if (vendorSpecialty === 'footwear' || dropMode === 'footwear') return c.group === 'footwear';
+    if (vendorSpecialty === 'apparel' || dropMode === 'apparel') return c.group === 'apparel';
+    return true;
+  });
+
   // Bulk Apply Toolbar State
   const [bulkPrice, setBulkPrice] = useState('');
   const [bulkQuantity, setBulkQuantity] = useState('15');
-  const [bulkCategory, setBulkCategory] = useState(CATEGORY_OPTIONS[0].id);
-  const [bulkSizes, setBulkSizes] = useState<string[]>(['M', 'L', 'XL']);
+  const [bulkCategory, setBulkCategory] = useState(availableCategories[0]?.id || 'streetwear_hoodie');
+  const [bulkSizes, setBulkSizes] = useState<string[]>(
+    dropMode === 'footwear' ? ['40', '41', '42', '43', '44'] :
+    dropMode === 'jewelry' ? ['One Size'] : ['M', 'L', 'XL']
+  );
+
+  // Handle Drop Mode Switch
+  const handleSwitchDropMode = (mode: DropMode) => {
+    setDropMode(mode);
+    const modeCats = ALL_CATEGORY_OPTIONS.filter(c => c.group === mode);
+    if (modeCats.length > 0) {
+      setBulkCategory(modeCats[0].id);
+    }
+    if (mode === 'footwear') {
+      setBulkSizes(['40', '41', '42', '43', '44']);
+    } else if (mode === 'jewelry') {
+      setBulkSizes(['One Size']);
+    } else {
+      setBulkSizes(['M', 'L', 'XL']);
+    }
+  };
 
   // Handle multi-file selection from gallery / camera / desktop
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,18 +158,22 @@ export default function BatchProductUploadView({
 
     const fileList = Array.from(files);
     const defaultQty = bulkQuantity === '' ? 15 : (Number(bulkQuantity) || 15);
+    const matchedCat = availableCategories.find(c => c.id === bulkCategory) || availableCategories[0];
 
     fileList.forEach((file, index) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const previewUrl = reader.result as string;
-        const defaultCat = CATEGORY_OPTIONS[0];
-        const defaultSizes = bulkSizes.length > 0 ? [...bulkSizes] : ['M', 'L', 'XL'];
         
         const initSizeStock: { [sz: string]: number | string } = {};
-        defaultSizes.forEach(sz => {
-          initSizeStock[sz] = defaultQty;
-        });
+        if (matchedCat.generalCat === 'accessories') {
+          initSizeStock['One Size'] = defaultQty;
+        } else {
+          const defaultSizes = bulkSizes.length > 0 ? [...bulkSizes] : (dropMode === 'footwear' ? ['40', '41', '42', '43', '44'] : ['M', 'L', 'XL']);
+          defaultSizes.forEach(sz => {
+            initSizeStock[sz] = defaultQty;
+          });
+        }
 
         setItems(prev => [
           ...prev,
@@ -138,12 +181,12 @@ export default function BatchProductUploadView({
             id: `batch-${Date.now()}-${index}-${Math.random()}`,
             name: cleanFileNameToTitle(file.name),
             price: bulkPrice || '',
-            category: defaultCat.generalCat,
-            subCategory: defaultCat.id,
-            genderTarget: defaultCat.dept,
+            category: matchedCat.generalCat,
+            subCategory: matchedCat.id,
+            genderTarget: matchedCat.dept,
             imageFile: file,
             imagePreview: previewUrl,
-            selectedColors: [POPULAR_SWATCHES[0]],
+            selectedColors: [],
             isCustomColorOpen: false,
             customColorText: '',
             customColorHex: '#2563eb',
@@ -239,7 +282,7 @@ export default function BatchProductUploadView({
   };
 
   const applyCategoryToAll = () => {
-    const matched = CATEGORY_OPTIONS.find(c => c.id === bulkCategory);
+    const matched = ALL_CATEGORY_OPTIONS.find(c => c.id === bulkCategory);
     if (!matched) return;
     setItems(prev => prev.map(item => ({
       ...item,
@@ -321,8 +364,8 @@ export default function BatchProductUploadView({
           image_url: item.imagePreview,
           description: '',
           tags: ['Ready-to-Wear', 'Collection Drop'],
-          colors: item.category === 'accessories' ? [] : item.selectedColors.map(c => ({ name: c.name.trim() || 'Standard', hex: c.hex || '#111111' })),
-          sizes: item.category === 'accessories' ? ['One Size'] : (activeSizes.length > 0 ? activeSizes : ['M', 'L', 'XL']),
+          colors: item.category === 'accessories' ? [] : (item.selectedColors.length > 0 ? item.selectedColors.map(c => ({ name: c.name.trim() || 'Standard', hex: c.hex || '#111111' })) : [{ name: 'As Pictured', hex: '#111111' }]),
+          sizes: item.category === 'accessories' ? ['One Size'] : (activeSizes.length > 0 ? activeSizes : (item.category === 'footwear' ? ['40', '41', '42'] : ['M', 'L', 'XL'])),
           sizeStock: sizeStockObj,
           stockQuantity: totalItemStock,
           vendorId: activeVendorId,
@@ -431,7 +474,7 @@ export default function BatchProductUploadView({
             Quick Batch Upload Drop
           </h1>
           <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-            Select 2 to 20 garment photos at once from your phone or studio gallery and launch your collection in seconds.
+            Select 2 to 20 product photos from your studio gallery and launch your drop in seconds.
           </p>
         </div>
 
@@ -445,6 +488,58 @@ export default function BatchProductUploadView({
           </button>
         )}
       </div>
+
+      {/* 1-TAP DROP TYPE SELECTOR (Apparel / Slides & Footwear / Jewelry & Accessories) */}
+      {(vendorSpecialty === 'multi_department' || items.length === 0) && (
+        <div className="p-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center gap-1.5 overflow-x-auto scrollbar-none font-mono-luxury text-xs">
+          <span className="text-[10px] text-[var(--text-muted)] uppercase font-bold px-2 shrink-0">Drop Type:</span>
+
+          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel') && (
+            <button
+              type="button"
+              onClick={() => handleSwitchDropMode('apparel')}
+              className={`px-3 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shrink-0 ${
+                dropMode === 'apparel'
+                  ? 'bg-[var(--gold-accent)] text-black shadow-md'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Shirt className="h-3.5 w-3.5" />
+              <span>Clothing &amp; Streetwear Drop</span>
+            </button>
+          )}
+
+          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'footwear') && (
+            <button
+              type="button"
+              onClick={() => handleSwitchDropMode('footwear')}
+              className={`px-3 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shrink-0 ${
+                dropMode === 'footwear'
+                  ? 'bg-[var(--gold-accent)] text-black shadow-md'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Footprints className="h-3.5 w-3.5" />
+              <span>Slides &amp; Footwear Drop (EU 39-46)</span>
+            </button>
+          )}
+
+          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry') && (
+            <button
+              type="button"
+              onClick={() => handleSwitchDropMode('jewelry')}
+              className={`px-3 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shrink-0 ${
+                dropMode === 'jewelry'
+                  ? 'bg-[var(--gold-accent)] text-black shadow-md'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Gem className="h-3.5 w-3.5" />
+              <span>Jewelry &amp; Accessories Drop</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Error Alert */}
       {errorMessage && (
@@ -469,10 +564,14 @@ export default function BatchProductUploadView({
 
           <div className="space-y-1.5">
             <h3 className="font-editorial text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-              Tap to Select Multiple Garment Photos
+              Tap to Select Multiple {dropMode === 'footwear' ? 'Slides & Footwear' : dropMode === 'jewelry' ? 'Jewelry & Accessories' : 'Garment'} Photos
             </h3>
             <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
-              Select pictures of your new hoodies, kaftans, dresses, or footwear directly from your phone gallery or files.
+              {dropMode === 'footwear'
+                ? 'Select pictures of your new slides, palms, loafers, or sneakers directly from your phone gallery.'
+                : dropMode === 'jewelry'
+                ? 'Select pictures of your new chains, bracelets, watches, rings, or caps directly from your phone.'
+                : 'Select pictures of your new hoodies, kaftans, dresses, or sets directly from your phone gallery.'}
             </p>
           </div>
 
@@ -533,7 +632,9 @@ export default function BatchProductUploadView({
 
               {/* Preset 2: Quantity per size */}
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">2. Stock Qty / Size</span>
+                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">
+                  {dropMode === 'jewelry' ? '2. Total Units in Stock' : '2. Stock Qty / Size'}
+                </span>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -563,7 +664,7 @@ export default function BatchProductUploadView({
                     onChange={(e) => setBulkCategory(e.target.value)}
                     className="flex-1 px-2.5 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
                   >
-                    {CATEGORY_OPTIONS.map(c => (
+                    {availableCategories.map(c => (
                       <option key={c.id} value={c.id}>{c.label}</option>
                     ))}
                   </select>
@@ -579,32 +680,40 @@ export default function BatchProductUploadView({
 
               {/* Preset 4: Sizing */}
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">4. Available Sizes</span>
-                <div className="flex items-center justify-between gap-1">
-                  <div className="flex items-center gap-1">
-                    {APPAREL_SIZES.map(sz => (
-                      <button
-                        key={sz}
-                        type="button"
-                        onClick={() => toggleBulkSize(sz)}
-                        className={`h-6 w-6 rounded-md border text-[9px] font-bold transition-all cursor-pointer ${
-                          bulkSizes.includes(sz)
-                            ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
-                            : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    ))}
+                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">
+                  {dropMode === 'footwear' ? '4. EU Shoe Sizes' : dropMode === 'jewelry' ? '4. Inventory Sizing' : '4. Clothing Sizes'}
+                </span>
+                {dropMode === 'jewelry' ? (
+                  <div className="text-[11px] text-[var(--gold-accent)] font-bold py-1">
+                    Universal Fit (One Size)
                   </div>
-                  <button
-                    type="button"
-                    onClick={applySizesToAll}
-                    className="px-2 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {(dropMode === 'footwear' ? FOOTWEAR_SIZES : APPAREL_SIZES).map(sz => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => toggleBulkSize(sz)}
+                          className={`h-6 min-w-[24px] px-1 rounded-md border text-[9px] font-bold transition-all cursor-pointer ${
+                            bulkSizes.includes(sz)
+                              ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
+                              : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={applySizesToAll}
+                      className="px-2 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer shrink-0"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -660,7 +769,7 @@ export default function BatchProductUploadView({
                             type="text"
                             value={item.name}
                             onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                            placeholder="Garment Title (e.g. Vintage Wash Hoodie)"
+                            placeholder={item.category === 'footwear' ? 'Slide Title (e.g. Handmade Leather Slides)' : item.category === 'accessories' ? 'Jewelry Title (e.g. 18k Gold Cuban Chain)' : 'Garment Title (e.g. Vintage Wash Hoodie)'}
                             className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                           />
 
@@ -695,7 +804,7 @@ export default function BatchProductUploadView({
                             value={item.subCategory}
                             onChange={(e) => {
                               const subId = e.target.value;
-                              const matched = CATEGORY_OPTIONS.find(c => c.id === subId);
+                              const matched = ALL_CATEGORY_OPTIONS.find(c => c.id === subId);
                               if (matched) {
                                 updateItem(item.id, {
                                   subCategory: subId,
@@ -706,7 +815,7 @@ export default function BatchProductUploadView({
                             }}
                             className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
                           >
-                            {CATEGORY_OPTIONS.map(c => (
+                            {availableCategories.map(c => (
                               <option key={c.id} value={c.id}>{c.label}</option>
                             ))}
                           </select>
@@ -852,7 +961,7 @@ export default function BatchProductUploadView({
                         <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2 pt-2">
                           <div className="flex items-center justify-between text-xs font-mono-luxury">
                             <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
-                              {item.category === 'accessories' ? 'Stock Quantity' : 'Sizes & Available Stock'}
+                              {item.category === 'accessories' ? 'Stock Quantity' : item.category === 'footwear' ? 'EU Shoe Sizing (39-46)' : 'Ready-to-Wear Sizes'}
                             </span>
                             <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                               {totalItemStock} in Stock
@@ -873,7 +982,7 @@ export default function BatchProductUploadView({
                               />
                             </div>
                           ) : (
-                            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-2">
                               {sizeList.map(sz => {
                                 const isEnabled = item.sizeStock[sz] !== undefined;
                                 const qty = item.sizeStock[sz];

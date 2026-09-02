@@ -103,6 +103,8 @@ export interface Product {
   sizeStock?: Record<string, number>;
 }
 
+export type VendorSpecialty = 'apparel' | 'footwear' | 'jewelry' | 'multi_department';
+
 export interface Vendor {
   id: string;
   name: string;
@@ -117,6 +119,7 @@ export interface Vendor {
   shippingFee: number;
   description: string;
   vendorType?: 'fashion_designer' | 'boutique_seller';
+  specialty?: VendorSpecialty;
   phone?: string;
 }
 
@@ -128,6 +131,7 @@ export interface VendorProfile {
   phone: string;
   location: string;
   vendorType: 'fashion_designer' | 'boutique_seller' | 'boutique_merchant' | string;
+  specialty?: VendorSpecialty;
   bankName: string;
   accountNumber: string;
   accountName: string;
@@ -143,6 +147,16 @@ export function isBoutiqueVendor(vendorOrType: any): boolean {
     : (vendorOrType.vendorType || vendorOrType.vendor_type || '');
   const lower = String(t).toLowerCase().trim();
   return lower === 'boutique_seller' || lower === 'boutique_merchant' || lower === 'boutique' || lower.includes('boutique');
+}
+
+export function getVendorSpecialty(vendorOrProfile: any): VendorSpecialty {
+  if (!vendorOrProfile) return 'multi_department';
+  const spec = vendorOrProfile.specialty || vendorOrProfile.vendorSpecialty || vendorOrProfile.vendor_specialty;
+  if (spec === 'jewelry' || spec === 'accessories') return 'jewelry';
+  if (spec === 'footwear' || spec === 'shoes') return 'footwear';
+  if (spec === 'apparel' || spec === 'clothing') return 'apparel';
+  if (spec === 'multi_department') return 'multi_department';
+  return 'multi_department';
 }
 
 export interface ActiveOutfit {

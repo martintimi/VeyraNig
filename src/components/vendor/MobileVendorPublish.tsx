@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GarmentCategory, GenderTarget } from '@/types';
+import { GarmentCategory, GenderTarget, VendorSpecialty, getVendorSpecialty } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2,
   Tag, ArrowRight, Loader2, X, Palette,
@@ -97,11 +97,25 @@ export default function MobileVendorPublish({
   getActiveVendorId,
   onSwitchToBatch
 }: MobileVendorPublishProps) {
+  const vendorSpecialty: VendorSpecialty = getVendorSpecialty(vendorProfile);
+
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
-  const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>('all');
+  const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>(
+    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'footwear' ? 'footwear' :
+    vendorSpecialty === 'apparel' ? 'apparel' : 'all'
+  );
   const [name, setName] = useState('');
-  const [subCategory, setSubCategory] = useState(MALE_CATEGORIES[0].id);
-  const [category, setCategory] = useState<GarmentCategory>(MALE_CATEGORIES[0].generalCat);
+  const [subCategory, setSubCategory] = useState(
+    vendorSpecialty === 'jewelry' ? 'men_jewelry_chains' :
+    vendorSpecialty === 'footwear' ? 'men_slides_palms' :
+    MALE_CATEGORIES[0].id
+  );
+  const [category, setCategory] = useState<GarmentCategory>(
+    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'footwear' ? 'footwear' :
+    MALE_CATEGORIES[0].generalCat
+  );
   const [rawPrice, setRawPrice] = useState<string>('');
   
   // Colors (for apparel and footwear)
@@ -120,13 +134,28 @@ export default function MobileVendorPublish({
   const [aiToast, setAiToast] = useState('');
 
   // Sizing & Stock
-  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>({
-    'S': { enabled: true, quantity: 10 },
-    'M': { enabled: true, quantity: 20 },
-    'L': { enabled: true, quantity: 20 },
-    'XL': { enabled: true, quantity: 10 },
-    'XXL': { enabled: false, quantity: 0 },
-  });
+  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>(
+    vendorSpecialty === 'jewelry'
+      ? { 'One Size': { enabled: true, quantity: 20 } }
+      : vendorSpecialty === 'footwear'
+      ? {
+          '39': { enabled: true, quantity: 5 },
+          '40': { enabled: true, quantity: 10 },
+          '41': { enabled: true, quantity: 10 },
+          '42': { enabled: true, quantity: 10 },
+          '43': { enabled: true, quantity: 10 },
+          '44': { enabled: true, quantity: 5 },
+          '45': { enabled: false, quantity: 0 },
+          '46': { enabled: false, quantity: 0 },
+        }
+      : {
+          'S': { enabled: true, quantity: 10 },
+          'M': { enabled: true, quantity: 20 },
+          'L': { enabled: true, quantity: 20 },
+          'XL': { enabled: true, quantity: 10 },
+          'XXL': { enabled: false, quantity: 0 },
+        }
+  );
 
   // Photo
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -612,11 +641,11 @@ export default function MobileVendorPublish({
           {/* Quick Segment Tabs with Lucide Icons */}
           <div className="flex items-center gap-1.5 mb-2 overflow-x-auto no-scrollbar pb-0.5">
             {[
-              { id: 'all', label: 'All', icon: Layers },
-              { id: 'apparel', label: 'Apparel', icon: Shirt },
-              { id: 'footwear', label: 'Footwear', icon: Footprints },
-              { id: 'accessories', label: 'Jewelry & Accessories', icon: Gem },
-            ].map((tab) => {
+              { id: 'all', label: 'All', icon: Layers, allowed: vendorSpecialty === 'multi_department' },
+              { id: 'apparel', label: 'Apparel', icon: Shirt, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel' },
+              { id: 'footwear', label: 'Footwear', icon: Footprints, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'footwear' },
+              { id: 'accessories', label: 'Jewelry & Accessories', icon: Gem, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry' },
+            ].filter(t => t.allowed).map((tab) => {
               const IconComp = tab.icon;
               return (
                 <button

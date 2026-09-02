@@ -3,7 +3,7 @@
 import { vendorFetch, getActiveVendorId } from '@/lib/services/apiClient';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store/useStore';
-import { GarmentCategory, GenderTarget } from '@/types';
+import { GarmentCategory, GenderTarget, VendorSpecialty, getVendorSpecialty } from '@/types';
 import {
   UploadCloud, CheckCircle2, Sparkles, Plus, Trash2,
   ShoppingBag, Tag, ArrowRight, ExternalLink,
@@ -102,6 +102,8 @@ const ACCESSORY_SIZES = ['One Size'];
 export default function PublishGarmentPage() {
   const { vendorProfile } = useStore();
 
+  const vendorSpecialty: VendorSpecialty = getVendorSpecialty(vendorProfile);
+
   // Verification & Profile Status State
   const [profileStatus, setProfileStatus] = useState<{
     isProfileSaved: boolean;
@@ -116,12 +118,24 @@ export default function PublishGarmentPage() {
 
   // Department / Gender Filter: male | female | unisex
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
-  const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>('all');
+  const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>(
+    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'footwear' ? 'footwear' :
+    vendorSpecialty === 'apparel' ? 'apparel' : 'all'
+  );
 
   // Core Form State
   const [name, setName] = useState('');
-  const [subCategory, setSubCategory] = useState(MALE_CATEGORIES[0].id);
-  const [category, setCategory] = useState<GarmentCategory>(MALE_CATEGORIES[0].generalCat);
+  const [subCategory, setSubCategory] = useState(
+    vendorSpecialty === 'jewelry' ? 'men_jewelry_chains' :
+    vendorSpecialty === 'footwear' ? 'men_slides_palms' :
+    MALE_CATEGORIES[0].id
+  );
+  const [category, setCategory] = useState<GarmentCategory>(
+    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'footwear' ? 'footwear' :
+    MALE_CATEGORIES[0].generalCat
+  );
   const [rawPrice, setRawPrice] = useState<string>('');
   const [description, setDescription] = useState('');
   const [tagInput, setTagInput] = useState('');
@@ -138,13 +152,28 @@ export default function PublishGarmentPage() {
   const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
 
   // Dynamic Adaptive Size Stock State
-  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>({
-    'S': { enabled: true, quantity: 10 },
-    'M': { enabled: true, quantity: 20 },
-    'L': { enabled: true, quantity: 20 },
-    'XL': { enabled: true, quantity: 10 },
-    'XXL': { enabled: false, quantity: 0 },
-  });
+  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>(
+    vendorSpecialty === 'jewelry'
+      ? { 'One Size': { enabled: true, quantity: 20 } }
+      : vendorSpecialty === 'footwear'
+      ? {
+          '39': { enabled: true, quantity: 5 },
+          '40': { enabled: true, quantity: 10 },
+          '41': { enabled: true, quantity: 10 },
+          '42': { enabled: true, quantity: 10 },
+          '43': { enabled: true, quantity: 10 },
+          '44': { enabled: true, quantity: 5 },
+          '45': { enabled: false, quantity: 0 },
+          '46': { enabled: false, quantity: 0 },
+        }
+      : {
+          'S': { enabled: true, quantity: 10 },
+          'M': { enabled: true, quantity: 20 },
+          'L': { enabled: true, quantity: 20 },
+          'XL': { enabled: true, quantity: 10 },
+          'XXL': { enabled: false, quantity: 0 },
+        }
+  );
 
   // Photo Upload State
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -842,20 +871,20 @@ export default function PublishGarmentPage() {
               </div>
 
               {/* Category Segment Tabs with Lucide Icons */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3 overflow-x-auto scrollbar-none pb-1">
                 {[
-                  { id: 'all', label: 'All Categories', icon: Layers },
-                  { id: 'apparel', label: 'Apparel & Sets', icon: Shirt },
-                  { id: 'footwear', label: 'Footwear & Slides', icon: Footprints },
-                  { id: 'accessories', label: 'Jewelry, Caps & Bags', icon: Gem },
-                ].map((tab) => {
+                  { id: 'all', label: 'All Categories', icon: Layers, allowed: vendorSpecialty === 'multi_department' },
+                  { id: 'apparel', label: 'Apparel & Sets', icon: Shirt, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel' },
+                  { id: 'footwear', label: 'Footwear & Slides', icon: Footprints, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'footwear' },
+                  { id: 'accessories', label: 'Jewelry, Caps & Bags', icon: Gem, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry' },
+                ].filter(t => t.allowed).map((tab) => {
                   const IconComp = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       type="button"
                       onClick={() => setCatFilterTab(tab.id as any)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                         catFilterTab === tab.id
                           ? 'bg-[var(--gold-accent)] text-black shadow-sm'
                           : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-white'
