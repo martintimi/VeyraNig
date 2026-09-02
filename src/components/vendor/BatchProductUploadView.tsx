@@ -6,7 +6,7 @@ import {
   UploadCloud, Sparkles, Plus, Trash2, Check,
   Layers, ChevronDown, CheckCircle2, ArrowRight,
   Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette,
-  Shirt, Footprints, Gem
+  Shirt, Footprints, Gem, SlidersHorizontal, ChevronUp
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -26,7 +26,7 @@ interface BatchItem {
   isCustomColorOpen?: boolean;
   customColorText?: string;
   customColorHex?: string;
-  sizeStock: { [size: string]: number | string }; // Allows empty string while typing
+  sizeStock: { [size: string]: number | string };
 }
 
 interface BatchProductUploadViewProps {
@@ -117,6 +117,7 @@ export default function BatchProductUploadView({
   const [isSuccess, setIsSuccess] = useState(false);
   const [publishedCount, setPublishedCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isPresetsExpanded, setIsPresetsExpanded] = useState(true);
 
   // Auto-scroll to top when error occurs so vendor sees message immediately
   useEffect(() => {
@@ -134,9 +135,10 @@ export default function BatchProductUploadView({
   });
 
   // Bulk Apply Toolbar State
+  const [bulkGender, setBulkGender] = useState<GenderTarget>('unisex');
   const [bulkPrice, setBulkPrice] = useState('');
   const [bulkQuantity, setBulkQuantity] = useState('15');
-  const [bulkCategory, setBulkCategory] = useState(availableCategories[0]?.id || 'streetwear_hoodie');
+  const [bulkCategory, setBulkCategory] = useState(availableCategories[0]?.id || 'unisex_slides_palms');
   const [bulkSizes, setBulkSizes] = useState<string[]>(
     dropMode === 'footwear' ? ['40', '41', '42', '43', '44'] :
     dropMode === 'jewelry' ? ['One Size'] : ['M', 'L', 'XL']
@@ -190,7 +192,7 @@ export default function BatchProductUploadView({
             price: bulkPrice || '',
             category: matchedCat.generalCat,
             subCategory: matchedCat.id,
-            genderTarget: matchedCat.dept,
+            genderTarget: bulkGender || matchedCat.dept || 'unisex',
             imageFile: file,
             imagePreview: previewUrl,
             selectedColors: [],
@@ -219,7 +221,7 @@ export default function BatchProductUploadView({
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
-  // Multi-Color Toggle for an Item (Optional - can be empty for unique pieces)
+  // Multi-Color Toggle for an Item
   const toggleItemColor = (itemId: string, color: { name: string; hex: string }) => {
     setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
@@ -231,7 +233,7 @@ export default function BatchProductUploadView({
     }));
   };
 
-  // Add Custom Color from Color Wheel / Input
+  // Add Custom Color from Color Wheel
   const addCustomColorToItem = (itemId: string, colorName: string, hex: string) => {
     setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
@@ -244,7 +246,7 @@ export default function BatchProductUploadView({
     }));
   };
 
-  // Update size stock for an item (allows empty string while erasing, no stuck 0s!)
+  // Update size stock for an item
   const setItemSizeQty = (itemId: string, size: string, rawVal: string | number) => {
     setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
@@ -271,43 +273,30 @@ export default function BatchProductUploadView({
     }));
   };
 
-  // BULK PRESET APPLIERS
-  const applyPriceToAll = () => {
-    if (!bulkPrice) return;
-    setItems(prev => prev.map(item => ({ ...item, price: bulkPrice })));
-  };
-
-  const applyQuantityToAll = () => {
-    const qty = bulkQuantity === '' ? 1 : Math.max(1, Number(bulkQuantity) || 1);
-    setItems(prev => prev.map(item => {
-      const updated: { [sz: string]: number | string } = {};
-      Object.keys(item.sizeStock).forEach(sz => {
-        updated[sz] = qty;
-      });
-      return { ...item, sizeStock: updated };
-    }));
-  };
-
-  const applyCategoryToAll = () => {
+  // UNIFIED 1-TAP APPLY ALL PRESETS
+  const handleApplyAllPresets = () => {
     const matched = ALL_CATEGORY_OPTIONS.find(c => c.id === bulkCategory);
-    if (!matched) return;
-    setItems(prev => prev.map(item => ({
-      ...item,
-      category: matched.generalCat,
-      subCategory: matched.id,
-      genderTarget: matched.dept,
-    })));
-  };
+    const qty = bulkQuantity === '' ? 15 : Math.max(1, Number(bulkQuantity) || 15);
 
-  const applySizesToAll = () => {
-    if (bulkSizes.length === 0) return;
-    const defaultQty = bulkQuantity === '' ? 15 : (Number(bulkQuantity) || 15);
     setItems(prev => prev.map(item => {
-      const updated: { [sz: string]: number | string } = {};
-      bulkSizes.forEach(sz => {
-        updated[sz] = item.sizeStock[sz] !== undefined ? item.sizeStock[sz] : defaultQty;
-      });
-      return { ...item, sizeStock: updated };
+      const updatedSizeStock: { [sz: string]: number | string } = {};
+
+      if (dropMode === 'jewelry' || matched?.generalCat === 'accessories') {
+        updatedSizeStock['One Size'] = qty;
+      } else {
+        bulkSizes.forEach(sz => {
+          updatedSizeStock[sz] = qty;
+        });
+      }
+
+      return {
+        ...item,
+        price: bulkPrice || item.price,
+        genderTarget: bulkGender,
+        category: matched ? matched.generalCat : item.category,
+        subCategory: matched ? matched.id : item.subCategory,
+        sizeStock: Object.keys(updatedSizeStock).length > 0 ? updatedSizeStock : item.sizeStock
+      };
     }));
   };
 
@@ -328,10 +317,10 @@ export default function BatchProductUploadView({
   const handlePublishAll = async () => {
     if (items.length === 0) return;
 
-    // Validation
     const invalidItem = items.find(i => !i.name.trim() || !i.price || Number(String(i.price).replace(/[^0-9.]/g, '')) <= 0);
     if (invalidItem) {
       setErrorMessage(`Please make sure every item has a title and a valid price in Naira.`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -365,7 +354,7 @@ export default function BatchProductUploadView({
           name: item.name.trim(),
           price: cleanPrice,
           category: item.category,
-          genderTarget: item.genderTarget,
+          genderTarget: item.genderTarget || 'unisex',
           garmentOriginType: 'ready_made_boutique',
           imageUrl: item.imagePreview,
           image_url: item.imagePreview,
@@ -407,6 +396,7 @@ export default function BatchProductUploadView({
       });
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred during batch publishing.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
       setPublishProgress(null);
@@ -456,7 +446,7 @@ export default function BatchProductUploadView({
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto pb-24">
+    <div className="space-y-5 animate-fadeIn max-w-4xl mx-auto pb-28 px-1 sm:px-0">
       
       {/* Hidden Multi-File Input */}
       <input
@@ -469,65 +459,60 @@ export default function BatchProductUploadView({
       />
 
       {/* Header & Mode Switch */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-4">
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold">
-              Multi-Product Batch Creator
+              Batch Drop Creator
             </span>
           </div>
-          <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mt-0.5">
-            Quick Batch Upload Drop
+          <h1 className="font-editorial text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+            Quick Upload Drop
           </h1>
-          <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-            Select 2 to 20 product photos from your studio gallery and launch your drop in seconds.
-          </p>
         </div>
 
         {onSwitchToSingle && (
           <button
             type="button"
             onClick={onSwitchToSingle}
-            className="px-4 py-2 rounded-xl surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] hover:border-[var(--gold-accent)] self-start sm:self-auto cursor-pointer font-bold"
+            className="px-3 py-1.5 rounded-xl surface-card border border-[var(--border-subtle)] text-[11px] font-mono-luxury text-[var(--text-primary)] hover:border-[var(--gold-accent)] shrink-0 font-bold"
           >
-            Switch to Single Piece Form
+            Single Form
           </button>
         )}
       </div>
 
       {/* 1-TAP DROP TYPE SELECTOR (Apparel / Slides & Footwear / Jewelry & Accessories) */}
       {(vendorSpecialty === 'multi_department' || items.length === 0) && (
-        <div className="p-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center gap-1.5 overflow-x-auto scrollbar-none font-mono-luxury text-xs">
-          <span className="text-[10px] text-[var(--text-muted)] uppercase font-bold px-2 shrink-0">Drop Type:</span>
-
-          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel') && (
-            <button
-              type="button"
-              onClick={() => handleSwitchDropMode('apparel')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shrink-0 ${
-                dropMode === 'apparel'
-                  ? 'bg-[var(--gold-accent)] text-black shadow-md'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              <Shirt className="h-3.5 w-3.5" />
-              <span>Clothing &amp; Streetwear Drop</span>
-            </button>
-          )}
-
+        <div className="p-1.5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center gap-1.5 overflow-x-auto no-scrollbar font-mono-luxury text-xs">
           {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'footwear') && (
             <button
               type="button"
               onClick={() => handleSwitchDropMode('footwear')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shrink-0 ${
+              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold transition-all cursor-pointer shrink-0 text-xs ${
                 dropMode === 'footwear'
                   ? 'bg-[var(--gold-accent)] text-black shadow-md'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <Footprints className="h-3.5 w-3.5" />
-              <span>Slides &amp; Footwear Drop (EU 39-46)</span>
+              <span>Slides &amp; Footwear</span>
+            </button>
+          )}
+
+          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel') && (
+            <button
+              type="button"
+              onClick={() => handleSwitchDropMode('apparel')}
+              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold transition-all cursor-pointer shrink-0 text-xs ${
+                dropMode === 'apparel'
+                  ? 'bg-[var(--gold-accent)] text-black shadow-md'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <Shirt className="h-3.5 w-3.5" />
+              <span>Clothing Drop</span>
             </button>
           )}
 
@@ -535,14 +520,14 @@ export default function BatchProductUploadView({
             <button
               type="button"
               onClick={() => handleSwitchDropMode('jewelry')}
-              className={`px-3 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shrink-0 ${
+              className={`px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold transition-all cursor-pointer shrink-0 text-xs ${
                 dropMode === 'jewelry'
                   ? 'bg-[var(--gold-accent)] text-black shadow-md'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <Gem className="h-3.5 w-3.5" />
-              <span>Jewelry &amp; Accessories Drop</span>
+              <span>Jewelry &amp; Watches</span>
             </button>
           )}
         </div>
@@ -563,171 +548,178 @@ export default function BatchProductUploadView({
       {items.length === 0 ? (
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] surface-card rounded-3xl p-10 sm:p-16 text-center cursor-pointer transition-all space-y-4 group"
+          className="border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] surface-card rounded-3xl p-8 sm:p-14 text-center cursor-pointer transition-all space-y-4 group"
         >
-          <div className="h-16 w-16 mx-auto rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
-            <UploadCloud className="h-8 w-8" />
+          <div className="h-14 w-14 mx-auto rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
+            <UploadCloud className="h-7 w-7" />
           </div>
 
-          <div className="space-y-1.5">
-            <h3 className="font-editorial text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-              Tap to Select Multiple {dropMode === 'footwear' ? 'Slides & Footwear' : dropMode === 'jewelry' ? 'Jewelry & Accessories' : 'Garment'} Photos
+          <div className="space-y-1">
+            <h3 className="font-editorial text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+              Tap to Select Multiple Photos
             </h3>
-            <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
-              {dropMode === 'footwear'
-                ? 'Select pictures of your new slides, palms, loafers, or sneakers directly from your phone gallery.'
-                : dropMode === 'jewelry'
-                ? 'Select pictures of your new chains, bracelets, watches, rings, or caps directly from your phone.'
-                : 'Select pictures of your new hoodies, kaftans, dresses, or sets directly from your phone gallery.'}
+            <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-sm mx-auto">
+              Select 2 to 20 product pictures directly from your phone gallery to launch a collection in seconds.
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury text-xs font-bold uppercase tracking-wider shadow-lg group-hover:opacity-90">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury text-xs font-bold uppercase tracking-wider shadow-lg">
             <Plus className="h-3.5 w-3.5" />
             <span>Choose Photos</span>
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
 
-          {/* QUICK BULK PRESETS TOOLBAR */}
-          <div className="p-4 sm:p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm">
+          {/* STREAMLINED QUICK BULK TOOLBAR (Clean, Compact & Effortless on Mobile) */}
+          <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-mono-luxury font-bold text-xs uppercase tracking-wider text-[var(--gold-accent)]">
-                <Sparkles className="h-4 w-4" />
-                <span>Quick Bulk Presets (Fill All {items.length} Items in 1 Tap)</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsPresetsExpanded(!isPresetsExpanded)}
+                className="flex items-center gap-2 font-mono-luxury font-bold text-xs uppercase tracking-wider text-[var(--gold-accent)] cursor-pointer"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Bulk Presets ({items.length} Pieces)</span>
+                {isPresetsExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              </button>
 
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl surface-card border border-[var(--border-subtle)] text-[11px] font-mono-luxury font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)] hover:border-[var(--gold-accent)] cursor-pointer"
               >
-                <Plus className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-                <span>Add More Photos</span>
+                <Plus className="h-3 w-3 text-[var(--gold-accent)]" />
+                <span>Add Photos</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono-luxury">
-              
-              {/* Preset 1: Price */}
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">1. Standard Price</span>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={bulkPrice}
-                      onChange={(e) => setBulkPrice(formatPriceString(e.target.value))}
-                      placeholder="30,000"
-                      onFocus={(e) => e.target.select()}
-                      className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury focus:border-[var(--gold-accent)]"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={applyPriceToAll}
-                    disabled={!bulkPrice}
-                    className="px-2.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 disabled:opacity-30 cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-
-              {/* Preset 2: Quantity per size */}
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">
-                  {dropMode === 'jewelry' ? '2. Total Units in Stock' : '2. Stock Qty / Size'}
-                </span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={bulkQuantity}
-                    onChange={(e) => setBulkQuantity(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="15"
-                    onFocus={(e) => e.target.select()}
-                    className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury focus:border-[var(--gold-accent)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={applyQuantityToAll}
-                    className="px-2.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-
-              {/* Preset 3: Category */}
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">3. Category Preset</span>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={bulkCategory}
-                    onChange={(e) => setBulkCategory(e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
-                  >
-                    {availableCategories.map(c => (
-                      <option key={c.id} value={c.id}>{c.label}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={applyCategoryToAll}
-                    className="px-2.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-
-              {/* Preset 4: Sizing */}
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">
-                  {dropMode === 'footwear' ? '4. EU Shoe Sizes' : dropMode === 'jewelry' ? '4. Inventory Sizing' : '4. Clothing Sizes'}
-                </span>
-                {dropMode === 'jewelry' ? (
-                  <div className="text-[11px] text-[var(--gold-accent)] font-bold py-1">
-                    Universal Fit (One Size)
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {(dropMode === 'footwear' ? FOOTWEAR_SIZES : APPAREL_SIZES).map(sz => (
+            {isPresetsExpanded && (
+              <div className="space-y-3 pt-1 animate-fadeIn text-xs font-mono-luxury">
+                
+                {/* Row 1: Department (Men/Women/Unisex) + Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Department Pill Selector */}
+                  <div>
+                    <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block mb-1">
+                      Department / Gender Target
+                    </label>
+                    <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                      {(['unisex', 'male', 'female'] as GenderTarget[]).map((gender) => (
                         <button
-                          key={sz}
+                          key={gender}
                           type="button"
-                          onClick={() => toggleBulkSize(sz)}
-                          className={`h-6 min-w-[24px] px-1 rounded-md border text-[9px] font-bold transition-all cursor-pointer ${
-                            bulkSizes.includes(sz)
-                              ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
-                              : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                          onClick={() => setBulkGender(gender)}
+                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all cursor-pointer ${
+                            bulkGender === gender
+                              ? 'bg-[var(--gold-accent)] text-black shadow-sm'
+                              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                           }`}
                         >
-                          {sz}
+                          {gender === 'male' ? 'Men' : gender === 'female' ? 'Women' : 'Unisex'}
                         </button>
                       ))}
                     </div>
-                    <button
-                      type="button"
-                      onClick={applySizesToAll}
-                      className="px-2 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer shrink-0"
+                  </div>
+
+                  {/* Category Preset */}
+                  <div>
+                    <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block mb-1">
+                      Category Preset
+                    </label>
+                    <select
+                      value={bulkCategory}
+                      onChange={(e) => setBulkCategory(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] font-bold cursor-pointer"
                     >
-                      Apply
-                    </button>
+                      {availableCategories.map(c => (
+                        <option key={c.id} value={c.id}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Row 2: Price & Stock Qty */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block mb-1">
+                      Standard Price
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={bulkPrice}
+                        onChange={(e) => setBulkPrice(formatPriceString(e.target.value))}
+                        placeholder="30,000"
+                        onFocus={(e) => e.target.select()}
+                        className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none focus:border-[var(--gold-accent)]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block mb-1">
+                      {dropMode === 'jewelry' ? 'Stock Units' : 'Stock Qty / Size'}
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={bulkQuantity}
+                      onChange={(e) => setBulkQuantity(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="15"
+                      onFocus={(e) => e.target.select()}
+                      className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none focus:border-[var(--gold-accent)]"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: Active Sizing Chips */}
+                {dropMode !== 'jewelry' && (
+                  <div>
+                    <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block mb-1">
+                      {dropMode === 'footwear' ? 'EU Shoe Sizing (Tap to Toggle)' : 'Garment Sizes (Tap to Toggle)'}
+                    </label>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {(dropMode === 'footwear' ? FOOTWEAR_SIZES : APPAREL_SIZES).map(sz => {
+                        const isSelected = bulkSizes.includes(sz);
+                        return (
+                          <button
+                            key={sz}
+                            type="button"
+                            onClick={() => toggleBulkSize(sz)}
+                            className={`h-7 px-2.5 rounded-lg border text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                              isSelected
+                                ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-sm'
+                                : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                            }`}
+                          >
+                            <span>{sz}</span>
+                            {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
-              </div>
 
-            </div>
+                {/* 1-Tap "Apply to All" Button */}
+                <button
+                  type="button"
+                  onClick={handleApplyAllPresets}
+                  className="w-full py-2.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-xs uppercase tracking-wider hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Apply Presets to All ({items.length} Pieces)</span>
+                </button>
+
+              </div>
+            )}
           </div>
 
           {/* BATCH ITEMS LIST */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between text-xs font-mono-luxury px-1">
               <span className="font-bold text-[var(--text-primary)] uppercase tracking-wider">
                 {items.length} {items.length === 1 ? 'Piece in Batch' : 'Pieces in Batch'}
@@ -741,6 +733,7 @@ export default function BatchProductUploadView({
               </button>
             </div>
 
+            {/* PRODUCT CARDS: Mobile-First Compact Architecture */}
             <div className="space-y-3">
               {items.map((item, index) => {
                 const totalItemStock = calculateTotalStock(item);
@@ -749,12 +742,13 @@ export default function BatchProductUploadView({
                 return (
                   <div
                     key={item.id}
-                    className="p-4 sm:p-5 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--border-hover)] transition-all space-y-3.5 shadow-sm"
+                    className="p-3.5 sm:p-4 rounded-2xl surface-card border border-[var(--border-subtle)] hover:border-[var(--border-hover)] transition-all space-y-3 shadow-sm"
                   >
-                    <div className="flex items-start gap-4">
+                    {/* Top Row: Thumbnail + Title + Price + Delete */}
+                    <div className="flex items-start gap-3">
                       
-                      {/* Item Thumbnail */}
-                      <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-2xl overflow-hidden bg-black border border-[var(--border-subtle)] shrink-0 shadow-sm">
+                      {/* Crisp Thumbnail */}
+                      <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-xl overflow-hidden bg-black border border-[var(--border-subtle)] shrink-0 shadow-sm">
                         <Image
                           src={item.imagePreview}
                           alt={item.name}
@@ -762,317 +756,336 @@ export default function BatchProductUploadView({
                           unoptimized
                           className="object-cover object-center"
                         />
-                        <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[9px] font-mono-luxury font-bold text-white border border-white/20">
+                        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[8px] font-mono-luxury font-bold text-white">
                           #{index + 1}
                         </span>
                       </div>
 
-                      {/* Main Specs */}
-                      <div className="flex-1 space-y-2.5 min-w-0">
-                        
-                        {/* Name & Remove */}
-                        <div className="flex items-center justify-between gap-2">
+                      {/* Title & Price Column */}
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center justify-between gap-1.5">
                           <input
                             type="text"
                             value={item.name}
                             onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                            placeholder={item.category === 'footwear' ? 'Slide Title (e.g. Handmade Leather Slides)' : item.category === 'accessories' ? 'Jewelry Title (e.g. 18k Gold Cuban Chain)' : 'Garment Title (e.g. Vintage Wash Hoodie)'}
-                            className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                            placeholder="Piece Title (e.g. Handmade Leather Slides)"
+                            className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                           />
 
                           <button
                             type="button"
                             onClick={() => removeItem(item.id)}
-                            className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
-                            title="Remove from batch"
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
+                            title="Remove"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
 
-                        {/* Price & Category Row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono-luxury">
-                          {/* Price */}
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={item.price}
-                              onChange={(e) => updateItem(item.id, { price: formatPriceString(e.target.value) })}
-                              placeholder="Price in ₦"
-                              onFocus={(e) => e.target.select()}
-                              className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
-                            />
-                          </div>
-
-                          {/* Category Selector */}
-                          <select
-                            value={item.subCategory}
-                            onChange={(e) => {
-                              const subId = e.target.value;
-                              const matched = ALL_CATEGORY_OPTIONS.find(c => c.id === subId);
-                              if (matched) {
-                                updateItem(item.id, {
-                                  subCategory: subId,
-                                  category: matched.generalCat,
-                                  genderTarget: matched.dept,
-                                });
-                              }
-                            }}
-                            className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
-                          >
-                            {availableCategories.map(c => (
-                              <option key={c.id} value={c.id}>{c.label}</option>
-                            ))}
-                          </select>
+                        {/* Price Input with Naira */}
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold text-xs">₦</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={item.price}
+                            onChange={(e) => updateItem(item.id, { price: formatPriceString(e.target.value) })}
+                            placeholder="Price in ₦"
+                            onFocus={(e) => e.target.select()}
+                            className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
+                          />
                         </div>
+                      </div>
+                    </div>
 
-                        {/* Multi-Color Swatch Selector with Tap-to-Toggle and Color Wheel */}
-                        {item.category !== 'accessories' && (
-                          <div className="space-y-1.5 pt-1">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5 flex-wrap text-xs font-mono-luxury">
-                                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
-                                  {item.selectedColors.length > 0 ? `Colors (${item.selectedColors.length}):` : 'Color:'}
-                                </span>
-                                {item.selectedColors.length === 0 ? (
-                                  <span className="text-[11px] font-bold text-[var(--text-muted)] italic">
-                                    As Pictured (Unique Print / Single Colorway)
-                                  </span>
-                                ) : (
-                                  <div className="flex items-center gap-1 flex-wrap">
-                                    {item.selectedColors.map((sc, scIdx) => (
-                                      <span
-                                        key={scIdx}
-                                        className="font-bold text-[var(--text-primary)] text-[11px] inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)]"
-                                      >
-                                        <span
-                                          className="inline-block h-2.5 w-2.5 rounded-full border border-white/20 shadow-sm shrink-0"
-                                          style={{
-                                            background: sc.name.toLowerCase().includes('multi')
-                                              ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
-                                              : sc.hex
-                                          }}
-                                        />
-                                        <span>{sc.name}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => toggleItemColor(item.id, sc)}
-                                          className="text-[var(--text-muted)] hover:text-rose-400 ml-0.5 text-xs font-bold cursor-pointer"
-                                        >
-                                          ×
-                                        </button>
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                    {/* Category & Department (Men/Women/Unisex) Row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono-luxury">
+                      
+                      {/* Category Dropdown */}
+                      <select
+                        value={item.subCategory}
+                        onChange={(e) => {
+                          const subId = e.target.value;
+                          const matched = ALL_CATEGORY_OPTIONS.find(c => c.id === subId);
+                          if (matched) {
+                            updateItem(item.id, {
+                              subCategory: subId,
+                              category: matched.generalCat,
+                              genderTarget: item.genderTarget || matched.dept,
+                            });
+                          }
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none font-bold cursor-pointer"
+                      >
+                        {availableCategories.map(c => (
+                          <option key={c.id} value={c.id}>{c.label}</option>
+                        ))}
+                      </select>
 
-                              <button
-                                type="button"
-                                onClick={() => updateItem(item.id, {
-                                  isCustomColorOpen: !item.isCustomColorOpen,
-                                  customColorText: ''
-                                })}
-                                className="text-[10px] text-[var(--gold-accent)] hover:underline font-bold flex items-center gap-1 cursor-pointer shrink-0"
-                              >
-                                <Plus className="h-3 w-3" />
-                                <span>{item.isCustomColorOpen ? 'Close custom' : '+ Custom'}</span>
-                              </button>
-                            </div>
+                      {/* Gender Target 3-Way Pill */}
+                      <div className="flex items-center gap-1 p-0.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                        {(['unisex', 'male', 'female'] as GenderTarget[]).map((gender) => (
+                          <button
+                            key={gender}
+                            type="button"
+                            onClick={() => updateItem(item.id, { genderTarget: gender })}
+                            className={`flex-1 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                              item.genderTarget === gender
+                                ? 'bg-[var(--gold-accent)] text-black shadow-sm'
+                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                            }`}
+                          >
+                            {gender === 'male' ? 'Men' : gender === 'female' ? 'Women' : 'Unisex'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                            {/* Circular Multi-Select Swatches */}
-                            <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
-                              {POPULAR_SWATCHES.map(c => {
-                                const isSelected = item.selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
-                                const isSwatchMulti = c.name.toLowerCase().includes('multi');
-                                return (
-                                  <button
-                                    key={c.name}
-                                    type="button"
-                                    title={c.name}
-                                    onClick={() => toggleItemColor(item.id, c)}
-                                    className={`h-6 w-6 rounded-full shrink-0 transition-all cursor-pointer relative flex items-center justify-center ${
-                                      isSelected
-                                        ? 'ring-2 ring-[var(--gold-accent)] ring-offset-2 ring-offset-black scale-110 shadow-md'
-                                        : 'hover:scale-105 border border-white/20 opacity-60 hover:opacity-100'
-                                    }`}
-                                    style={{
-                                      background: isSwatchMulti
-                                        ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
-                                        : c.hex
-                                    }}
+                    {/* Multi-Color Swatches (Apparel & Footwear only) */}
+                    {item.category !== 'accessories' && (
+                      <div className="space-y-1.5 pt-0.5">
+                        <div className="flex items-center justify-between text-xs font-mono-luxury">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
+                              Color:
+                            </span>
+                            {item.selectedColors.length === 0 ? (
+                              <span className="text-[10px] text-[var(--text-muted)] italic font-bold">
+                                As Pictured (Single / Unique)
+                              </span>
+                            ) : (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {item.selectedColors.map((sc, scIdx) => (
+                                  <span
+                                    key={scIdx}
+                                    className="font-bold text-[var(--text-primary)] text-[10px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)]"
                                   >
-                                    {isSelected && (
-                                      <Check className={`h-3 w-3 drop-shadow stroke-[3] ${c.name === 'White' || c.name === 'Off-White / Cream' ? 'text-black' : 'text-white'}`} />
-                                    )}
-                                  </button>
-                                );
-                              })}
-
-                              {/* Native Visual Color Wheel Swatch */}
-                              <label
-                                title="Pick any custom shade wheel"
-                                className="relative h-6 w-6 rounded-full shrink-0 border border-white/30 cursor-pointer overflow-hidden flex items-center justify-center hover:scale-110 transition-all shadow-sm group"
-                                style={{
-                                  background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'
-                                }}
-                              >
-                                <input
-                                  type="color"
-                                  value={item.customColorHex || '#2563eb'}
-                                  onChange={(e) => {
-                                    const hex = e.target.value;
-                                    updateItem(item.id, {
-                                      customColorHex: hex,
-                                      isCustomColorOpen: true
-                                    });
-                                  }}
-                                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                />
-                                <Palette className="h-3 w-3 text-white drop-shadow pointer-events-none group-hover:scale-110" />
-                              </label>
-                            </div>
-
-                            {/* Inline Custom Color Name Input */}
-                            {item.isCustomColorOpen && (
-                              <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/40 animate-fadeIn">
-                                <input
-                                  type="color"
-                                  value={item.customColorHex || '#2563eb'}
-                                  onChange={(e) => updateItem(item.id, { customColorHex: e.target.value })}
-                                  className="h-6 w-6 rounded-md border border-white/20 cursor-pointer bg-transparent shrink-0"
-                                />
-                                <input
-                                  type="text"
-                                  value={item.customColorText || ''}
-                                  onChange={(e) => updateItem(item.id, { customColorText: e.target.value })}
-                                  placeholder="Color name (e.g. Sage Green, Black & White, Tie Dye)"
-                                  className="w-full px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
-                                  autoFocus
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => addCustomColorToItem(item.id, item.customColorText || 'Custom Shade', item.customColorHex || '#2563eb')}
-                                  className="px-3 py-1 rounded-lg bg-[var(--gold-accent)] text-black text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer"
-                                >
-                                  Add Color
-                                </button>
+                                    <span
+                                      className="inline-block h-2 w-2 rounded-full border border-white/20"
+                                      style={{
+                                        background: sc.name.toLowerCase().includes('multi')
+                                          ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                                          : sc.hex
+                                      }}
+                                    />
+                                    <span>{sc.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleItemColor(item.id, sc)}
+                                      className="text-[var(--text-muted)] hover:text-rose-400 text-[10px] font-bold cursor-pointer ml-0.5"
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
                               </div>
                             )}
                           </div>
-                        )}
 
-                        {/* Sizing & Stock Boxes: Zero Stuck Issues with Backspace Erase */}
-                        <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2 pt-2">
-                          <div className="flex items-center justify-between text-xs font-mono-luxury">
-                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
-                              {item.category === 'accessories' ? 'Stock Quantity' : item.category === 'footwear' ? 'EU Shoe Sizing (39-46)' : 'Ready-to-Wear Sizes'}
-                            </span>
-                            <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                              {totalItemStock} in Stock
-                            </span>
-                          </div>
-
-                          {item.category === 'accessories' ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-[var(--text-primary)]">Total Stock:</span>
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                value={item.sizeStock['One Size'] === '' ? '' : (item.sizeStock['One Size'] ?? 20)}
-                                placeholder="0"
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) => setItemSizeQty(item.id, 'One Size', e.target.value)}
-                                className="w-24 px-3 py-1 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] text-center focus:outline-none focus:border-[var(--gold-accent)] font-mono-luxury"
-                              />
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-2">
-                              {sizeList.map(sz => {
-                                const isEnabled = item.sizeStock[sz] !== undefined;
-                                const qty = item.sizeStock[sz];
-
-                                return (
-                                  <div
-                                    key={sz}
-                                    className={`p-2 rounded-xl border text-center transition-all ${
-                                      isEnabled
-                                        ? 'bg-[var(--bg-primary)] border-[var(--gold-accent)] shadow-sm'
-                                        : 'bg-[var(--bg-primary)]/40 border-[var(--border-subtle)] opacity-40'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between mb-1">
-                                      <span className="text-xs font-bold text-[var(--text-primary)]">{sz}</span>
-                                      <input
-                                        type="checkbox"
-                                        checked={isEnabled}
-                                        onChange={() => toggleItemSize(item.id, sz)}
-                                        className="h-3.5 w-3.5 rounded text-[var(--gold-accent)] cursor-pointer"
-                                      />
-                                    </div>
-                                    {isEnabled && (
-                                      <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={qty === '' ? '' : (qty ?? 0)}
-                                        placeholder="0"
-                                        onFocus={(e) => e.target.select()}
-                                        onChange={(e) => setItemSizeQty(item.id, sz, e.target.value)}
-                                        className="w-full text-center py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] font-mono-luxury"
-                                      />
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => updateItem(item.id, {
+                              isCustomColorOpen: !item.isCustomColorOpen,
+                              customColorText: ''
+                            })}
+                            className="text-[10px] text-[var(--gold-accent)] hover:underline font-bold flex items-center gap-0.5 cursor-pointer shrink-0"
+                          >
+                            <Plus className="h-2.5 w-2.5" />
+                            <span>{item.isCustomColorOpen ? 'Close' : 'Custom'}</span>
+                          </button>
                         </div>
 
+                        {/* Swatches Horizontal Row */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar">
+                          {POPULAR_SWATCHES.map(c => {
+                            const isSelected = item.selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
+                            const isSwatchMulti = c.name.toLowerCase().includes('multi');
+                            return (
+                              <button
+                                key={c.name}
+                                type="button"
+                                title={c.name}
+                                onClick={() => toggleItemColor(item.id, c)}
+                                className={`h-5 w-5 rounded-full shrink-0 transition-all cursor-pointer relative flex items-center justify-center ${
+                                  isSelected
+                                    ? 'ring-2 ring-[var(--gold-accent)] ring-offset-1 ring-offset-black scale-110 shadow-sm'
+                                    : 'hover:scale-105 border border-white/20 opacity-60 hover:opacity-100'
+                                }`}
+                                style={{
+                                  background: isSwatchMulti
+                                    ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                                    : c.hex
+                                }}
+                              >
+                                {isSelected && (
+                                  <Check className={`h-2.5 w-2.5 stroke-[3] ${c.name === 'White' || c.name === 'Off-White / Cream' ? 'text-black' : 'text-white'}`} />
+                                )}
+                              </button>
+                            );
+                          })}
+
+                          {/* Native Visual Color Wheel Swatch */}
+                          <label
+                            title="Pick custom color"
+                            className="relative h-5 w-5 rounded-full shrink-0 border border-white/30 cursor-pointer overflow-hidden flex items-center justify-center shadow-sm"
+                            style={{
+                              background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'
+                            }}
+                          >
+                            <input
+                              type="color"
+                              value={item.customColorHex || '#2563eb'}
+                              onChange={(e) => {
+                                const hex = e.target.value;
+                                updateItem(item.id, {
+                                  customColorHex: hex,
+                                  isCustomColorOpen: true
+                                });
+                              }}
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                            />
+                            <Palette className="h-2.5 w-2.5 text-white drop-shadow pointer-events-none" />
+                          </label>
+                        </div>
+
+                        {/* Inline Custom Color Name Input */}
+                        {item.isCustomColorOpen && (
+                          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/40 animate-fadeIn">
+                            <input
+                              type="color"
+                              value={item.customColorHex || '#2563eb'}
+                              onChange={(e) => updateItem(item.id, { customColorHex: e.target.value })}
+                              className="h-5 w-5 rounded border border-white/20 cursor-pointer bg-transparent shrink-0"
+                            />
+                            <input
+                              type="text"
+                              value={item.customColorText || ''}
+                              onChange={(e) => updateItem(item.id, { customColorText: e.target.value })}
+                              placeholder="Color name (e.g. Olive, Royal Blue)"
+                              className="w-full px-2 py-0.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => addCustomColorToItem(item.id, item.customColorText || 'Custom Shade', item.customColorHex || '#2563eb')}
+                              className="px-2.5 py-1 rounded-lg bg-[var(--gold-accent)] text-black text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        )}
                       </div>
+                    )}
+
+                    {/* Sizing & Stock Selector: Ultra-Clean Compact Chips */}
+                    <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
+                      <div className="flex items-center justify-between text-xs font-mono-luxury">
+                        <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
+                          {item.category === 'accessories' ? 'Stock Units' : item.category === 'footwear' ? 'EU Sizes (Tap to toggle)' : 'Sizes (Tap to toggle)'}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                          {totalItemStock} in Stock
+                        </span>
+                      </div>
+
+                      {item.category === 'accessories' ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[var(--text-primary)]">Total Stock:</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={item.sizeStock['One Size'] === '' ? '' : (item.sizeStock['One Size'] ?? 20)}
+                            placeholder="20"
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) => setItemSizeQty(item.id, 'One Size', e.target.value)}
+                            className="w-20 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] text-center focus:outline-none focus:border-[var(--gold-accent)] font-mono-luxury"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {sizeList.map(sz => {
+                            const isEnabled = item.sizeStock[sz] !== undefined;
+                            const qty = item.sizeStock[sz];
+
+                            return (
+                              <div
+                                key={sz}
+                                className={`flex items-center rounded-lg border transition-all ${
+                                  isEnabled
+                                    ? 'bg-[var(--bg-primary)] border-[var(--gold-accent)] shadow-sm'
+                                    : 'bg-[var(--bg-primary)]/40 border-[var(--border-subtle)] opacity-50'
+                                }`}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => toggleItemSize(item.id, sz)}
+                                  className={`px-2 py-1 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                    isEnabled ? 'text-[var(--gold-accent)]' : 'text-[var(--text-muted)]'
+                                  }`}
+                                >
+                                  <span>{sz}</span>
+                                  {isEnabled && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                                </button>
+
+                                {isEnabled && (
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={qty === '' ? '' : (qty ?? 0)}
+                                    placeholder="0"
+                                    onFocus={(e) => e.target.select()}
+                                    onChange={(e) => setItemSizeQty(item.id, sz, e.target.value)}
+                                    className="w-10 text-center py-1 pr-1 bg-transparent border-l border-[var(--border-subtle)] text-[11px] font-bold text-[var(--text-primary)] focus:outline-none font-mono-luxury"
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
+
                   </div>
                 );
               })}
             </div>
 
             {/* STICKY BOTTOM ACTION BAR */}
-            <div className="sticky bottom-6 z-20 p-4 sm:p-5 rounded-3xl surface-card border border-[var(--border-subtle)] shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-xl bg-[var(--bg-primary)]/90">
-              <div>
-                <span className="font-editorial text-lg font-bold text-[var(--text-primary)] block">
-                  Ready to Publish {items.length} {items.length === 1 ? 'Piece' : 'Pieces'}
+            <div className="sticky bottom-4 z-20 p-3.5 sm:p-4 rounded-2xl surface-card border border-[var(--border-subtle)] shadow-2xl flex items-center justify-between gap-3 backdrop-blur-xl bg-[var(--bg-primary)]/90">
+              <div className="min-w-0">
+                <span className="font-editorial text-sm sm:text-base font-bold text-[var(--text-primary)] truncate block">
+                  {items.length} {items.length === 1 ? 'Piece' : 'Pieces'} in Drop
                 </span>
-                <span className="text-xs font-mono-luxury text-emerald-400 font-bold flex items-center gap-1">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  <span>Instant live synchronization to Veyra catalog</span>
+                <span className="text-[10px] font-mono-luxury text-emerald-400 font-bold flex items-center gap-1 truncate">
+                  <ShieldCheck className="h-3 w-3 shrink-0" />
+                  <span>Instant live publish</span>
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-3 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] font-bold hover:border-[var(--gold-accent)] cursor-pointer"
+                  className="px-3 py-2 rounded-xl surface-card border border-[var(--border-subtle)] text-[11px] font-mono-luxury text-[var(--text-primary)] font-bold hover:border-[var(--gold-accent)] cursor-pointer"
                 >
-                  + Add Photos
+                  + Photos
                 </button>
 
                 <button
                   type="button"
                   onClick={handlePublishAll}
                   disabled={isSubmitting}
-                  className="flex-1 sm:flex-initial px-8 py-3.5 rounded-full bg-[var(--gold-accent)] text-black font-mono-luxury font-bold text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[var(--gold-accent)] text-black font-mono-luxury font-bold text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Publishing Batch ({publishProgress?.current || 1}/{publishProgress?.total || items.length})...</span>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>({publishProgress?.current || 1}/{publishProgress?.total || items.length})...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-4 w-4 fill-black" />
-                      <span>Publish All ({items.length} Pieces)</span>
+                      <Sparkles className="h-3.5 w-3.5 fill-black" />
+                      <span>Publish All</span>
                     </>
                   )}
                 </button>
