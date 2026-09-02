@@ -16,13 +16,25 @@ const editorialSlides = [
   {
     image: '/images/products/BlackAgbada.jpg',
     title: 'Bespoke Nigerian Couture',
-    subtitle: 'Hand-tailored Senator Kaftans, Royal Agbada robes, and silk Boubous from top verified Lagos ateliers.',
-    tag: 'Luxury Native Wear'
+    subtitle: 'Hand-tailored Senator Kaftans, Royal Agbada robes, and tailored native wear from top Lagos ateliers.',
+    tag: 'Men & Unisex Native'
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1200&auto=format&fit=crop',
+    title: 'Artisanal Silk Boubous & Adire Gowns',
+    subtitle: 'Flowing silk Bubu dresses, hand-dyed Abeokuta Adire robes, and vibrant African heritage maxis.',
+    tag: "Women's Couture & Silks"
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=1200&auto=format&fit=crop',
+    title: 'Contemporary Dresses & Co-ord Sets',
+    subtitle: 'Tailored two-piece co-ord sets, evening gowns, pleated skirts, and chic ready-to-wear silhouettes.',
+    tag: "Women's Ready-to-Wear"
   },
   {
     image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop',
     title: 'Fine Jewelry & Luxury Watches',
-    subtitle: 'Solid gold Cuban links, iced pendants, custom signet rings, and luxury chronographs.',
+    subtitle: 'Solid gold Cuban links, iced pendants, custom signet rings, layered chains, and luxury timepieces.',
     tag: 'Jewelry & Timepieces'
   },
   {
@@ -30,6 +42,12 @@ const editorialSlides = [
     title: 'Designer Backpacks & Leather Totes',
     subtitle: 'Full-grain structured leather backpacks, crossbodies, travel duffels, and everyday luxury totes.',
     tag: 'Backpacks & Bags'
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=1200&auto=format&fit=crop',
+    title: 'Designer Heels, Mules & Sandals',
+    subtitle: 'Statement block heels, handcrafted leather mules, and elegant strappy sandals for every occasion.',
+    tag: "Women's Heels & Mules"
   },
   {
     image: '/images/products/UnisexSlides.jpg',
