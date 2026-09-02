@@ -147,8 +147,25 @@ export default function MobileVendorAtelier({
       {/* 3. Store Identity & Contacts */}
       <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm text-xs font-mono-luxury">
         <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-          1. Brand Identity & Contacts
+          1. Brand Identity &amp; Specialty
         </span>
+
+        <div>
+          <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
+            Store Specialty &amp; Department
+          </label>
+          <select
+            disabled={isFieldsDisabled}
+            value={form.specialty || 'multi_department'}
+            onChange={(e) => setForm({ ...form, specialty: e.target.value })}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <option value="jewelry">Jewelry, Watches &amp; Luxury Accessories</option>
+            <option value="footwear">Footwear &amp; Slides Atelier</option>
+            <option value="apparel">Clothing &amp; Streetwear Boutique</option>
+            <option value="multi_department">Multi-Department Boutique</option>
+          </select>
+        </div>
 
         <div>
           <label className="block text-[var(--text-secondary)] uppercase mb-1 font-bold">
