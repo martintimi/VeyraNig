@@ -61,6 +61,7 @@ export default function VendorPortalLayout({
             approvalStatus: verified ? 'approved' : (v.approvalStatus || 'pending')
           });
           const normalizedType = isBoutiqueVendor(v) ? 'boutique_seller' : 'fashion_designer';
+          const spec = v.specialty || v.vendorSpecialty || (normalizedType === 'fashion_designer' ? 'apparel' : 'multi_department');
           setVendorProfile({
             brandName: v.brandName || v.brand_name || vendorProfile.brandName || 'My Brand',
             designerName: v.designerName || v.designer_name || v.contact_person || vendorProfile.designerName || 'Manager',
@@ -69,6 +70,8 @@ export default function VendorPortalLayout({
             phone: v.phone || vendorProfile.phone,
             location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || 'Lagos, Nigeria',
             vendorType: normalizedType,
+            specialty: spec,
+            vendorSpecialty: spec,
             bankName: v.bankName || v.bank_name || vendorProfile.bankName,
             accountNumber: v.accountNumber || v.account_number || vendorProfile.accountNumber,
             accountName: v.accountName || v.account_name || vendorProfile.accountName,

@@ -12,14 +12,7 @@ import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import MobileVendorAtelier from '@/components/vendor/MobileVendorAtelier';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
-
-const NIGERIAN_STATES = [
-  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
-  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT - Abuja', 'Gombe',
-  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
-  'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
-  'Taraba', 'Yobe', 'Zamfara'
-];
+import { NIGERIAN_STATES, getCitiesForState } from '@/lib/data/nigeriaLocations';
 
 // Vector App Logos
 const InstagramLogo = () => (
@@ -441,45 +434,39 @@ export default function VendorAtelierProfilePage() {
             </div>
           </div>
 
-          {/* 2. Store Location & Delivery Zone Rates */}
+          {/* 2. Store Location & Automated Logistics */}
           <div className="space-y-4 pt-2 border-t border-[var(--border-subtle)]">
             <div>
               <div className="flex items-center gap-2">
                 <Truck className="h-4 w-4 text-[var(--gold-accent)]" />
                 <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold">
-                  2. Store Location & Delivery Zone Rates
+                  2. Store Location &amp; Dispatch Logistics
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-secondary)] font-mono-luxury mt-0.5">
-                Set where your boutique/workshop is located so checkout calculates accurate delivery fees for customers.
+                Select your State first, then your City/Town for automated Shipbubble courier pickups and customer deliveries.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              {/* 1. STORE STATE (FIRST) */}
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  Store City / Town
-                </label>
-                <input
-                  type="text"
-                  required
-                  disabled={isFieldsDisabled}
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  placeholder="e.g. Ikeja, Yaba, Ibadan, etc."
-                  className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  Store State
+                  1. Store State <strong className="text-rose-400">*</strong>
                 </label>
                 <select
                   required
                   disabled={isFieldsDisabled}
                   value={form.state}
-                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  onChange={(e) => {
+                    const newState = e.target.value;
+                    const availableCities = getCitiesForState(newState);
+                    setForm({
+                      ...form,
+                      state: newState,
+                      city: availableCities.length > 0 ? availableCities[0] : ''
+                    });
+                  }}
                   className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <option value="">-- Select State --</option>
@@ -489,9 +476,41 @@ export default function VendorAtelierProfilePage() {
                 </select>
               </div>
 
+              {/* 2. STORE CITY / TOWN (SECOND, DYNAMIC) */}
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
-                  Dispatches In
+                  2. Store City / Town <strong className="text-rose-400">*</strong>
+                </label>
+                {form.state && getCitiesForState(form.state).length > 0 ? (
+                  <select
+                    required
+                    disabled={isFieldsDisabled}
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <option value="">-- Select City / Town --</option>
+                    {getCitiesForState(form.state).map((ct) => (
+                      <option key={ct} value={ct}>{ct}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    disabled={isFieldsDisabled}
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    placeholder={form.state ? 'Enter your city / area' : 'Select state first'}
+                    className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                  />
+                )}
+              </div>
+
+              {/* 3. DISPATCHES IN */}
+              <div>
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
+                  3. Dispatches In
                 </label>
                 <select
                   disabled={isFieldsDisabled}
