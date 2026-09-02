@@ -3,11 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import {
-  Gem, Footprints, Shirt, ArrowRight,
-  Eye, ChevronRight, ChevronLeft,
-  Compass, Play, Pause, X
-} from 'lucide-react';
+import { Gem, Footprints, Shirt } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 
 interface EditorialSlide {
@@ -129,7 +125,6 @@ export default function AmbientScreenSaver() {
   const { allProducts } = useStore();
   const [isIdle, setIsIdle] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
   // Slides state: initialized with fallback, replaced 100% by real products as soon as loaded
   const [slides, setSlides] = useState<EditorialSlide[]>(CURATED_EDITORIAL_SLIDES);
@@ -245,37 +240,19 @@ export default function AmbientScreenSaver() {
 
   // Auto-advance slides when idle
   useEffect(() => {
-    if (!isIdle || isPaused) return;
+    if (!isIdle) return;
 
     const slideTimer = setInterval(() => {
       setCurrentSlideIndex(prev => (prev + 1) % slides.length);
     }, SLIDE_DURATION_MS);
 
     return () => clearInterval(slideTimer);
-  }, [isIdle, isPaused, slides.length]);
+  }, [isIdle, slides.length]);
 
-  // Dismiss screensaver and optionally navigate to product
-  const handleWakeUp = (url?: string) => {
+  // Dismiss screensaver on any movement/touch
+  const handleWakeUp = () => {
     setIsIdle(false);
     resetIdleTimer();
-    if (url) {
-      router.push(url);
-    }
-  };
-
-  const handleNextSlide = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentSlideIndex(prev => (prev + 1) % slides.length);
-  };
-
-  const handlePrevSlide = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentSlideIndex(prev => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const togglePause = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsPaused(prev => !prev);
   };
 
   const activeSlide = slides[currentSlideIndex] || slides[0];
@@ -361,65 +338,11 @@ export default function AmbientScreenSaver() {
             </span>
           </div>
 
-          {/* Action & Controller Buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleWakeUp(activeSlide.linkUrl);
-              }}
-              className="px-6 py-3.5 rounded-2xl bg-[var(--gold-accent)] hover:bg-[#e5c158] text-black font-mono-luxury text-xs uppercase font-bold tracking-wider transition-all transform hover:scale-105 shadow-2xl flex items-center gap-2 cursor-pointer"
-            >
-              <Eye className="h-4 w-4" />
-              <span>Shop This Piece</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleWakeUp('/shop');
-              }}
-              className="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white font-mono-luxury text-xs uppercase font-bold tracking-wider transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Compass className="h-4 w-4 text-[var(--gold-accent)]" />
-              <span>Explore All Drops</span>
-            </button>
-
-            {/* Slide Arrows */}
-            <div className="flex items-center gap-1.5 ml-auto">
-              <button
-                type="button"
-                onClick={handlePrevSlide}
-                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all cursor-pointer"
-                title="Previous Drop"
-                aria-label="Previous Slide"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={togglePause}
-                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-[var(--gold-accent)] transition-all cursor-pointer"
-                title={isPaused ? "Play" : "Pause"}
-                aria-label={isPaused ? "Play" : "Pause"}
-              >
-                {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNextSlide}
-                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all cursor-pointer"
-                title="Next Drop"
-                aria-label="Next Slide"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+          {/* Subtle Resume Hint */}
+          <div className="pt-2">
+            <p className="text-[11px] font-mono-luxury text-white/50 tracking-wider">
+              Touch screen or move mouse anywhere to resume session
+            </p>
           </div>
 
         </div>
