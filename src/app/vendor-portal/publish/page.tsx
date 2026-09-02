@@ -384,7 +384,7 @@ export default function PublishGarmentPage() {
         image_url: finalImageUrl,
         description: description.trim() || name.trim(),
         tags,
-        colors: category === 'accessories' ? ['Standard'] : selectedColors.map(c => c.name),
+        colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
         sizes: enabledSizes,
         sizeStock,
         stockQuantity: totalStockCount,

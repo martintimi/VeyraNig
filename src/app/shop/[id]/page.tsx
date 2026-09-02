@@ -240,41 +240,26 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* REAL VENDOR DELIVERY RATES BREAKDOWN CARD (PLACED DIRECTLY UNDER PRODUCT IMAGE) */}
-          <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 text-xs font-mono-luxury shadow-md">
+          {/* NATIONWIDE COURIER & MOTOR PARK DELIVERY INFO */}
+          <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 text-xs font-mono-luxury shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-[var(--text-primary)]">
                 <Truck className="h-4 w-4 text-[var(--gold-accent)]" />
-                <span className="uppercase tracking-wider">Vendor Delivery Rates</span>
+                <span className="uppercase tracking-wider">Nationwide Courier &amp; Waybill</span>
               </div>
               <span className="text-[10px] text-emerald-400 font-bold">
                 Dispatches in {product.dispatchDays || '1-2 business days'}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-[11px]">
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1">
-                <div className="text-[var(--text-secondary)]">Same City Delivery:</div>
-                <div className="font-bold text-[var(--gold-accent)] text-sm">₦1,500</div>
-                <div className="text-[9px] text-[var(--text-muted)]">Local town courier</div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1">
-                <div className="text-[var(--text-secondary)]">Doorstep Courier:</div>
-                <div className="font-bold text-[var(--gold-accent)] text-sm">₦4,500</div>
-                <div className="text-[9px] text-[var(--text-muted)]">Prepaid at checkout</div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1">
-                <div className="text-[var(--text-secondary)]">Motor Park Waybill:</div>
-                <div className="font-bold text-emerald-400 text-sm">Pay Driver at Park</div>
-                <div className="text-[9px] text-[var(--text-muted)]">~₦1,500–₦2,500 on pickup</div>
-              </div>
-            </div>
-
-            <p className="text-[10px] text-[var(--text-secondary)] pt-1">
-              Dispatched directly from <strong className="text-[var(--text-primary)]">{product.vendorCity ? `${product.vendorCity}, ` : ''}{product.vendorState}</strong> by {product.vendorName} via verified dispatch riders and park waybills.
+            <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
+              Live courier delivery rates calculated dynamically at checkout based on your delivery address. Verified doorstep delivery (GIG Logistics, Fez, Red Star) and Motor Park Waybills supported nationwide.
             </p>
+
+            <div className="flex items-center gap-2 text-xs text-[var(--gold-accent)] font-medium pt-1">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span>Dispatched directly from <strong className="text-[var(--text-primary)]">{product.vendorCity ? `${product.vendorCity}, ` : ''}{product.vendorState}</strong></span>
+            </div>
           </div>
 
         </div>
@@ -355,7 +340,7 @@ export default function ProductDetailPage() {
             <div className="p-5 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
               <div className="flex items-center justify-between text-xs font-mono-luxury">
                 <span className="text-[var(--text-secondary)] uppercase font-bold">
-                  Select Colorway: <strong className="text-[var(--text-primary)]">{selectedColor?.name || 'Standard'}</strong>
+                  Select Color: <strong className="text-[var(--text-primary)]">{selectedColor?.name || 'Standard'}</strong>
                 </span>
                 <span className="text-[11px] text-[var(--gold-accent)] font-bold">
                   {product.colors.length} {product.colors.length === 1 ? 'Option' : 'Options'}
@@ -364,12 +349,14 @@ export default function ProductDetailPage() {
 
               <div className="flex items-center gap-3 pt-1 flex-wrap">
                 {product.colors.map((c: any, index: number) => {
-                  const isSelected = selectedColor?.name === c.name || selectedColor?.hex === c.hex;
+                  const colorName = typeof c === 'string' ? c : (c.name || 'Standard');
+                  const colorHex = typeof c === 'object' && c?.hex ? c.hex : '#111111';
+                  const isSelected = selectedColor?.name === colorName || selectedColor?.hex === colorHex;
                   return (
                     <button
-                      key={`color-${c.name || index}`}
+                      key={`color-${colorName}-${index}`}
                       type="button"
-                      onClick={() => setSelectedColor(c)}
+                      onClick={() => setSelectedColor(typeof c === 'object' ? c : { name: colorName, hex: colorHex })}
                       className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md border-transparent ring-2 ring-[var(--gold-accent)]'
@@ -378,9 +365,9 @@ export default function ProductDetailPage() {
                     >
                       <span
                         className="h-4 w-4 rounded-full border border-white/30 shadow-sm shrink-0"
-                        style={{ backgroundColor: c.hex || '#111111' }}
+                        style={{ backgroundColor: colorHex }}
                       />
-                      <span className="text-xs font-mono-luxury font-bold">{c.name}</span>
+                      <span className="text-xs font-mono-luxury font-bold">{colorName}</span>
                     </button>
                   );
                 })}
@@ -415,10 +402,10 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex flex-wrap gap-2.5 font-mono-luxury text-xs pt-1">
-                {(product.sizes || ['S', 'M', 'L', 'XL', 'XXL']).map((size: string) => {
+                {(Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : (product.sizeStock && Object.keys(product.sizeStock).length > 0 ? Object.keys(product.sizeStock) : ['M', 'L', 'XL'])).map((size: string) => {
                   const isChosen = size === selectedSize;
                   const szStock = product.sizeStock?.[size];
-                  const szOutOfStock = szStock === 0;
+                  const szOutOfStock = typeof szStock === 'object' ? szStock?.enabled === false || Number(szStock?.quantity) === 0 : szStock === 0;
 
                   return (
                     <button
@@ -428,10 +415,10 @@ export default function ProductDetailPage() {
                       onClick={() => setSelectedSize(size)}
                       className={`min-w-[48px] px-4 py-3 rounded-2xl border transition-all text-center flex items-center justify-center font-bold cursor-pointer ${
                         szOutOfStock
-                          ? 'opacity-40 line-through cursor-not-allowed bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                          ? 'opacity-30 line-through cursor-not-allowed bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
                           : isChosen
-                          ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md border-transparent ring-2 ring-[var(--gold-accent)]'
-                          : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)]'
+                          ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md font-extrabold'
+                          : 'surface-card border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-hover)]'
                       }`}
                     >
                       <span>{size}</span>

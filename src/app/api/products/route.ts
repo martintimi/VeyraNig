@@ -115,6 +115,104 @@ export async function GET(request: Request) {
         : getSmartFallbackImage(p.name, p.category);
 
       const isAccessory = p.category === 'accessories';
+
+      const COLOR_HEX_MAP: Record<string, string> = {
+        black: '#111111',
+        'onyx black': '#111111',
+        'jet black': '#0a0a0a',
+        white: '#ffffff',
+        'pure white': '#ffffff',
+        'off white': '#f5f5f5',
+        grey: '#6b7280',
+        gray: '#6b7280',
+        'charcoal grey': '#374151',
+        'charcoal gray': '#374151',
+        'light grey': '#d1d5db',
+        'light gray': '#d1d5db',
+        navy: '#1e3a8a',
+        'navy blue': '#1e3a8a',
+        'royal blue': '#1d4ed8',
+        'sky blue': '#38bdf8',
+        blue: '#2563eb',
+        red: '#dc2626',
+        'crimson red': '#991b1b',
+        green: '#16a34a',
+        'forest green': '#14532d',
+        'emerald green': '#059669',
+        olive: '#556b2f',
+        'olive green': '#556b2f',
+        brown: '#78350f',
+        'chocolate brown': '#451a03',
+        beige: '#d4b996',
+        tan: '#d2b48c',
+        cream: '#fdfbf7',
+        gold: '#d97706',
+        yellow: '#eab308',
+        orange: '#ea580c',
+        purple: '#7e22ce',
+        pink: '#ec4899',
+        burgundy: '#800020',
+        wine: '#722f37',
+        maroon: '#800000',
+        khaki: '#c3b091',
+        teal: '#0d9488',
+        turquoise: '#06b6d4',
+        silver: '#e5e7eb',
+      };
+
+      let normalizedColors: { name: string; hex: string }[] = [];
+      if (Array.isArray(p.colors) && p.colors.length > 0) {
+        normalizedColors = p.colors.map((c: any) => {
+          if (typeof c === 'string') {
+            const trimmed = c.trim();
+            if (trimmed.startsWith('#')) {
+              const hexLower = trimmed.toLowerCase();
+              const foundKey = Object.keys(COLOR_HEX_MAP).find(k => COLOR_HEX_MAP[k] === hexLower);
+              const name = foundKey ? foundKey.charAt(0).toUpperCase() + foundKey.slice(1) : trimmed;
+              return { name, hex: trimmed };
+            }
+            const lower = trimmed.toLowerCase();
+            const hex = COLOR_HEX_MAP[lower] || '#111111';
+            const formattedName = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+            return { name: formattedName, hex };
+          }
+          if (typeof c === 'object' && c !== null) {
+            const rawName = String(c.name || '').trim();
+            if (rawName && !rawName.toLowerCase().startsWith('colorway')) {
+              const hex = c.hex || COLOR_HEX_MAP[rawName.toLowerCase()] || '#111111';
+              return { name: rawName, hex };
+            }
+            if (c.hex) {
+              const hexLower = String(c.hex).toLowerCase().trim();
+              const foundKey = Object.keys(COLOR_HEX_MAP).find(k => COLOR_HEX_MAP[k] === hexLower);
+              const name = foundKey ? foundKey.charAt(0).toUpperCase() + foundKey.slice(1) : (rawName || 'Standard');
+              return { name, hex: c.hex };
+            }
+            return { name: rawName || 'Standard', hex: '#111111' };
+          }
+          return { name: 'Standard', hex: '#111111' };
+        });
+      }
+
+      if (normalizedColors.length === 0) {
+        normalizedColors = [{ name: 'As Featured', hex: '#111111' }];
+      }
+
+      let resolvedSizes: string[] = ['M', 'L', 'XL'];
+      if (isAccessory) {
+        resolvedSizes = ['One Size'];
+      } else if (Array.isArray(p.sizes) && p.sizes.length > 0) {
+        resolvedSizes = p.sizes;
+      } else if (p.size_stock && typeof p.size_stock === 'object') {
+        const enabled = Object.keys(p.size_stock).filter(sz => {
+          const v = p.size_stock[sz];
+          return typeof v === 'object' ? v?.enabled !== false : Number(v) > 0;
+        });
+        if (enabled.length > 0) {
+          resolvedSizes = enabled;
+        }
+      }
+
       return {
         id: p.id,
         name: p.name,
@@ -126,8 +224,8 @@ export async function GET(request: Request) {
         image_url: resolvedImg,
         description: p.description,
         tags: p.tags || [],
-        colors: isAccessory ? [] : (p.colors || []),
-        sizes: isAccessory ? ['One Size'] : (p.sizes || ['S', 'M', 'L', 'XL']),
+        colors: isAccessory ? [] : normalizedColors,
+        sizes: resolvedSizes,
         sizeStock: isAccessory 
           ? { 'One Size': typeof p.size_stock?.['One Size'] === 'object' ? p.size_stock['One Size'] : { enabled: true, quantity: p.stock_quantity || 20 } }
           : (p.size_stock || {}),

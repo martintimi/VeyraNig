@@ -97,22 +97,106 @@ export async function GET(
       }
     }
 
+    const COLOR_HEX_MAP: Record<string, string> = {
+      black: '#111111',
+      'onyx black': '#111111',
+      'jet black': '#0a0a0a',
+      white: '#ffffff',
+      'pure white': '#ffffff',
+      'off white': '#f5f5f5',
+      grey: '#6b7280',
+      gray: '#6b7280',
+      'charcoal grey': '#374151',
+      'charcoal gray': '#374151',
+      'light grey': '#d1d5db',
+      'light gray': '#d1d5db',
+      navy: '#1e3a8a',
+      'navy blue': '#1e3a8a',
+      'royal blue': '#1d4ed8',
+      'sky blue': '#38bdf8',
+      blue: '#2563eb',
+      red: '#dc2626',
+      'crimson red': '#991b1b',
+      green: '#16a34a',
+      'forest green': '#14532d',
+      'emerald green': '#059669',
+      olive: '#556b2f',
+      'olive green': '#556b2f',
+      brown: '#78350f',
+      'chocolate brown': '#451a03',
+      beige: '#d4b996',
+      tan: '#d2b48c',
+      cream: '#fdfbf7',
+      gold: '#d97706',
+      yellow: '#eab308',
+      orange: '#ea580c',
+      purple: '#7e22ce',
+      pink: '#ec4899',
+      burgundy: '#800020',
+      wine: '#722f37',
+      maroon: '#800000',
+      khaki: '#c3b091',
+      teal: '#0d9488',
+      turquoise: '#06b6d4',
+      silver: '#e5e7eb',
+    };
+
     let normalizedColors: { name: string; hex: string }[] = [];
-    if (Array.isArray(product.colors)) {
-      normalizedColors = product.colors.map((c: any, index: number) => {
+    if (Array.isArray(product.colors) && product.colors.length > 0) {
+      normalizedColors = product.colors.map((c: any) => {
         if (typeof c === 'string') {
-          const colorName = c === '#111111' ? 'Black' : c === '#ffffff' ? 'White' : c === '#6b7280' ? 'Grey' : c === '#1e3a8a' ? 'Navy' : `Colorway ${index + 1}`;
-          return { name: colorName, hex: c };
+          const trimmed = c.trim();
+          if (trimmed.startsWith('#')) {
+            const hexLower = trimmed.toLowerCase();
+            const foundKey = Object.keys(COLOR_HEX_MAP).find(k => COLOR_HEX_MAP[k] === hexLower);
+            const name = foundKey ? foundKey.charAt(0).toUpperCase() + foundKey.slice(1) : trimmed;
+            return { name, hex: trimmed };
+          }
+          const lower = trimmed.toLowerCase();
+          const hex = COLOR_HEX_MAP[lower] || '#111111';
+          const formattedName = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+          return { name: formattedName, hex };
         }
-        return { name: c.name || `Colorway ${index + 1}`, hex: c.hex || '#111111' };
+        if (typeof c === 'object' && c !== null) {
+          const rawName = String(c.name || '').trim();
+          if (rawName && !rawName.toLowerCase().startsWith('colorway')) {
+            const hex = c.hex || COLOR_HEX_MAP[rawName.toLowerCase()] || '#111111';
+            return { name: rawName, hex };
+          }
+          if (c.hex) {
+            const hexLower = String(c.hex).toLowerCase().trim();
+            const foundKey = Object.keys(COLOR_HEX_MAP).find(k => COLOR_HEX_MAP[k] === hexLower);
+            const name = foundKey ? foundKey.charAt(0).toUpperCase() + foundKey.slice(1) : (rawName || 'Standard');
+            return { name, hex: c.hex };
+          }
+          return { name: rawName || 'Standard', hex: '#111111' };
+        }
+        return { name: 'Standard', hex: '#111111' };
       });
     }
 
     if (normalizedColors.length === 0) {
-      normalizedColors = [{ name: 'As Pictured', hex: '#111111' }];
+      normalizedColors = [{ name: 'As Featured', hex: '#111111' }];
     }
 
     const isAccessory = product.category === 'accessories';
+
+    // Strictly resolve vendor-selected sizes
+    let resolvedSizes: string[] = ['M', 'L', 'XL'];
+    if (isAccessory) {
+      resolvedSizes = ['One Size'];
+    } else if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      resolvedSizes = product.sizes;
+    } else if (product.size_stock && typeof product.size_stock === 'object') {
+      const enabled = Object.keys(product.size_stock).filter(sz => {
+        const v = product.size_stock[sz];
+        return typeof v === 'object' ? v?.enabled !== false : Number(v) > 0;
+      });
+      if (enabled.length > 0) {
+        resolvedSizes = enabled;
+      }
+    }
+
     const formattedProduct = {
       id: product.id,
       vendorId: product.vendor_id,
@@ -131,10 +215,10 @@ export async function GET(
       imageUrl: product.image_url || '/images/products/BlackTrapStarHoodie.jpg',
       tags: Array.isArray(product.tags) && product.tags.length > 0 ? product.tags : ['Ready-to-Wear'],
       colors: isAccessory ? [] : normalizedColors,
-      sizes: isAccessory ? ['One Size'] : (Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL', 'XXL']),
+      sizes: resolvedSizes,
       sizeStock: isAccessory 
         ? { 'One Size': typeof product.size_stock?.['One Size'] === 'object' ? product.size_stock['One Size'] : { enabled: true, quantity: product.stock_quantity || 20 } }
-        : (product.size_stock || { S: 10, M: 25, L: 30, XL: 15, XXL: 5 }),
+        : (product.size_stock || {}),
       stockQuantity: product.stock_quantity || 20,
       rating: 5.0,
       reviewCount: 0,

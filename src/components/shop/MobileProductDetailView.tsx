@@ -35,13 +35,24 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   } = useStore();
 
   const isSaved = isInVault(product.id);
+  const isAccessory = product.category === 'accessories';
   const pref = bodyProfile?.preferredSize || 'M';
-  const availableSizes = product.sizes || ['S', 'M', 'L', 'XL', 'XXL'];
+
+  const availableSizes: string[] = isAccessory
+    ? ['One Size']
+    : Array.isArray(product.sizes) && product.sizes.length > 0
+    ? product.sizes
+    : product.sizeStock && typeof product.sizeStock === 'object' && Object.keys(product.sizeStock).length > 0
+    ? Object.keys(product.sizeStock).filter(sz => {
+        const v = product.sizeStock[sz];
+        return typeof v === 'object' ? v?.enabled !== false : Number(v) > 0;
+      })
+    : ['M', 'L', 'XL'];
+
   const defaultSize = availableSizes.includes(pref) ? pref : (availableSizes[0] || 'M');
 
   const [selectedSize, setSelectedSize] = useState(defaultSize);
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
-  const [isRatesOpen, setIsRatesOpen] = useState(true);
+  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'Standard', hex: '#111111' });
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -235,12 +246,12 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
           </p>
         )}
 
-        {/* 4. COLORWAY SELECTOR (Only for apparel and footwear - hidden for accessories) */}
+        {/* 4. COLOR SELECTOR (Only for apparel and footwear - hidden for accessories) */}
         {product.category !== 'accessories' && product.colors && product.colors.length > 0 && (
           <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
             <div className="flex items-center justify-between text-xs font-mono-luxury">
               <span className="text-[var(--text-secondary)] uppercase font-bold">
-                Colorway: <strong className="text-[var(--text-primary)]">{selectedColor?.name || 'Standard'}</strong>
+                Color: <strong className="text-[var(--text-primary)]">{selectedColor?.name || 'Standard'}</strong>
               </span>
               <span className="text-[10px] text-[var(--gold-accent)] font-bold">
                 {product.colors.length} {product.colors.length === 1 ? 'Color' : 'Colors'}
@@ -249,12 +260,14 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
 
             <div className="flex items-center gap-2.5 flex-wrap">
               {product.colors.map((c: any, index: number) => {
-                const isChosen = selectedColor?.name === c.name || selectedColor?.hex === c.hex;
+                const colorName = typeof c === 'string' ? c : (c.name || 'Standard');
+                const colorHex = typeof c === 'object' && c?.hex ? c.hex : '#111111';
+                const isChosen = selectedColor?.name === colorName || selectedColor?.hex === colorHex;
                 return (
                   <button
-                    key={`color-${c.name || index}`}
+                    key={`color-${colorName}-${index}`}
                     type="button"
-                    onClick={() => setSelectedColor(c)}
+                    onClick={() => setSelectedColor(typeof c === 'object' ? c : { name: colorName, hex: colorHex })}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all cursor-pointer ${
                       isChosen
                         ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] ring-2 ring-[var(--gold-accent)] shadow-md'
@@ -263,9 +276,9 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                   >
                     <span
                       className="h-3.5 w-3.5 rounded-full border border-white/30 shrink-0"
-                      style={{ backgroundColor: c.hex || '#111111' }}
+                      style={{ backgroundColor: colorHex }}
                     />
-                    <span className="text-[11px] font-mono-luxury font-bold">{c.name}</span>
+                    <span className="text-[11px] font-mono-luxury font-bold">{colorName}</span>
                   </button>
                 );
               })}
@@ -297,7 +310,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
               {availableSizes.map((size: string) => {
                 const isChosen = size === selectedSize;
                 const szStock = product.sizeStock?.[size];
-                const szOutOfStock = szStock === 0;
+                const szOutOfStock = typeof szStock === 'object' ? szStock?.enabled === false || Number(szStock?.quantity) === 0 : szStock === 0;
 
                 return (
                   <button
@@ -321,47 +334,26 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
           </div>
         )}
 
-        {/* 6. EXPANDABLE VENDOR DELIVERY RATES ACCORDION */}
-        <div className="rounded-2xl surface-card border border-[var(--border-subtle)] overflow-hidden shadow-sm">
-          <button
-            type="button"
-            onClick={() => setIsRatesOpen(!isRatesOpen)}
-            className="w-full p-4 flex items-center justify-between text-xs font-mono-luxury text-[var(--text-primary)] font-bold cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
+        {/* 6. NATIONWIDE COURIER & MOTOR PARK DELIVERY INFO */}
+        <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-2.5 text-xs font-mono-luxury shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-bold text-[var(--text-primary)]">
               <Truck className="h-4 w-4 text-[var(--gold-accent)]" />
-              <span className="uppercase">Vendor Delivery Rates</span>
+              <span className="uppercase tracking-wider">Nationwide Delivery</span>
             </div>
-            {isRatesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
+            <span className="text-[10px] text-emerald-400 font-bold">
+              Dispatches in {product.dispatchDays || '1-2 business days'}
+            </span>
+          </div>
 
-          {isRatesOpen && (
-            <div className="p-4 pt-0 border-t border-[var(--border-subtle)] space-y-2.5 text-xs font-mono-luxury">
-              <div className="grid grid-cols-3 gap-2 text-[10px] pt-3">
-                <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
-                  <div className="text-[var(--text-muted)]">Same City:</div>
-                  <div className="font-bold text-[var(--gold-accent)] text-xs">₦1,500</div>
-                  <div className="text-[8px] text-[var(--text-muted)]">Local town rider</div>
-                </div>
+          <p className="text-[11px] text-[var(--text-secondary)] font-light leading-relaxed">
+            Live courier rates calculated at checkout based on your destination. Doorstep delivery (GIG, Fez, Red Star) &amp; Motor Park Waybills supported across Nigeria.
+          </p>
 
-                <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
-                  <div className="text-[var(--text-muted)]">Doorstep:</div>
-                  <div className="font-bold text-[var(--gold-accent)] text-xs">₦4,500</div>
-                  <div className="text-[8px] text-[var(--text-muted)]">Prepay checkout</div>
-                </div>
-
-                <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-0.5">
-                  <div className="text-[var(--text-muted)]">Park Waybill:</div>
-                  <div className="font-bold text-emerald-400 text-xs">Pay at Park</div>
-                  <div className="text-[8px] text-[var(--text-muted)]">~₦1,500–₦2,500</div>
-                </div>
-              </div>
-
-              <p className="text-[10px] text-[var(--text-secondary)] font-light leading-relaxed">
-                Dispatched directly from <strong className="text-[var(--text-primary)]">{product.vendorCity ? `${product.vendorCity}, ` : ''}{product.vendorState || 'Nigeria'}</strong>.
-              </p>
-            </div>
-          )}
+          <div className="pt-1 flex items-center gap-1.5 text-[10px] text-[var(--gold-accent)] font-medium">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span>Ships directly from {product.vendorCity ? `${product.vendorCity}, ` : ''}{product.vendorState || 'Nigeria'}</span>
+          </div>
         </div>
 
         {/* 7. EXPANDABLE CUSTOMER REVIEWS ACCORDION */}
