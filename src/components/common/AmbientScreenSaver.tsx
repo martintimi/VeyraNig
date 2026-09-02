@@ -113,6 +113,17 @@ const CURATED_EDITORIAL_SLIDES: EditorialSlide[] = [
 const INACTIVITY_TIMEOUT_MS = 60000; // 60s idle
 const SLIDE_DURATION_MS = 6500; // 6.5s per slide
 
+// Helper to map local product image to background-removed transparent cutout
+function getProductCutoutUrl(rawUrl: string): string {
+  if (!rawUrl) return '';
+  if (rawUrl.startsWith('/images/products/') && !rawUrl.includes('/cutouts/')) {
+    const filename = rawUrl.replace('/images/products/', '');
+    const basename = filename.substring(0, filename.lastIndexOf('.')) || filename;
+    return `/images/products/cutouts/${basename}.png`;
+  }
+  return rawUrl;
+}
+
 export default function AmbientScreenSaver() {
   const router = useRouter();
   const { allProducts } = useStore();
@@ -120,10 +131,10 @@ export default function AmbientScreenSaver() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Combine curated high-res slides with live uploaded products from database
+  // Slides state: initialized with fallback, replaced 100% by real products as soon as loaded
   const [slides, setSlides] = useState<EditorialSlide[]>(CURATED_EDITORIAL_SLIDES);
 
-  // Helper to map product object to EditorialSlide
+  // Helper to map product object to EditorialSlide with transparent cutouts
   const mapProductToSlide = useCallback((p: any, idx: number): EditorialSlide => {
     const rawCat = (p.category || 'tops').toLowerCase();
     let catIcon: 'gem' | 'footwear' | 'apparel' = 'apparel';
@@ -141,8 +152,10 @@ export default function AmbientScreenSaver() {
       catName = "Women's Couture & Silks";
     }
 
+    const rawImg = p.imageUrl || p.image_url || '';
+    const cutoutImg = getProductCutoutUrl(rawImg);
     const fallbackImg = CURATED_EDITORIAL_SLIDES[idx % CURATED_EDITORIAL_SLIDES.length].imageUrl;
-    const finalImg = p.imageUrl || p.image_url || fallbackImg;
+    const finalImg = cutoutImg || rawImg || fallbackImg;
     const location = p.vendorLocation || (p.vendorCity && p.vendorState ? `${p.vendorCity}, ${p.vendorState}` : p.vendorCity || p.vendorState || 'Nigeria');
 
     return {
@@ -159,16 +172,16 @@ export default function AmbientScreenSaver() {
     };
   }, []);
 
-  // Fetch live products directly on mount to guarantee 100% real products
+  // Fetch live products directly on mount - EXCLUSIVELY SHOW REAL PRODUCTS
   useEffect(() => {
     async function loadLiveProducts() {
       try {
-        const res = await fetch('/api/products?limit=20');
+        const res = await fetch('/api/products?limit=25');
         const data = await res.json();
         if (data.success && Array.isArray(data.products) && data.products.length > 0) {
           const liveSlides: EditorialSlide[] = data.products.map((p: any, idx: number) => mapProductToSlide(p, idx));
-          // Put real live products first, followed by curated editorial drops as backdrops
-          setSlides([...liveSlides, ...CURATED_EDITORIAL_SLIDES]);
+          // Exclusively show real database products (no hardcoded mix)
+          setSlides(liveSlides);
         }
       } catch (err) {
         console.error('Failed to load live products for screensaver:', err);
@@ -180,8 +193,8 @@ export default function AmbientScreenSaver() {
   // Sync if allProducts in store updates
   useEffect(() => {
     if (allProducts && allProducts.length > 0) {
-      const dynamicSlides: EditorialSlide[] = allProducts.slice(0, 15).map((p, idx) => mapProductToSlide(p, idx));
-      setSlides([...dynamicSlides, ...CURATED_EDITORIAL_SLIDES]);
+      const dynamicSlides: EditorialSlide[] = allProducts.map((p, idx) => mapProductToSlide(p, idx));
+      setSlides(dynamicSlides);
     }
   }, [allProducts, mapProductToSlide]);
 
@@ -411,24 +424,26 @@ export default function AmbientScreenSaver() {
 
         </div>
 
-        {/* Right: Crisp, Full Uncropped Fashion Showcase Frame */}
-        <div className="w-full md:w-1/2 h-[45vh] sm:h-[60vh] md:h-[75vh] relative flex items-center justify-center pointer-events-none">
+        {/* Right: Crisp, Floating Background-Free Fashion Cutout Showcase */}
+        <div className="w-full md:w-1/2 h-[50vh] sm:h-[65vh] md:h-[80vh] relative flex items-center justify-center pointer-events-none">
           {slides.map((slide, idx) => (
             <div
               key={`fg-${slide.id}`}
               className={`absolute inset-0 flex items-center justify-center md:justify-end transition-all duration-1000 ease-out ${
                 idx === currentSlideIndex
-                  ? 'opacity-100 scale-100'
-                  : 'opacity-0 scale-95 pointer-events-none'
+                  ? 'opacity-100 scale-100 translate-y-0'
+                  : 'opacity-0 scale-95 translate-y-4 pointer-events-none'
               }`}
             >
-              <div className="relative w-full h-full max-h-[72vh] rounded-3xl overflow-hidden border border-white/15 shadow-2xl bg-black/40 backdrop-blur-sm">
+              <div className="relative w-full h-full max-h-[76vh] flex items-center justify-center">
+                {/* Floating Ambient Ground Shadow */}
+                <div className="absolute bottom-4 w-2/3 h-10 bg-black/90 blur-2xl rounded-full" />
                 <Image
                   src={slide.imageUrl}
                   alt={slide.title}
                   fill
                   priority={idx === 0}
-                  className="object-contain md:object-cover object-center"
+                  className="object-contain object-center drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)] filter"
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />
               </div>
