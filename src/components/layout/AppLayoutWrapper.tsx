@@ -12,6 +12,7 @@ import SmoothScrollProvider from '@/components/common/SmoothScrollProvider';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
 import MobileHeader from '@/components/layout/MobileHeader';
 import WardrobeVaultDrawer from '@/components/vault/WardrobeVaultDrawer';
+import AmbientScreenSaver from '@/components/common/AmbientScreenSaver';
 
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -60,6 +61,9 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       <BodyTwinWizard />
       {/* Floating Glassmorphic Mobile Bottom Dock (Strictly Mobile) */}
       <MobileBottomNav />
+
+      {/* Ambient Netflix-Style Idle Lookbook Screensaver */}
+      <AmbientScreenSaver />
     </SmoothScrollProvider>
   );
 }
