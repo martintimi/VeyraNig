@@ -118,7 +118,7 @@ export default function MobileVendorPublish({
   const [aiToast, setAiToast] = useState('');
 
   // Sizing & Stock
-  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number } }>({
+  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>({
     'S': { enabled: true, quantity: 10 },
     'M': { enabled: true, quantity: 20 },
     'L': { enabled: true, quantity: 20 },
@@ -235,9 +235,9 @@ export default function MobileVendorPublish({
   };
 
   const toggleColor = (color: { name: string; hex: string }) => {
-    const exists = selectedColors.some(c => c.name === color.name);
+    const exists = selectedColors.some(c => c.name.toLowerCase() === color.name.toLowerCase());
     if (exists) {
-      if (selectedColors.length > 1) setSelectedColors(selectedColors.filter(c => c.name !== color.name));
+      if (selectedColors.length > 1) setSelectedColors(selectedColors.filter(c => c.name.toLowerCase() !== color.name.toLowerCase()));
     } else {
       setSelectedColors([...selectedColors, color]);
     }
@@ -250,10 +250,16 @@ export default function MobileVendorPublish({
     setShowCustomColor(false);
   };
 
-  const handleSizeStockChange = (size: string, quantity: number) => {
+  const handleSizeStockChange = (size: string, rawQuantity: number | string) => {
+    const cleanQty = typeof rawQuantity === 'string'
+      ? (rawQuantity.trim() === '' ? '' : parseInt(rawQuantity.replace(/[^0-9]/g, ''), 10))
+      : rawQuantity;
     setSizeStock(prev => ({
       ...prev,
-      [size]: { ...prev[size], quantity: Math.max(0, quantity) }
+      [size]: {
+        ...prev[size],
+        quantity: typeof cleanQty === 'number' && isNaN(cleanQty) ? '' : cleanQty
+      }
     }));
   };
 
@@ -277,7 +283,7 @@ export default function MobileVendorPublish({
 
   const totalStock = Object.values(sizeStock)
     .filter(s => s?.enabled)
-    .reduce((sum, s) => sum + Number(s?.quantity || 0), 0);
+    .reduce((sum, s) => sum + (s?.quantity === '' ? 0 : Number(s?.quantity || 0)), 0);
 
   const handleResetForm = () => {
     setName('');
@@ -699,18 +705,20 @@ export default function MobileVendorPublish({
               Total Available Units
             </label>
             <input
-              type="number"
-              min={1}
-              value={sizeStock['One Size']?.quantity || 20}
-              onChange={(e) => handleSizeStockChange('One Size', Number(e.target.value))}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+              type="text"
+              inputMode="numeric"
+              value={sizeStock['One Size']?.quantity === '' ? '' : (sizeStock['One Size']?.quantity ?? 20)}
+              placeholder="0"
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => handleSizeStockChange('One Size', e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
             />
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-2">
             {currentSizeList.map((sz) => {
               const isEn = sizeStock[sz]?.enabled;
-              const qty = sizeStock[sz]?.quantity || 0;
+              const qty = sizeStock[sz]?.quantity;
               return (
                 <div
                   key={sz}
@@ -724,16 +732,18 @@ export default function MobileVendorPublish({
                       type="checkbox"
                       checked={isEn}
                       onChange={() => handleToggleSize(sz)}
-                      className="rounded text-[var(--gold-accent)]"
+                      className="rounded text-[var(--gold-accent)] cursor-pointer"
                     />
                   </div>
                   {isEn && (
                     <input
-                      type="number"
-                      min={0}
-                      value={qty}
-                      onChange={(e) => handleSizeStockChange(sz, Number(e.target.value))}
-                      className="w-full text-center px-1 py-0.5 rounded bg-[var(--bg-secondary)] text-xs font-bold text-[var(--text-primary)]"
+                      type="text"
+                      inputMode="numeric"
+                      value={qty === '' ? '' : (qty ?? 0)}
+                      placeholder="0"
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => handleSizeStockChange(sz, e.target.value)}
+                      className="w-full text-center px-1 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] font-mono-luxury"
                     />
                   )}
                 </div>

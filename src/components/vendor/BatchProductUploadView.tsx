@@ -5,7 +5,7 @@ import { GarmentCategory, GenderTarget } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2, Check,
   Layers, ChevronDown, CheckCircle2, ArrowRight,
-  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck
+  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,7 +22,9 @@ interface BatchItem {
   imageFile: File | null;
   imagePreview: string;
   selectedColor: { name: string; hex: string };
-  sizeStock: { [size: string]: number }; // e.g. { S: 5, M: 15, L: 20, XL: 8 }
+  isCustomColorOpen?: boolean;
+  customColorText?: string;
+  sizeStock: { [size: string]: number | string }; // Allows empty string while typing
 }
 
 interface BatchProductUploadViewProps {
@@ -53,16 +55,18 @@ const CATEGORY_OPTIONS = [
   { id: 'unisex_bags', label: 'Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget },
 ];
 
-const PRESET_COLORS = [
+const POPULAR_COLORS = [
   { name: 'Black', hex: '#111111' },
   { name: 'White', hex: '#ffffff' },
+  { name: 'Black & White', hex: '#111111' },
   { name: 'Khaki / Beige', hex: '#d4b996' },
   { name: 'Chocolate Brown', hex: '#451a03' },
   { name: 'Navy Blue', hex: '#1e3a8a' },
   { name: 'Heather Grey', hex: '#9ca3af' },
   { name: 'Forest Green', hex: '#065f46' },
   { name: 'Wine / Burgundy', hex: '#831843' },
-  { name: 'Emerald Gold', hex: '#e6c367' },
+  { name: 'Crimson Red', hex: '#dc2626' },
+  { name: 'Multi-Color / Pattern', hex: '#6366f1' },
 ];
 
 const APPAREL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -112,7 +116,7 @@ export default function BatchProductUploadView({
     if (!files || files.length === 0) return;
 
     const fileList = Array.from(files);
-    const defaultQty = Number(bulkQuantity) || 15;
+    const defaultQty = bulkQuantity === '' ? 15 : (Number(bulkQuantity) || 15);
 
     fileList.forEach((file, index) => {
       const reader = new FileReader();
@@ -121,7 +125,7 @@ export default function BatchProductUploadView({
         const defaultCat = CATEGORY_OPTIONS[0];
         const defaultSizes = bulkSizes.length > 0 ? [...bulkSizes] : ['M', 'L', 'XL'];
         
-        const initSizeStock: { [sz: string]: number } = {};
+        const initSizeStock: { [sz: string]: number | string } = {};
         defaultSizes.forEach(sz => {
           initSizeStock[sz] = defaultQty;
         });
@@ -137,7 +141,9 @@ export default function BatchProductUploadView({
             genderTarget: defaultCat.dept,
             imageFile: file,
             imagePreview: previewUrl,
-            selectedColor: PRESET_COLORS[0],
+            selectedColor: POPULAR_COLORS[0],
+            isCustomColorOpen: false,
+            customColorText: '',
             sizeStock: initSizeStock,
           }
         ]);
@@ -160,11 +166,14 @@ export default function BatchProductUploadView({
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
-  // Update size stock for an item
-  const setItemSizeQty = (itemId: string, size: string, qty: number) => {
+  // Update size stock for an item (allows empty string while erasing, no stuck 0s!)
+  const setItemSizeQty = (itemId: string, size: string, rawVal: string | number) => {
     setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
-      const updated = { ...item.sizeStock, [size]: Math.max(0, qty) };
+      const cleanVal = typeof rawVal === 'string'
+        ? (rawVal.trim() === '' ? '' : parseInt(rawVal.replace(/[^0-9]/g, ''), 10))
+        : rawVal;
+      const updated = { ...item.sizeStock, [size]: isNaN(cleanVal as number) ? '' : cleanVal };
       return { ...item, sizeStock: updated };
     }));
   };
@@ -177,7 +186,8 @@ export default function BatchProductUploadView({
       if (updated[size] !== undefined) {
         delete updated[size];
       } else {
-        updated[size] = Number(bulkQuantity) || 15;
+        const defaultQty = bulkQuantity === '' ? 15 : (Number(bulkQuantity) || 15);
+        updated[size] = defaultQty;
       }
       return { ...item, sizeStock: updated };
     }));
@@ -190,9 +200,9 @@ export default function BatchProductUploadView({
   };
 
   const applyQuantityToAll = () => {
-    const qty = Math.max(1, Number(bulkQuantity) || 1);
+    const qty = bulkQuantity === '' ? 1 : Math.max(1, Number(bulkQuantity) || 1);
     setItems(prev => prev.map(item => {
-      const updated: { [sz: string]: number } = {};
+      const updated: { [sz: string]: number | string } = {};
       Object.keys(item.sizeStock).forEach(sz => {
         updated[sz] = qty;
       });
@@ -213,9 +223,9 @@ export default function BatchProductUploadView({
 
   const applySizesToAll = () => {
     if (bulkSizes.length === 0) return;
-    const defaultQty = Number(bulkQuantity) || 15;
+    const defaultQty = bulkQuantity === '' ? 15 : (Number(bulkQuantity) || 15);
     setItems(prev => prev.map(item => {
-      const updated: { [sz: string]: number } = {};
+      const updated: { [sz: string]: number | string } = {};
       bulkSizes.forEach(sz => {
         updated[sz] = item.sizeStock[sz] !== undefined ? item.sizeStock[sz] : defaultQty;
       });
@@ -230,9 +240,10 @@ export default function BatchProductUploadView({
   // Calculate total piece stock
   const calculateTotalStock = (item: BatchItem): number => {
     if (item.category === 'accessories') {
-      return item.sizeStock['One Size'] || 20;
+      const q = item.sizeStock['One Size'];
+      return q === '' ? 0 : Number(q) || 20;
     }
-    return Object.values(item.sizeStock).reduce((sum, q) => sum + (Number(q) || 0), 0);
+    return Object.values(item.sizeStock).reduce((sum: number, q) => sum + (q === '' ? 0 : Number(q) || 0), 0);
   };
 
   // PUBLISH ALL ITEMS TO DATABASE
@@ -258,12 +269,13 @@ export default function BatchProductUploadView({
         const sizeStockObj: { [k: string]: { enabled: boolean; quantity: number } } = {};
         
         if (item.category === 'accessories') {
-          const accQty = item.sizeStock['One Size'] || 20;
+          const accQty = item.sizeStock['One Size'] === '' ? 20 : (Number(item.sizeStock['One Size']) || 20);
           sizeStockObj['One Size'] = { enabled: true, quantity: accQty };
         } else {
           Object.entries(item.sizeStock).forEach(([sz, qty]) => {
-            if (qty > 0) {
-              sizeStockObj[sz] = { enabled: true, quantity: qty };
+            const numQty = qty === '' ? 0 : Number(qty) || 0;
+            if (numQty > 0) {
+              sizeStockObj[sz] = { enabled: true, quantity: numQty };
             }
           });
         }
@@ -281,7 +293,7 @@ export default function BatchProductUploadView({
           image_url: item.imagePreview,
           description: '',
           tags: ['Ready-to-Wear', 'Collection Drop'],
-          colors: item.category === 'accessories' ? [] : [item.selectedColor],
+          colors: item.category === 'accessories' ? [] : [{ name: item.selectedColor.name.trim() || 'Standard', hex: item.selectedColor.hex || '#111111' }],
           sizes: item.category === 'accessories' ? ['One Size'] : (activeSizes.length > 0 ? activeSizes : ['M', 'L', 'XL']),
           sizeStock: sizeStockObj,
           stockQuantity: totalItemStock,
@@ -476,7 +488,8 @@ export default function BatchProductUploadView({
                       value={bulkPrice}
                       onChange={(e) => setBulkPrice(formatPriceString(e.target.value))}
                       placeholder="30,000"
-                      className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury"
+                      onFocus={(e) => e.target.select()}
+                      className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury focus:border-[var(--gold-accent)]"
                     />
                   </div>
                   <button
@@ -495,12 +508,13 @@ export default function BatchProductUploadView({
                 <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">2. Stock Qty / Size</span>
                 <div className="flex items-center gap-2">
                   <input
-                    type="number"
-                    min="1"
+                    type="text"
+                    inputMode="numeric"
                     value={bulkQuantity}
-                    onChange={(e) => setBulkQuantity(e.target.value)}
+                    onChange={(e) => setBulkQuantity(e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="15"
-                    className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury"
+                    onFocus={(e) => e.target.select()}
+                    className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury focus:border-[var(--gold-accent)]"
                   />
                   <button
                     type="button"
@@ -577,7 +591,7 @@ export default function BatchProductUploadView({
               <button
                 type="button"
                 onClick={() => setItems([])}
-                className="text-rose-400 hover:underline text-[11px] font-bold"
+                className="text-rose-400 hover:underline text-[11px] font-bold cursor-pointer"
               >
                 Clear All
               </button>
@@ -643,6 +657,7 @@ export default function BatchProductUploadView({
                               value={item.price}
                               onChange={(e) => updateItem(item.id, { price: formatPriceString(e.target.value) })}
                               placeholder="Price in ₦"
+                              onFocus={(e) => e.target.select()}
                               className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
                             />
                           </div>
@@ -669,32 +684,83 @@ export default function BatchProductUploadView({
                           </select>
                         </div>
 
-                        {/* Color Selector (1 Tap Primary Color) */}
+                        {/* Color Selector: Popular Quick Pills + Write Any Custom Color */}
                         {item.category !== 'accessories' && (
-                          <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold mr-1">Color:</span>
-                            {PRESET_COLORS.slice(0, 8).map(c => {
-                              const isSelected = item.selectedColor?.name === c.name;
-                              return (
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold mr-1">Color:</span>
+                              
+                              {POPULAR_COLORS.map(c => {
+                                const isSelected = item.selectedColor?.name === c.name && !item.isCustomColorOpen;
+                                return (
+                                  <button
+                                    key={c.name}
+                                    type="button"
+                                    onClick={() => updateItem(item.id, {
+                                      selectedColor: c,
+                                      isCustomColorOpen: false
+                                    })}
+                                    className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 transition-all cursor-pointer ${
+                                      isSelected
+                                        ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold ring-1 ring-[var(--gold-accent)]'
+                                        : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
+                                    }`}
+                                  >
+                                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
+                                    <span>{c.name}</span>
+                                  </button>
+                                );
+                              })}
+
+                              {/* Custom / Other Color Trigger */}
+                              <button
+                                type="button"
+                                onClick={() => updateItem(item.id, {
+                                  isCustomColorOpen: !item.isCustomColorOpen,
+                                  customColorText: item.customColorText || (item.selectedColor ? item.selectedColor.name : '')
+                                })}
+                                className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 font-bold transition-all cursor-pointer ${
+                                  item.isCustomColorOpen
+                                    ? 'border-[var(--gold-accent)] bg-[var(--gold-accent)] text-black'
+                                    : 'border-[var(--border-subtle)] text-[var(--gold-accent)] bg-[var(--bg-secondary)] hover:border-[var(--gold-accent)]'
+                                }`}
+                              >
+                                <Edit3 className="h-2.5 w-2.5" />
+                                <span>+ Write Custom Color</span>
+                              </button>
+                            </div>
+
+                            {/* Inline Custom Color Text Input */}
+                            {item.isCustomColorOpen && (
+                              <div className="flex items-center gap-2 p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/50 animate-fadeIn">
+                                <Palette className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
+                                <input
+                                  type="text"
+                                  value={item.customColorText !== undefined ? item.customColorText : item.selectedColor.name}
+                                  onChange={(e) => {
+                                    const text = e.target.value;
+                                    updateItem(item.id, {
+                                      customColorText: text,
+                                      selectedColor: { name: text.trim() || 'Custom Shade', hex: item.selectedColor.hex || '#111111' }
+                                    });
+                                  }}
+                                  placeholder="Type any color/pattern (e.g. Black & White Fleece, Tie Dye, Vintage Camo)"
+                                  className="w-full px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
+                                  autoFocus
+                                />
                                 <button
-                                  key={c.name}
                                   type="button"
-                                  onClick={() => updateItem(item.id, { selectedColor: c })}
-                                  className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 transition-all cursor-pointer ${
-                                    isSelected
-                                      ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold ring-1 ring-[var(--gold-accent)]'
-                                      : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                                  }`}
+                                  onClick={() => updateItem(item.id, { isCustomColorOpen: false })}
+                                  className="px-2.5 py-1 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer"
                                 >
-                                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
-                                  <span>{c.name}</span>
+                                  Done
                                 </button>
-                              );
-                            })}
+                              </div>
+                            )}
                           </div>
                         )}
 
-                        {/* Sizing & Stock Boxes (Jumia Style) */}
+                        {/* Sizing & Stock Boxes: Zero Stuck Issues with Backspace Erase */}
                         <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2 pt-2">
                           <div className="flex items-center justify-between text-xs font-mono-luxury">
                             <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
@@ -709,18 +775,20 @@ export default function BatchProductUploadView({
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-bold text-[var(--text-primary)]">Total Stock:</span>
                               <input
-                                type="number"
-                                min="1"
-                                value={item.sizeStock['One Size'] || 20}
-                                onChange={(e) => setItemSizeQty(item.id, 'One Size', Number(e.target.value))}
-                                className="w-24 px-3 py-1 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] text-center focus:outline-none"
+                                type="text"
+                                inputMode="numeric"
+                                value={item.sizeStock['One Size'] === '' ? '' : (item.sizeStock['One Size'] ?? 20)}
+                                placeholder="0"
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => setItemSizeQty(item.id, 'One Size', e.target.value)}
+                                className="w-24 px-3 py-1 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] text-center focus:outline-none focus:border-[var(--gold-accent)] font-mono-luxury"
                               />
                             </div>
                           ) : (
                             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2">
                               {sizeList.map(sz => {
                                 const isEnabled = item.sizeStock[sz] !== undefined;
-                                const qty = item.sizeStock[sz] || 0;
+                                const qty = item.sizeStock[sz];
 
                                 return (
                                   <div
@@ -742,12 +810,13 @@ export default function BatchProductUploadView({
                                     </div>
                                     {isEnabled && (
                                       <input
-                                        type="number"
-                                        min="0"
-                                        value={qty}
-                                        onChange={(e) => setItemSizeQty(item.id, sz, Number(e.target.value))}
-                                        className="w-full text-center py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none"
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={qty === '' ? '' : (qty ?? 0)}
                                         placeholder="0"
+                                        onFocus={(e) => e.target.select()}
+                                        onChange={(e) => setItemSizeQty(item.id, sz, e.target.value)}
+                                        className="w-full text-center py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] font-mono-luxury"
                                       />
                                     )}
                                   </div>

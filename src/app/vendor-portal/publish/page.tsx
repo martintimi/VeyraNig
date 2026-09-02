@@ -136,7 +136,7 @@ export default function PublishGarmentPage() {
   const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
 
   // Dynamic Adaptive Size Stock State
-  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number } }>({
+  const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>({
     'S': { enabled: true, quantity: 10 },
     'M': { enabled: true, quantity: 20 },
     'L': { enabled: true, quantity: 20 },
@@ -318,10 +318,16 @@ export default function PublishGarmentPage() {
     setShowCustomColorPicker(false);
   };
 
-  const handleSizeStockChange = (size: string, quantity: number) => {
+  const handleSizeStockChange = (size: string, rawQuantity: number | string) => {
+    const cleanQty = typeof rawQuantity === 'string'
+      ? (rawQuantity.trim() === '' ? '' : parseInt(rawQuantity.replace(/[^0-9]/g, ''), 10))
+      : rawQuantity;
     setSizeStock(prev => ({
       ...prev,
-      [size]: { ...prev[size], quantity: Math.max(0, quantity) }
+      [size]: {
+        ...prev[size],
+        quantity: typeof cleanQty === 'number' && isNaN(cleanQty) ? '' : cleanQty
+      }
     }));
   };
 
@@ -445,7 +451,7 @@ export default function PublishGarmentPage() {
 
   const totalStockCount = Object.values(sizeStock)
     .filter(s => s?.enabled)
-    .reduce((sum, s) => sum + Number(s?.quantity || 0), 0);
+    .reduce((sum, s) => sum + (s?.quantity === '' ? 0 : Number(s?.quantity || 0)), 0);
 
   const isVerified = profileStatus?.isVerified || profileStatus?.approvalStatus === 'approved';
   const isRejected = profileStatus?.approvalStatus === 'rejected';
@@ -1036,11 +1042,13 @@ export default function PublishGarmentPage() {
                 </label>
                 <div className="relative">
                   <input
-                    type="number"
-                    min={1}
-                    value={sizeStock['One Size']?.quantity || 20}
-                    onChange={(e) => handleSizeStockChange('One Size', Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                    type="text"
+                    inputMode="numeric"
+                    value={sizeStock['One Size']?.quantity === '' ? '' : (sizeStock['One Size']?.quantity ?? 20)}
+                    placeholder="0"
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => handleSizeStockChange('One Size', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono-luxury text-[var(--text-muted)] font-bold">
                     One Size
@@ -1053,7 +1061,7 @@ export default function PublishGarmentPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
                   {currentSizeList.map((size) => {
                     const isEnabled = sizeStock[size]?.enabled;
-                    const qty = sizeStock[size]?.quantity || 0;
+                    const qty = sizeStock[size]?.quantity;
 
                     return (
                       <div
@@ -1078,11 +1086,13 @@ export default function PublishGarmentPage() {
                           <div className="space-y-1">
                             <span className="text-[9px] font-mono-luxury uppercase text-[var(--text-secondary)] block">Qty</span>
                             <input
-                              type="number"
-                              min={0}
-                              value={qty}
-                              onChange={(e) => handleSizeStockChange(size, Number(e.target.value))}
-                              className="w-full px-2 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none text-center"
+                              type="text"
+                              inputMode="numeric"
+                              value={qty === '' ? '' : (qty ?? 0)}
+                              placeholder="0"
+                              onFocus={(e) => e.target.select()}
+                              onChange={(e) => handleSizeStockChange(size, e.target.value)}
+                              className="w-full px-2 py-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:outline-none text-center font-mono-luxury focus:border-[var(--gold-accent)]"
                             />
                           </div>
                         )}
