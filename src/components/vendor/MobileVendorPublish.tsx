@@ -530,8 +530,8 @@ export default function MobileVendorPublish({
           </span>
         </div>
 
-        {/* Gender Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+        {/* Gender Tabs (Clean Luxury Underline, No Background Color) */}
+        <div className="flex items-center justify-around border-b border-[var(--border-subtle)] pt-1 pb-0">
           {(['male', 'female', 'unisex'] as GenderTarget[]).map((gt) => (
             <button
               key={gt}
@@ -541,10 +541,10 @@ export default function MobileVendorPublish({
                 const list = gt === 'male' ? MALE_CATEGORIES : gt === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
                 handleCategorySelect(list[0].id, list[0].generalCat);
               }}
-              className={`py-2 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+              className={`pb-2.5 px-4 text-xs font-mono-luxury uppercase font-bold tracking-wider transition-all cursor-pointer ${
                 genderTarget === gt
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                  : 'text-[var(--text-secondary)]'
+                  ? 'text-[var(--gold-accent)] border-b-2 border-[var(--gold-accent)] font-extrabold'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border-b-2 border-transparent'
               }`}
             >
               {gt === 'male' ? 'Men' : gt === 'female' ? 'Women' : 'Unisex'}

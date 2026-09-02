@@ -671,43 +671,22 @@ export default function PublishGarmentPage() {
           </p>
         </div>
 
-        {/* Gender / Department Switcher */}
-        <div className="flex items-center p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] w-fit shrink-0">
-          <button
-            type="button"
-            onClick={() => setGenderTarget('male')}
-            className={`px-4 py-2 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              genderTarget === 'male'
-                ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            <span>Men</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setGenderTarget('female')}
-            className={`px-4 py-2 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              genderTarget === 'female'
-                ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            <span>Women</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setGenderTarget('unisex')}
-            className={`px-4 py-2 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              genderTarget === 'unisex'
-                ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            <span>Unisex</span>
-          </button>
+        {/* Gender / Department Switcher (Clean Underline Tabs, No Background Color) */}
+        <div className="flex items-center gap-6 border-b border-[var(--border-subtle)] shrink-0 pb-0">
+          {(['male', 'female', 'unisex'] as GenderTarget[]).map((gt) => (
+            <button
+              key={gt}
+              type="button"
+              onClick={() => setGenderTarget(gt)}
+              className={`pb-2 px-1 text-xs font-mono-luxury uppercase font-bold tracking-wider transition-all cursor-pointer ${
+                genderTarget === gt
+                  ? 'text-[var(--gold-accent)] border-b-2 border-[var(--gold-accent)] font-extrabold'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border-b-2 border-transparent'
+              }`}
+            >
+              <span>{gt === 'male' ? 'Men' : gt === 'female' ? 'Women' : 'Unisex'}</span>
+            </button>
+          ))}
         </div>
       </div>
 

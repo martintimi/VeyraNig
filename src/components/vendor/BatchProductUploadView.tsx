@@ -599,21 +599,21 @@ export default function BatchProductUploadView({
                 
                 {/* Row 1: Department (Men/Women/Unisex) + Category */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {/* Department Pill Selector */}
+                  {/* Department Underline Selector */}
                   <div>
                     <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block mb-1">
                       Department / Gender Target
                     </label>
-                    <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                    <div className="flex items-center justify-around border-b border-[var(--border-subtle)] pb-1">
                       {(['unisex', 'male', 'female'] as GenderTarget[]).map((gender) => (
                         <button
                           key={gender}
                           type="button"
                           onClick={() => setBulkGender(gender)}
-                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase transition-all cursor-pointer ${
+                          className={`pb-1 px-2 text-[11px] font-bold uppercase transition-all cursor-pointer ${
                             bulkGender === gender
-                              ? 'bg-[var(--gold-accent)] text-black shadow-sm'
-                              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                              ? 'text-[var(--gold-accent)] border-b-2 border-[var(--gold-accent)] font-extrabold'
+                              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border-b-2 border-transparent'
                           }`}
                         >
                           {gender === 'male' ? 'Men' : gender === 'female' ? 'Women' : 'Unisex'}
@@ -822,17 +822,17 @@ export default function BatchProductUploadView({
                         ))}
                       </select>
 
-                      {/* Gender Target 3-Way Pill */}
-                      <div className="flex items-center gap-1 p-0.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                      {/* Gender Target 3-Way Underline Selector */}
+                      <div className="flex items-center justify-around border-b border-[var(--border-subtle)] px-1">
                         {(['unisex', 'male', 'female'] as GenderTarget[]).map((gender) => (
                           <button
                             key={gender}
                             type="button"
                             onClick={() => updateItem(item.id, { genderTarget: gender })}
-                            className={`flex-1 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                            className={`pb-1 px-1.5 text-[10px] font-bold uppercase transition-all cursor-pointer ${
                               item.genderTarget === gender
-                                ? 'bg-[var(--gold-accent)] text-black shadow-sm'
-                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                                ? 'text-[var(--gold-accent)] border-b-2 border-[var(--gold-accent)] font-extrabold'
+                                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border-b-2 border-transparent'
                             }`}
                           >
                             {gender === 'male' ? 'Men' : gender === 'female' ? 'Women' : 'Unisex'}
