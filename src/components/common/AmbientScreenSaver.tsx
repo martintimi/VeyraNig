@@ -4,9 +4,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  Sparkles, Gem, Footprints, Shirt, ArrowRight,
-  Eye, Clock, Layers, ChevronRight, ChevronLeft,
-  ShoppingBag, Compass, Play, Pause, X
+  Gem, Footprints, Shirt, ArrowRight,
+  Eye, ChevronRight, ChevronLeft,
+  Compass, Play, Pause, X
 } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 
@@ -14,7 +14,7 @@ interface EditorialSlide {
   id: string;
   title: string;
   categoryName: string;
-  categoryIcon: 'gem' | 'footwear' | 'apparel' | 'boutique';
+  categoryIcon: 'gem' | 'footwear' | 'apparel';
   atelierName: string;
   price: number;
   imageUrl: string;
@@ -26,25 +26,25 @@ interface EditorialSlide {
 const CURATED_EDITORIAL_SLIDES: EditorialSlide[] = [
   {
     id: 'slide-jewelry-1',
-    title: 'Imperial 18K Gold Cuban Chain & Diamond Watch Bezel',
+    title: '18K Heavy Cuban Link & Iced Chronograph Watch',
     categoryName: 'Fine Jewelry & Timepieces',
     categoryIcon: 'gem',
     atelierName: 'Vee Collection Luxury',
     price: 185000,
-    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1800&q=85',
-    description: 'Solid brass core with double-micro gold plating, micro-pave zirconia accents and heavy curb link clasp.',
-    location: 'Abeokuta & Lagos, Nigeria',
+    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1600&q=95',
+    description: 'Double-micro gold plating, micro-pave zirconia crystals with hand-polished luxury weight.',
+    location: 'Abeokuta, Nigeria',
     linkUrl: '/shop'
   },
   {
     id: 'slide-agbada-1',
-    title: 'Midnight Obsidian Heritage Agbada with Gold Filigree',
+    title: 'Midnight Obsidian Grand Agbada with Gold Placket',
     categoryName: 'Men & Unisex Native Grandeur',
     categoryIcon: 'apparel',
     atelierName: 'Sartorial Lagos',
     price: 98000,
-    imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1800&q=85',
-    description: 'Precision hand-loomed wool blend structured for royal entrances and distinguished ceremonies.',
+    imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1600&q=95',
+    description: 'Bespoke hand-tailored wool drape structured for royal weddings and high-profile ceremonies.',
     location: 'Victoria Island, Lagos',
     linkUrl: '/shop'
   },
@@ -55,20 +55,20 @@ const CURATED_EDITORIAL_SLIDES: EditorialSlide[] = [
     categoryIcon: 'footwear',
     atelierName: 'Kano Artisan Footwear',
     price: 35000,
-    imageUrl: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?auto=format&fit=crop&w=1800&q=85',
-    description: 'Ergonomic cork-cushion footbed wrapped in supple top-grain Nigerian hide for all-day comfort.',
+    imageUrl: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?auto=format&fit=crop&w=1600&q=95',
+    description: 'Full-grain Nigerian cowhide with shock-absorbing cork footbed and weather-sealed edge coats.',
     location: 'Kano Municipal, Nigeria',
     linkUrl: '/shop'
   },
   {
     id: 'slide-boubou-1',
-    title: 'Silk Organza Boubou Gown with Hand-Painted Adire Accents',
+    title: 'Emerald Silk Organza Boubou with Adire Motifs',
     categoryName: "Women's Couture & Silks",
     categoryIcon: 'apparel',
     atelierName: 'Arike Brand Atelier',
     price: 85000,
-    imageUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1800&q=85',
-    description: 'Bespoke drape crafted from luminous dyed silk organza with rich auntie fluid silhouette.',
+    imageUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1600&q=95',
+    description: 'Fluid rich-auntie silhouette in premium lustrous silk organza with metallic accents.',
     location: 'Ikoyi, Lagos',
     linkUrl: '/shop'
   },
@@ -79,47 +79,45 @@ const CURATED_EDITORIAL_SLIDES: EditorialSlide[] = [
     categoryIcon: 'apparel',
     atelierName: 'Moji Wears',
     price: 33000,
-    imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1800&q=85',
-    description: 'Ultra-dense combed cotton with puff-printed gothic typography and brushed thermal fleece lining.',
+    imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1600&q=95',
+    description: 'Dense double-faced combed cotton fleece with puff screen-printed street typography.',
     location: 'Yaba, Lagos',
     linkUrl: '/shop'
   },
   {
     id: 'slide-heels-1',
-    title: 'Sculptural Strappy Square-Toe Champagne Mules',
+    title: 'Champagne Metallic Fluted Mules & Square-Toe Heels',
     categoryName: "Women's Luxury Footwear",
     categoryIcon: 'footwear',
     atelierName: 'Veyra Runway Vault',
     price: 52000,
-    imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1800&q=85',
-    description: 'Architectural fluted heel with padded memory-foam insole and metallic champagne sheen.',
+    imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1600&q=95',
+    description: 'Architectural fluted heel with padded memory-foam footbed and metallic champagne sheen.',
     location: 'Lagos, Nigeria',
     linkUrl: '/shop'
   },
   {
     id: 'slide-senator-1',
-    title: 'Super 160s Sapphire Wool Senator Kaftan with Geometric Chest',
+    title: 'Super 160s Sapphire Wool Senator Kaftan Set',
     categoryName: 'Bespoke Senator & Kaftans',
     categoryIcon: 'apparel',
     atelierName: 'Sartorial Lagos',
     price: 68000,
-    imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1800&q=85',
-    description: 'Engineered with non-crease tropical wool and concealed snap placket for clean Nigerian luxury.',
+    imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1600&q=95',
+    description: 'Non-crease tropical Italian wool tailored with sleek geometric chest embroidery.',
     location: 'Abuja (FCT), Nigeria',
     linkUrl: '/shop'
   }
 ];
 
-const INACTIVITY_TIMEOUT_MS = 60000; // 60 seconds of complete idle
-const SLIDE_DURATION_MS = 6000; // 6 seconds per slide
+const INACTIVITY_TIMEOUT_MS = 60000; // 60s idle
+const SLIDE_DURATION_MS = 6500; // 6.5s per slide
 
 export default function AmbientScreenSaver() {
   const router = useRouter();
   const { allProducts } = useStore();
   const [isIdle, setIsIdle] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [currentTime, setCurrentTime] = useState<string>('');
-  const [currentDate, setCurrentDate] = useState<string>('');
   const [isPaused, setIsPaused] = useState(false);
 
   // Combine curated high-res slides with live uploaded products if available
@@ -127,12 +125,12 @@ export default function AmbientScreenSaver() {
 
   useEffect(() => {
     if (allProducts && allProducts.length > 0) {
-      const dynamicSlides: EditorialSlide[] = allProducts.slice(0, 8).map((p, idx) => ({
+      const dynamicSlides: EditorialSlide[] = allProducts.slice(0, 6).map((p, idx) => ({
         id: `prod-slide-${p.id || idx}`,
         title: p.name,
         categoryName: p.category === 'footwear' ? 'Footwear & Slides' : p.category === 'accessories' ? 'Jewelry & Accessories' : 'Ready-to-Wear Fashion',
         categoryIcon: p.category === 'footwear' ? 'footwear' : p.category === 'accessories' ? 'gem' : 'apparel',
-        atelierName: p.vendorName || 'Veyra Atelier Partner',
+        atelierName: p.vendorName || 'Veyra Partner Atelier',
         price: Number(p.price) || 45000,
         imageUrl: p.imageUrl || CURATED_EDITORIAL_SLIDES[idx % CURATED_EDITORIAL_SLIDES.length].imageUrl,
         description: p.description || p.fitNotes || 'Handcrafted contemporary Nigerian design available for immediate delivery.',
@@ -142,18 +140,6 @@ export default function AmbientScreenSaver() {
       setSlides([...CURATED_EDITORIAL_SLIDES, ...dynamicSlides]);
     }
   }, [allProducts]);
-
-  // Live Clock Update
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      setCurrentDate(now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }));
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Inactivity Detection Engine
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -242,253 +228,168 @@ export default function AmbientScreenSaver() {
       role="dialog"
       aria-label="Veyra Ambient Fashion Screensaver"
       onClick={() => handleWakeUp()}
-      className={`fixed inset-0 z-[999999] bg-black text-white select-none transition-all duration-1000 ease-in-out ${
+      className={`fixed inset-0 z-[999999] bg-[#070709] text-white select-none transition-all duration-700 ease-in-out ${
         isIdle
-          ? 'opacity-100 pointer-events-auto backdrop-blur-3xl'
+          ? 'opacity-100 pointer-events-auto'
           : 'opacity-0 pointer-events-none'
       }`}
     >
-      {/* Background Cinematic Slide Image with Slow Ken Burns Pan */}
+      {/* 1. Ambient Background Layer: Soft ambient glow to avoid extreme crop */}
       <div className="absolute inset-0 overflow-hidden">
         {slides.map((slide, idx) => (
           <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-out ${
-              idx === currentSlideIndex ? 'opacity-100' : 'opacity-0'
+            key={`bg-${slide.id}`}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              idx === currentSlideIndex ? 'opacity-30' : 'opacity-0'
             }`}
           >
-            <div className={`relative w-full h-full transform transition-transform duration-7000 ease-out ${
-              idx === currentSlideIndex ? 'scale-105' : 'scale-100'
-            }`}>
-              <Image
-                src={slide.imageUrl}
-                alt={slide.title}
-                fill
-                priority={idx === 0}
-                className="object-cover object-center filter brightness-[0.75]"
-                sizes="100vw"
-              />
-            </div>
+            <Image
+              src={slide.imageUrl}
+              alt=""
+              fill
+              priority={idx === 0}
+              className="object-cover object-center filter blur-3xl scale-110"
+              sizes="100vw"
+            />
           </div>
         ))}
 
-        {/* Ambient Luxury Dark Gradient Vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/80" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80" />
-        <div className="absolute inset-0 bg-radial-vignette opacity-70 pointer-events-none" />
+        {/* Cinematic Vignettes */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#070709] via-transparent to-[#070709]/80" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#070709] via-transparent to-[#070709]/70" />
       </div>
 
-      {/* Foreground Content Container */}
-      <div className="relative z-10 w-full h-full flex flex-col justify-between p-6 sm:p-12 lg:p-16">
+      {/* 2. Main High-Definition Center Showcase */}
+      <div className="relative z-10 w-full h-full flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 lg:p-16 gap-8">
         
-        {/* ======================================================== */}
-        {/* 1. TOP BAR: Veyra Cinema Branding, Time & Multi-bar progress */}
-        {/* ======================================================== */}
-        <div className="space-y-4">
-          {/* Top Row */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/images/logo/veyra-emblem.png"
-                alt="Veyra"
-                width={36}
-                height={36}
-                className="h-9 w-9 object-contain drop-shadow-md animate-pulse"
-              />
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-editorial text-lg sm:text-xl font-bold tracking-widest text-[var(--gold-accent)] uppercase">
-                    Veyra Lookbook Cinema
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-red-600/80 text-white text-[9px] font-mono-luxury font-bold uppercase tracking-wider">
-                    Live
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono-luxury text-white/60 tracking-wider block">
-                  Ambient Fashion Showcase
-                </span>
-              </div>
-            </div>
-
-            {/* Live Time & Date */}
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex flex-col text-right">
-                <span className="text-sm font-mono-luxury font-bold text-white tracking-widest">
-                  {currentTime}
-                </span>
-                <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] uppercase">
-                  {currentDate} • Lagos GMT+1
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleWakeUp();
-                }}
-                className="p-2 sm:px-4 sm:py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-xs font-mono-luxury uppercase font-bold text-white transition-all flex items-center gap-2 cursor-pointer"
-                title="Exit screensaver"
-              >
-                <span>Resume</span>
-                <X className="h-4 w-4 text-[var(--gold-accent)]" />
-              </button>
-            </div>
-          </div>
-
-          {/* Netflix / Stories Style Segmented Progress Bars */}
-          <div className="flex items-center gap-1.5 w-full">
-            {slides.map((_, idx) => (
-              <div
-                key={idx}
-                className="h-1 flex-1 rounded-full bg-white/20 overflow-hidden relative cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlideIndex(idx);
-                }}
-              >
-                <div
-                  className={`h-full bg-[var(--gold-accent)] transition-all duration-300 ${
-                    idx < currentSlideIndex
-                      ? 'w-full'
-                      : idx === currentSlideIndex
-                      ? 'w-full animate-progress'
-                      : 'w-0'
-                  }`}
-                  style={{
-                    animationDuration: `${SLIDE_DURATION_MS}ms`,
-                    animationPlayState: isPaused ? 'paused' : 'running'
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* 2. BOTTOM HERO: Slide Details, Editorial Serif & CTA Buttons */}
-        {/* ======================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+        {/* Left: Fashion Editorial Information */}
+        <div className="w-full md:max-w-xl lg:max-w-2xl space-y-4 sm:space-y-6 animate-fadeIn self-end md:self-center">
           
-          {/* Main Editorial Text Details */}
-          <div className="lg:col-span-8 space-y-4 max-w-3xl animate-fadeIn">
-            {/* Category Tag */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-accent)]/20 border border-[var(--gold-accent)]/40 text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold tracking-wider backdrop-blur-md">
-              {activeSlide.categoryIcon === 'gem' ? (
-                <Gem className="h-3.5 w-3.5" />
-              ) : activeSlide.categoryIcon === 'footwear' ? (
-                <Footprints className="h-3.5 w-3.5" />
-              ) : (
-                <Shirt className="h-3.5 w-3.5" />
-              )}
-              <span>{activeSlide.categoryName}</span>
-              <span className="text-white/40">•</span>
-              <span>{activeSlide.atelierName}</span>
-            </div>
-
-            {/* Slide Title */}
-            <h1 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-none drop-shadow-lg tracking-tight">
-              {activeSlide.title}
-            </h1>
-
-            {/* Editorial Description */}
-            <p className="text-sm sm:text-base text-white/80 max-w-2xl font-sans leading-relaxed line-clamp-2 sm:line-clamp-3 drop-shadow">
-              {activeSlide.description}
-            </p>
-
-            {/* Price & Atelier Origin */}
-            <div className="flex flex-wrap items-center gap-4 text-xs font-mono-luxury pt-1">
-              <span className="text-xl sm:text-2xl font-bold text-[var(--gold-accent)]">
-                ₦{activeSlide.price.toLocaleString()} NGN
-              </span>
-              <span className="text-white/40">|</span>
-              <span className="text-white/70">
-                Atelier Location: <strong className="text-white">{activeSlide.location}</strong>
-              </span>
-              <span className="text-white/40">|</span>
-              <span className="text-emerald-400 font-bold">
-                ● Ready for Dispatch via Shipbubble
-              </span>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-3">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleWakeUp(activeSlide.linkUrl);
-                }}
-                className="px-6 py-3.5 rounded-2xl bg-[var(--gold-accent)] hover:bg-[#e5c158] text-black font-mono-luxury text-xs uppercase font-bold tracking-wider transition-all transform hover:scale-105 shadow-xl flex items-center gap-2.5 cursor-pointer"
-              >
-                <Eye className="h-4 w-4" />
-                <span>Shop This Piece</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleWakeUp('/shop');
-                }}
-                className="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white font-mono-luxury text-xs uppercase font-bold tracking-wider transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <Compass className="h-4 w-4 text-[var(--gold-accent)]" />
-                <span>Explore Full Lookbook</span>
-              </button>
-            </div>
+          {/* Category Tag */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-accent)]/15 border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold tracking-wider backdrop-blur-md">
+            {activeSlide.categoryIcon === 'gem' ? (
+              <Gem className="h-3.5 w-3.5" />
+            ) : activeSlide.categoryIcon === 'footwear' ? (
+              <Footprints className="h-3.5 w-3.5" />
+            ) : (
+              <Shirt className="h-3.5 w-3.5" />
+            )}
+            <span>{activeSlide.categoryName}</span>
+            <span className="text-white/30">•</span>
+            <span className="text-white/80">{activeSlide.atelierName}</span>
           </div>
 
-          {/* Right Controller & Ambient Notice */}
-          <div className="lg:col-span-4 flex flex-col items-start lg:items-end justify-between gap-4">
-            
-            {/* Interactive Carousel Controllers */}
-            <div className="flex items-center gap-2">
+          {/* Slide Title */}
+          <h1 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight drop-shadow-xl tracking-tight">
+            {activeSlide.title}
+          </h1>
+
+          {/* Description */}
+          <p className="text-xs sm:text-sm text-white/75 font-sans leading-relaxed line-clamp-3 drop-shadow">
+            {activeSlide.description}
+          </p>
+
+          {/* Price & Location Details */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-mono-luxury pt-1">
+            <span className="text-2xl sm:text-3xl font-bold text-[var(--gold-accent)]">
+              ₦{activeSlide.price.toLocaleString()}
+            </span>
+            <span className="text-white/30">|</span>
+            <span className="text-white/70">
+              {activeSlide.location}
+            </span>
+            <span className="text-white/30">|</span>
+            <span className="text-emerald-400 font-bold">
+              ● Shipbubble Live Courier
+            </span>
+          </div>
+
+          {/* Action & Controller Buttons */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleWakeUp(activeSlide.linkUrl);
+              }}
+              className="px-6 py-3.5 rounded-2xl bg-[var(--gold-accent)] hover:bg-[#e5c158] text-black font-mono-luxury text-xs uppercase font-bold tracking-wider transition-all transform hover:scale-105 shadow-2xl flex items-center gap-2 cursor-pointer"
+            >
+              <Eye className="h-4 w-4" />
+              <span>Shop This Piece</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleWakeUp('/shop');
+              }}
+              className="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white font-mono-luxury text-xs uppercase font-bold tracking-wider transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Compass className="h-4 w-4 text-[var(--gold-accent)]" />
+              <span>Explore All Drops</span>
+            </button>
+
+            {/* Slide Arrows */}
+            <div className="flex items-center gap-1.5 ml-auto">
               <button
                 type="button"
                 onClick={handlePrevSlide}
-                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white transition-all cursor-pointer"
+                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all cursor-pointer"
                 title="Previous Drop"
                 aria-label="Previous Slide"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </button>
 
               <button
                 type="button"
                 onClick={togglePause}
-                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-[var(--gold-accent)] transition-all cursor-pointer"
+                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-[var(--gold-accent)] transition-all cursor-pointer"
                 title={isPaused ? "Play" : "Pause"}
                 aria-label={isPaused ? "Play" : "Pause"}
               >
-                {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
+                {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
               </button>
 
               <button
                 type="button"
                 onClick={handleNextSlide}
-                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white transition-all cursor-pointer"
+                className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all cursor-pointer"
                 title="Next Drop"
                 aria-label="Next Slide"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
-
-            {/* Interaction Wakeup Prompt */}
-            <div className="p-3.5 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-lg text-left space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-mono-luxury text-[var(--gold-accent)] uppercase font-bold">
-                <span className="h-2 w-2 rounded-full bg-[var(--gold-accent)] animate-ping" />
-                <span>Ambient Theater Active</span>
-              </div>
-              <p className="text-[11px] font-mono-luxury text-white/70">
-                Move mouse, scroll, or tap anywhere to return to your styling session.
-              </p>
-            </div>
-
           </div>
 
+        </div>
+
+        {/* Right: Crisp, Full Uncropped Fashion Showcase Frame */}
+        <div className="w-full md:w-1/2 h-[45vh] sm:h-[60vh] md:h-[75vh] relative flex items-center justify-center pointer-events-none">
+          {slides.map((slide, idx) => (
+            <div
+              key={`fg-${slide.id}`}
+              className={`absolute inset-0 flex items-center justify-center md:justify-end transition-all duration-1000 ease-out ${
+                idx === currentSlideIndex
+                  ? 'opacity-100 scale-100'
+                  : 'opacity-0 scale-95 pointer-events-none'
+              }`}
+            >
+              <div className="relative w-full h-full max-h-[72vh] rounded-3xl overflow-hidden border border-white/15 shadow-2xl bg-black/40 backdrop-blur-sm">
+                <Image
+                  src={slide.imageUrl}
+                  alt={slide.title}
+                  fill
+                  priority={idx === 0}
+                  className="object-contain md:object-cover object-center"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
+            </div>
+          ))}
         </div>
 
       </div>
