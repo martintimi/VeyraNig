@@ -169,21 +169,14 @@ export default function BatchProductUploadView({
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
-  // Multi-Color Toggle for an Item
+  // Multi-Color Toggle for an Item (Optional - can be empty for unique pieces)
   const toggleItemColor = (itemId: string, color: { name: string; hex: string }) => {
     setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
       const exists = item.selectedColors.some(sc => sc.name.toLowerCase() === color.name.toLowerCase());
-      let updatedColors: { name: string; hex: string }[] = [];
-      if (exists) {
-        if (item.selectedColors.length > 1) {
-          updatedColors = item.selectedColors.filter(sc => sc.name.toLowerCase() !== color.name.toLowerCase());
-        } else {
-          updatedColors = item.selectedColors; // Keep at least one
-        }
-      } else {
-        updatedColors = [...item.selectedColors, color];
-      }
+      const updatedColors = exists
+        ? item.selectedColors.filter(sc => sc.name.toLowerCase() !== color.name.toLowerCase())
+        : [...item.selectedColors, color];
       return { ...item, selectedColors: updatedColors };
     }));
   };
@@ -725,24 +718,28 @@ export default function BatchProductUploadView({
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5 flex-wrap text-xs font-mono-luxury">
                                 <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">
-                                  Colors ({item.selectedColors.length}):
+                                  {item.selectedColors.length > 0 ? `Colors (${item.selectedColors.length}):` : 'Color:'}
                                 </span>
-                                <div className="flex items-center gap-1 flex-wrap">
-                                  {item.selectedColors.map((sc, scIdx) => (
-                                    <span
-                                      key={scIdx}
-                                      className="font-bold text-[var(--text-primary)] text-[11px] inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)]"
-                                    >
+                                {item.selectedColors.length === 0 ? (
+                                  <span className="text-[11px] font-bold text-[var(--text-muted)] italic">
+                                    As Pictured (Unique Print / Single Colorway)
+                                  </span>
+                                ) : (
+                                  <div className="flex items-center gap-1 flex-wrap">
+                                    {item.selectedColors.map((sc, scIdx) => (
                                       <span
-                                        className="inline-block h-2.5 w-2.5 rounded-full border border-white/20 shadow-sm shrink-0"
-                                        style={{
-                                          background: sc.name.toLowerCase().includes('multi')
-                                            ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
-                                            : sc.hex
-                                        }}
-                                      />
-                                      <span>{sc.name}</span>
-                                      {item.selectedColors.length > 1 && (
+                                        key={scIdx}
+                                        className="font-bold text-[var(--text-primary)] text-[11px] inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-subtle)]"
+                                      >
+                                        <span
+                                          className="inline-block h-2.5 w-2.5 rounded-full border border-white/20 shadow-sm shrink-0"
+                                          style={{
+                                            background: sc.name.toLowerCase().includes('multi')
+                                              ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                                              : sc.hex
+                                          }}
+                                        />
+                                        <span>{sc.name}</span>
                                         <button
                                           type="button"
                                           onClick={() => toggleItemColor(item.id, sc)}
@@ -750,10 +747,10 @@ export default function BatchProductUploadView({
                                         >
                                           ×
                                         </button>
-                                      )}
-                                    </span>
-                                  ))}
-                                </div>
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
 
                               <button

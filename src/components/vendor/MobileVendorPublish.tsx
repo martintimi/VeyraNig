@@ -239,7 +239,7 @@ export default function MobileVendorPublish({
   const toggleColor = (color: { name: string; hex: string }) => {
     const exists = selectedColors.some(c => c.name.toLowerCase() === color.name.toLowerCase());
     if (exists) {
-      if (selectedColors.length > 1) setSelectedColors(selectedColors.filter(c => c.name.toLowerCase() !== color.name.toLowerCase()));
+      setSelectedColors(selectedColors.filter(c => c.name.toLowerCase() !== color.name.toLowerCase()));
     } else {
       setSelectedColors([...selectedColors, color]);
     }
@@ -341,12 +341,6 @@ export default function MobileVendorPublish({
       return;
     }
 
-    if (category !== 'accessories' && selectedColors.length === 0) {
-      setErrorMessage('Please select at least one color');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
     const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
     if (enabledSizes.length === 0) {
       setErrorMessage(category === 'accessories' ? 'Please set stock quantity' : 'Enable at least one size with stock');
@@ -370,7 +364,7 @@ export default function MobileVendorPublish({
         image_url: finalImg,
         description: description.trim(),
         tags,
-        colors: category === 'accessories' ? ['Standard'] : selectedColors.map(c => c.name),
+        colors: category === 'accessories' ? [] : (selectedColors.length > 0 ? selectedColors.map(c => ({ name: c.name, hex: c.hex })) : [{ name: 'As Pictured', hex: '#111111' }]),
         sizes: enabledSizes,
         sizeStock,
         stockQuantity: totalStock,

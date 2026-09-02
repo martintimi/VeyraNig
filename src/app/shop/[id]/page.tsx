@@ -346,8 +346,11 @@ export default function ProductDetailPage() {
             </p>
           )}
 
-          {/* 1. Color Palette Selector (Only for apparel and footwear - hidden for accessories) */}
-          {product.category !== 'accessories' && product.colors && product.colors.length > 0 && (
+          {/* 1. Color Selector (Only shown when multiple colorways are offered) */}
+          {product.category !== 'accessories' && product.colors && product.colors.length > 1 && !product.colors.every((c: any) => {
+            const name = (typeof c === 'string' ? c : c?.name || '').toLowerCase();
+            return name === 'as pictured' || name === 'standard';
+          }) && (
             <div className="p-5 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
               <div className="flex items-center justify-between text-xs font-mono-luxury">
                 <span className="text-[var(--text-secondary)] uppercase font-bold">

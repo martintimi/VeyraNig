@@ -257,8 +257,11 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
           </p>
         )}
 
-        {/* 4. COLOR SELECTOR (Only for apparel and footwear - hidden for accessories) */}
-        {product.category !== 'accessories' && product.colors && product.colors.length > 0 && (
+        {/* 4. COLOR SELECTOR (Only shown when vendor provides multiple distinct colorways to choose from) */}
+        {product.category !== 'accessories' && product.colors && product.colors.length > 1 && !product.colors.every((c: any) => {
+          const name = (typeof c === 'string' ? c : c?.name || '').toLowerCase();
+          return name === 'as pictured' || name === 'standard';
+        }) && (
           <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
             <div className="flex items-center justify-between text-xs font-mono-luxury">
               <span className="text-[var(--text-secondary)] uppercase font-bold">

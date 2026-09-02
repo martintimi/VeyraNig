@@ -302,11 +302,9 @@ export default function PublishGarmentPage() {
   };
 
   const toggleColor = (color: { name: string; hex: string }) => {
-    const exists = selectedColors.some(c => c.name === color.name);
+    const exists = selectedColors.some(c => c.name.toLowerCase() === color.name.toLowerCase());
     if (exists) {
-      if (selectedColors.length > 1) {
-        setSelectedColors(selectedColors.filter(c => c.name !== color.name));
-      }
+      setSelectedColors(selectedColors.filter(c => c.name.toLowerCase() !== color.name.toLowerCase()));
     } else {
       setSelectedColors([...selectedColors, color]);
     }
@@ -369,11 +367,6 @@ export default function PublishGarmentPage() {
       return;
     }
 
-    if (category !== 'accessories' && selectedColors.length === 0) {
-      setErrorMessage('Please select at least one available color.');
-      return;
-    }
-
     const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
     if (enabledSizes.length === 0) {
       setErrorMessage(category === 'accessories' ? 'Please specify available stock quantity.' : 'Please enable at least one size with stock quantity.');
@@ -396,7 +389,7 @@ export default function PublishGarmentPage() {
         image_url: finalImageUrl,
         description: description.trim(),
         tags,
-        colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
+        colors: category === 'accessories' ? [] : (selectedColors.length > 0 ? selectedColors.map(c => ({ name: c.name, hex: c.hex })) : [{ name: 'As Pictured', hex: '#111111' }]),
         sizes: enabledSizes,
         sizeStock,
         stockQuantity: totalStockCount,
