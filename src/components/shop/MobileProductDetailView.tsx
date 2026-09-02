@@ -138,10 +138,10 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         </div>
       </div>
 
-      {/* 2. PRODUCT HERO IMAGE (Balanced height, tap to open lightbox transition) */}
+      {/* 2. PRODUCT HERO IMAGE (Balanced compact mobile height, tap to open lightbox) */}
       <div
         onClick={() => setIsImageModalOpen(true)}
-        className="relative w-full h-[50vh] sm:h-[55vh] max-h-[440px] bg-black overflow-hidden cursor-pointer group"
+        className="relative w-full h-[38vh] sm:h-[44vh] max-h-[360px] bg-black overflow-hidden cursor-pointer group"
       >
         <Image
           src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
@@ -154,7 +154,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
 
         {/* Bottom Floating Controls */}
-        <div className="absolute bottom-4 left-4 right-4 z-10 flex items-center justify-between text-xs font-mono-luxury">
+        <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between text-xs font-mono-luxury">
           <div className="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white/90 text-[10px] font-bold flex items-center gap-1.5 shadow-lg">
             <ZoomIn className="h-3 w-3 text-[var(--gold-accent)]" />
             <span>Tap to View</span>
@@ -166,7 +166,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
               e.stopPropagation();
               setOutfitItem(product);
             }}
-            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--gold-accent)] to-amber-600 text-black font-bold uppercase text-[10px] active:scale-95 transition-transform flex items-center gap-1 shadow-xl"
+            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--gold-accent)] to-amber-600 text-black font-bold uppercase text-[10px] active:scale-95 transition-transform flex items-center gap-1 shadow-xl cursor-pointer"
           >
             <Sparkles className="h-3 w-3 fill-black" />
             <span>Try on 3D Twin</span>
@@ -175,10 +175,10 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
       </div>
 
       {/* 3. PRODUCT ESSENTIAL DETAILS & VENDOR IDENTITY */}
-      <div className="p-4 sm:p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-4">
         
         {/* Vendor Header */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5">
           <Link
             href={`/brand/${encodeURIComponent(product.vendorName || product.vendorId)}`}
             className="flex items-center gap-2 group"
@@ -197,7 +197,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
             </div>
           </Link>
 
-          {reviewsData.count > 0 ? (
+          {reviewsData && reviewsData.count > 0 && reviewsData.averageRating > 0 ? (
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-[11px] font-mono-luxury">
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
               <span className="font-bold text-[var(--text-primary)]">{reviewsData.averageRating.toFixed(1)}</span>
@@ -211,13 +211,13 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         </div>
 
         {/* Title & Price */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)] leading-snug">
             {product.name}
           </h1>
 
-          <div className="flex items-baseline justify-between pt-1">
-            <div className="font-editorial text-3xl font-bold text-amber-600 dark:text-[var(--gold-accent)]">
+          <div className="flex items-baseline justify-between pt-0.5">
+            <div className="font-editorial text-2xl sm:text-3xl font-bold text-amber-600 dark:text-[var(--gold-accent)]">
               ₦{Number(product.price || 0).toLocaleString()}
             </div>
 
@@ -233,15 +233,15 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
           </div>
 
           {/* Location line */}
-          <div className="flex items-center gap-2 text-xs font-mono-luxury text-[var(--text-secondary)] pt-1">
+          <div className="flex items-center gap-2 text-xs font-mono-luxury text-[var(--text-secondary)] pt-0.5">
             <MapPin className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
             <span>Ships from <strong className="text-[var(--text-primary)]">{product.vendorCity ? `${product.vendorCity}, ` : ''}{product.vendorState || 'Lagos'}</strong></span>
           </div>
         </div>
 
-        {/* Description */}
-        {product.description && (
-          <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed border-t border-[var(--border-subtle)] pt-3">
+        {/* Description (Only show when genuine description exists) */}
+        {product.description && product.description.trim().length > 0 && product.description.trim().toLowerCase() !== (product.name || '').trim().toLowerCase() && (
+          <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed border-t border-[var(--border-subtle)] pt-2.5">
             {product.description}
           </p>
         )}

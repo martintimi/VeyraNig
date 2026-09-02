@@ -382,7 +382,7 @@ export default function PublishGarmentPage() {
         garmentOriginType: 'ready_made_boutique',
         imageUrl: finalImageUrl,
         image_url: finalImageUrl,
-        description: description.trim() || name.trim(),
+        description: description.trim(),
         tags,
         colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
         sizes: enabledSizes,

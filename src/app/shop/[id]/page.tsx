@@ -314,7 +314,7 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              {reviewsData.count > 0 ? (
+              {reviewsData && reviewsData.count > 0 && reviewsData.averageRating > 0 ? (
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--badge-bg)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                   <span className="font-bold text-[var(--text-primary)]">{reviewsData.averageRating.toFixed(1)}</span>
@@ -328,8 +328,8 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Description */}
-          {product.description && (
+          {/* Description (Only show when genuine description exists) */}
+          {product.description && product.description.trim().length > 0 && product.description.trim().toLowerCase() !== (product.name || '').trim().toLowerCase() && (
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed border-t border-[var(--border-subtle)] pt-4">
               {product.description}
             </p>

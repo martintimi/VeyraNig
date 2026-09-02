@@ -106,13 +106,14 @@ export async function GET(
       'off white': '#f5f5f5',
       grey: '#6b7280',
       gray: '#6b7280',
+      'heather grey': '#9ca3af',
       'charcoal grey': '#374151',
       'charcoal gray': '#374151',
       'light grey': '#d1d5db',
       'light gray': '#d1d5db',
       navy: '#1e3a8a',
       'navy blue': '#1e3a8a',
-      'royal blue': '#1d4ed8',
+      'royal blue': '#2563eb',
       'sky blue': '#38bdf8',
       blue: '#2563eb',
       red: '#dc2626',
@@ -125,21 +126,56 @@ export async function GET(
       brown: '#78350f',
       'chocolate brown': '#451a03',
       beige: '#d4b996',
+      'khaki / beige': '#d4b996',
+      'khaki/beige': '#d4b996',
+      khaki: '#d4b996',
       tan: '#d2b48c',
       cream: '#fdfbf7',
       gold: '#d97706',
+      'emerald gold': '#e6c367',
       yellow: '#eab308',
+      'mustard yellow': '#d97706',
       orange: '#ea580c',
+      'vibrant orange': '#ea580c',
       purple: '#7e22ce',
+      'lavender purple': '#9333ea',
       pink: '#ec4899',
+      'pastel pink': '#f472b6',
       burgundy: '#800020',
+      'wine / burgundy': '#831843',
+      'wine/burgundy': '#831843',
       wine: '#722f37',
       maroon: '#800000',
-      khaki: '#c3b091',
       teal: '#0d9488',
       turquoise: '#06b6d4',
       silver: '#e5e7eb',
     };
+
+    function resolveColorHex(name: string = '', fallbackHex?: string): string {
+      if (fallbackHex && fallbackHex.startsWith('#') && fallbackHex !== '#111111' && fallbackHex !== '#000000') {
+        return fallbackHex;
+      }
+      const lower = name.toLowerCase().trim();
+      if (COLOR_HEX_MAP[lower]) return COLOR_HEX_MAP[lower];
+      if (lower.includes('khaki') || lower.includes('beige') || lower.includes('cream') || lower.includes('sand')) return '#d4b996';
+      if (lower.includes('brown') || lower.includes('chocolate') || lower.includes('coffee')) return '#78350f';
+      if (lower.includes('white') || lower.includes('off-white') || lower.includes('off white')) return '#ffffff';
+      if (lower.includes('black') || lower.includes('onyx') || lower.includes('noir')) return '#111111';
+      if (lower.includes('charcoal') || lower.includes('grey') || lower.includes('gray')) return '#374151';
+      if (lower.includes('navy')) return '#1e3a8a';
+      if (lower.includes('sky')) return '#38bdf8';
+      if (lower.includes('blue')) return '#2563eb';
+      if (lower.includes('olive')) return '#556b2f';
+      if (lower.includes('forest') || lower.includes('emerald') || lower.includes('green')) return '#16a34a';
+      if (lower.includes('wine') || lower.includes('burgundy') || lower.includes('maroon')) return '#831843';
+      if (lower.includes('red') || lower.includes('crimson')) return '#dc2626';
+      if (lower.includes('gold') || lower.includes('mustard') || lower.includes('yellow')) return '#d97706';
+      if (lower.includes('purple') || lower.includes('lavender') || lower.includes('violet')) return '#7e22ce';
+      if (lower.includes('pink') || lower.includes('rose') || lower.includes('blush')) return '#f472b6';
+      if (lower.includes('orange')) return '#ea580c';
+      if (lower.includes('teal') || lower.includes('turquoise')) return '#0d9488';
+      return fallbackHex || '#111111';
+    }
 
     let normalizedColors: { name: string; hex: string }[] = [];
     if (Array.isArray(product.colors) && product.colors.length > 0) {
@@ -152,15 +188,14 @@ export async function GET(
             const name = foundKey ? foundKey.charAt(0).toUpperCase() + foundKey.slice(1) : trimmed;
             return { name, hex: trimmed };
           }
-          const lower = trimmed.toLowerCase();
-          const hex = COLOR_HEX_MAP[lower] || '#111111';
+          const hex = resolveColorHex(trimmed);
           const formattedName = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
           return { name: formattedName, hex };
         }
         if (typeof c === 'object' && c !== null) {
           const rawName = String(c.name || '').trim();
           if (rawName && !rawName.toLowerCase().startsWith('colorway')) {
-            const hex = c.hex || COLOR_HEX_MAP[rawName.toLowerCase()] || '#111111';
+            const hex = resolveColorHex(rawName, c.hex);
             return { name: rawName, hex };
           }
           if (c.hex) {
@@ -169,7 +204,7 @@ export async function GET(
             const name = foundKey ? foundKey.charAt(0).toUpperCase() + foundKey.slice(1) : (rawName || 'Standard');
             return { name, hex: c.hex };
           }
-          return { name: rawName || 'Standard', hex: '#111111' };
+          return { name: rawName || 'Standard', hex: resolveColorHex(rawName) };
         }
         return { name: 'Standard', hex: '#111111' };
       });
@@ -208,7 +243,7 @@ export async function GET(
       shippingRates,
       name: product.name,
       price: Number(product.price),
-      description: product.description || '',
+      description: product.description && product.description.trim().toLowerCase() !== product.name.trim().toLowerCase() ? product.description : '',
       category: product.category || 'tops',
       genderTarget: product.gender_target || 'unisex',
       garmentOriginType: product.garment_origin_type || 'ready_made_boutique',
@@ -220,7 +255,7 @@ export async function GET(
         ? { 'One Size': typeof product.size_stock?.['One Size'] === 'object' ? product.size_stock['One Size'] : { enabled: true, quantity: product.stock_quantity || 20 } }
         : (product.size_stock || {}),
       stockQuantity: product.stock_quantity || 20,
-      rating: 5.0,
+      rating: 0,
       reviewCount: 0,
       createdAt: product.created_at,
       badge: isAccessory ? 'Jewelry & Accessories' : 'Ready-to-Wear'

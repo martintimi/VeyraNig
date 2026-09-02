@@ -51,6 +51,7 @@ function AuthPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [preferredSize, setPreferredSize] = useState<'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -62,6 +63,7 @@ function AuthPageContent() {
     email: string;
     phone: string;
     gender: 'male' | 'female';
+    preferredSize: 'S' | 'M' | 'L' | 'XL' | 'XXL';
     twinId: string;
   } | null>(null);
   const [resendTimer, setResendTimer] = useState(30);
@@ -134,6 +136,7 @@ function AuthPageContent() {
           email,
           phone,
           gender,
+          preferredSize,
           twinId,
         });
         setOtp(['', '', '', '', '', '']);
@@ -262,6 +265,7 @@ function AuthPageContent() {
         email: activeEmail,
         phone: activePhone,
         gender: pendingUserData?.gender || gender,
+        preferredSize: pendingUserData?.preferredSize || preferredSize || 'M',
         twinId: pendingUserData?.twinId || `VY-NIG-${Math.floor(100 + Math.random() * 900)}`,
         isInitialized: true,
       });
@@ -654,9 +658,9 @@ function AuthPageContent() {
                 </div>
               )}
 
-              {/* Gender Preference for Sign-Up */}
+              {/* Gender Preference and Clothing Size for Sign-Up */}
               {mode === 'signup' && (
-                <div className="space-y-3 pt-1">
+                <div className="space-y-4 pt-1">
                   <div>
                     <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">
                       Primary Department
@@ -665,7 +669,7 @@ function AuthPageContent() {
                       <button
                         type="button"
                         onClick={() => setGender('male')}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center ${
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center cursor-pointer ${
                           gender === 'male'
                             ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] text-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30'
                             : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
@@ -676,7 +680,7 @@ function AuthPageContent() {
                       <button
                         type="button"
                         onClick={() => setGender('female')}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center ${
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center cursor-pointer ${
                           gender === 'female'
                             ? 'bg-[var(--gold-subtle)] border-[var(--gold-accent)] text-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30'
                             : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
@@ -685,6 +689,36 @@ function AuthPageContent() {
                         Women&apos;s Fashion
                       </button>
                     </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)]">
+                        What clothing size do you wear?
+                      </label>
+                      <span className="text-[11px] font-mono-luxury font-bold text-[var(--gold-accent)]">
+                        Selected: {preferredSize}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {(['S', 'M', 'L', 'XL', 'XXL'] as const).map((sz) => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setPreferredSize(sz)}
+                          className={`py-2 px-1 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center cursor-pointer ${
+                            preferredSize === sz
+                              ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md font-extrabold'
+                              : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]'
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono-luxury mt-1">
+                      Products across the store will automatically default to your chosen size ({preferredSize}).
+                    </p>
                   </div>
                 </div>
               )}

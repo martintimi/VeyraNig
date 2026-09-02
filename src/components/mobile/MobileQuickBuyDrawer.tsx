@@ -19,11 +19,22 @@ export default function MobileQuickBuyDrawer({ product, onClose }: QuickBuyDrawe
   if (!product) return null;
 
   const pref = bodyProfile?.preferredSize || 'M';
-  const availableSizes = product.sizes || ['S', 'M', 'L', 'XL', 'XXL'];
+  const isAccessory = product.category === 'accessories';
+  const availableSizes: string[] = isAccessory
+    ? ['One Size']
+    : Array.isArray(product.sizes) && product.sizes.length > 0
+    ? product.sizes
+    : product.sizeStock && typeof product.sizeStock === 'object' && Object.keys(product.sizeStock).length > 0
+    ? Object.keys(product.sizeStock).filter(sz => {
+        const v = product.sizeStock[sz];
+        return typeof v === 'object' ? v?.enabled !== false : Number(v) > 0;
+      })
+    : ['M', 'L', 'XL'];
+
   const defaultSize = availableSizes.includes(pref) ? pref : (availableSizes[0] || 'M');
 
   const [selectedSize, setSelectedSize] = useState(defaultSize);
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'As Featured', hex: '#111111' });
+  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'Standard', hex: '#111111' });
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -132,22 +143,28 @@ export default function MobileQuickBuyDrawer({ product, onClose }: QuickBuyDrawe
         {product.colors && product.colors.length > 1 && (
           <div className="space-y-2">
             <span className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] font-bold">
-              Select Color: <strong className="text-[var(--text-primary)]">{selectedColor.name}</strong>
+              Select Color: <strong className="text-[var(--text-primary)]">{selectedColor?.name || 'Standard'}</strong>
             </span>
             <div className="flex items-center gap-2.5">
-              {product.colors.map((c: any) => (
-                <button
-                  key={c.hex}
-                  type="button"
-                  onClick={() => setSelectedColor(c)}
-                  className={`h-7 w-7 rounded-full border-2 transition-transform cursor-pointer ${
-                    selectedColor.hex.toLowerCase() === c.hex.toLowerCase()
-                      ? 'border-[var(--gold-accent)] scale-110 shadow-md'
-                      : 'border-transparent opacity-70'
-                  }`}
-                  style={{ backgroundColor: c.hex }}
-                />
-              ))}
+              {product.colors.map((c: any, idx: number) => {
+                const colorName = typeof c === 'string' ? c : (c.name || 'Standard');
+                const colorHex = typeof c === 'object' && c?.hex ? c.hex : '#111111';
+                const isSelected = selectedColor?.name === colorName || selectedColor?.hex === colorHex;
+                return (
+                  <button
+                    key={`color-pill-${colorName}-${idx}`}
+                    type="button"
+                    onClick={() => setSelectedColor(typeof c === 'object' ? c : { name: colorName, hex: colorHex })}
+                    className={`h-7 w-7 rounded-full border-2 transition-transform cursor-pointer ${
+                      isSelected
+                        ? 'border-[var(--gold-accent)] scale-110 shadow-md ring-2 ring-[var(--gold-accent)]/30'
+                        : 'border-transparent opacity-75 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: colorHex }}
+                    title={colorName}
+                  />
+                );
+              })}
             </div>
           </div>
         )}

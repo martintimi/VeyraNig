@@ -25,6 +25,7 @@ export default function AuthModal() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [preferredSize, setPreferredSize] = useState<'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
   const [heightCm, setHeightCm] = useState(178);
   const [weightKg, setWeightKg] = useState(74);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,6 +68,7 @@ export default function AuthModal() {
           name: userName,
           email,
           gender,
+          preferredSize,
           heightCm,
           weightKg,
           chestCm: gender === 'male' ? 102 : 88,
@@ -253,8 +255,38 @@ export default function AuthModal() {
             </div>
           </div>
 
+          {/* Preferred Clothing Size for Shoppers */}
+          {mode === 'signup' && accountType === 'shopper' && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)]">
+                  Preferred Clothing Size
+                </label>
+                <span className="text-[11px] font-mono-luxury font-bold text-[var(--gold-accent)]">
+                  {preferredSize}
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {(['S', 'M', 'L', 'XL', 'XXL'] as const).map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => setPreferredSize(sz)}
+                    className={`py-2 px-1 rounded-xl border text-xs font-mono-luxury font-bold transition-all text-center cursor-pointer ${
+                      preferredSize === sz
+                        ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)] shadow-md font-extrabold'
+                        : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]'
+                    }`}
+                  >
+                    {sz}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quick Height & Weight for Shoppers */}
-          {mode === 'signup' && (
+          {mode === 'signup' && accountType === 'shopper' && (
             <div className="grid grid-cols-2 gap-3 pt-1">
               <div>
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1">Height (cm)</label>
