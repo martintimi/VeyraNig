@@ -301,37 +301,14 @@ export async function POST(request: Request) {
       request.headers.get('x-vendor-id') || 
       '';
 
-    const {
-      name,
-      price,
-      category,
-      genderTarget,
-      garmentOriginType,
-      imageUrl,
-      image_url,
-      description,
-      tags,
-      colors,
-      sizes,
-      sizeStock,
-      stockQuantity,
-      tailoringSpecs,
-      vendorName,
-    } = body;
-    const vendorId = resolvedVendorId;
-
-    if (!name || !price || !category) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
     const supabase = await createClient();
 
     // Check vendor verification status before permitting publication
-    if (vendorId) {
+    if (resolvedVendorId) {
       const { data: vendorRecord } = await supabase
         .from('vendors')
         .select('*')
-        .or(`id.eq.${vendorId},email.eq.${vendorId}`)
+        .or(`id.eq.${resolvedVendorId},email.eq.${resolvedVendorId}`)
         .maybeSingle();
 
       if (vendorRecord) {
@@ -357,6 +334,74 @@ export async function POST(request: Request) {
       }
     }
 
+    // BATCH INSERTION MODE (Multiple Products at once)
+    if (Array.isArray(body.items) && body.items.length > 0) {
+      const rows = body.items.map((item: any, idx: number) => {
+        const pId = `prod-${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}`;
+        const colorsList = Array.isArray(item.colors)
+          ? item.colors.map((c: any) => typeof c === 'string' ? c : (c.name || c.hex || 'Black'))
+          : [];
+        const tagsList = Array.isArray(item.tags)
+          ? item.tags.map((t: any) => typeof t === 'string' ? t.replace(/^#/, '') : String(t))
+          : ['Ready-to-Wear'];
+        const finalImage = item.imageUrl || item.image_url || getSmartFallbackImage(item.name || 'Garment', item.category || 'tops');
+        
+        return {
+          id: pId,
+          name: item.name || `Collection Piece #${idx + 1}`,
+          price: Number(item.price || 0),
+          category: item.category || 'tops',
+          gender_target: item.genderTarget || 'unisex',
+          garment_origin_type: item.garmentOriginType || 'ready_made_boutique',
+          image_url: finalImage,
+          description: item.description && item.description.trim().toLowerCase() !== (item.name || '').trim().toLowerCase() ? item.description : '',
+          tags: tagsList,
+          colors: colorsList,
+          sizes: item.sizes || ['M', 'L', 'XL'],
+          size_stock: item.sizeStock || {},
+          stock_quantity: Number(item.stockQuantity || 20),
+          vendor_id: resolvedVendorId,
+          is_published: true,
+        };
+      });
+
+      const { data, error } = await supabase.from('products').insert(rows).select();
+      if (error) {
+        console.error('Error inserting batch into products table:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        count: data?.length || rows.length,
+        products: data || rows,
+      });
+    }
+
+    // SINGLE PRODUCT INSERTION MODE
+    const {
+      name,
+      price,
+      category,
+      genderTarget,
+      garmentOriginType,
+      imageUrl,
+      image_url,
+      description,
+      tags,
+      colors,
+      sizes,
+      sizeStock,
+      stockQuantity,
+      tailoringSpecs,
+      vendorName,
+    } = body;
+    const vendorId = resolvedVendorId;
+
+    if (!name || !price || !category) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
     const productId = `prod-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const colorsList = Array.isArray(colors)
@@ -377,9 +422,12 @@ export async function POST(request: Request) {
       gender_target: genderTarget || 'unisex',
       garment_origin_type: garmentOriginType || 'ready_made_boutique',
       image_url: finalImage,
-      description: description || name,
+      description: description && description.trim().toLowerCase() !== name.trim().toLowerCase() ? description : '',
       tags: tagsList,
       colors: colorsList,
+      sizes: sizes || ['M', 'L', 'XL'],
+      size_stock: sizeStock || {},
+      stock_quantity: Number(stockQuantity || 20),
       vendor_id: vendorId,
       is_published: true,
     }).select().single();

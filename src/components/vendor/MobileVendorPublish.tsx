@@ -86,12 +86,14 @@ interface MobileVendorPublishProps {
   onPublishSuccess: (productId: string) => void;
   vendorProfile: any;
   getActiveVendorId: () => string;
+  onSwitchToBatch?: () => void;
 }
 
 export default function MobileVendorPublish({
   onPublishSuccess,
   vendorProfile,
-  getActiveVendorId
+  getActiveVendorId,
+  onSwitchToBatch
 }: MobileVendorPublishProps) {
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
   const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>('all');
@@ -135,6 +137,7 @@ export default function MobileVendorPublish({
   const [isPublishSuccess, setIsPublishSuccess] = useState(false);
   const [publishedProductId, setPublishedProductId] = useState<string | null>(null);
   const [lastPublishedName, setLastPublishedName] = useState('');
+  const [successToast, setSuccessToast] = useState('');
 
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
   const filteredCategoryList = catFilterTab === 'all' 
@@ -455,6 +458,26 @@ export default function MobileVendorPublish({
       
       {/* 1. Header & Department Switcher */}
       <div className="space-y-3">
+        {/* Mode Switcher */}
+        {onSwitchToBatch && (
+          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury font-bold">
+            <button
+              type="button"
+              className="py-2 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm text-center cursor-pointer"
+            >
+              Single Piece
+            </button>
+            <button
+              type="button"
+              onClick={onSwitchToBatch}
+              className="py-2 rounded-xl text-[var(--gold-accent)] hover:text-white transition-all flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <Sparkles className="h-3 w-3 fill-current" />
+              <span>⚡ Multi-Photo Batch</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold block">
@@ -748,8 +771,16 @@ export default function MobileVendorPublish({
         </div>
       )}
 
-      {/* Submit Button */}
-      <div className="pt-2">
+      {/* Success Toast */}
+      {successToast && (
+        <div className="fixed top-6 left-4 right-4 z-50 p-4 rounded-2xl bg-emerald-500 text-black font-mono-luxury font-bold text-xs flex items-center gap-2 shadow-2xl animate-slideDown">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>{successToast}</span>
+        </div>
+      )}
+
+      {/* Submit Buttons */}
+      <div className="pt-2 space-y-2.5">
         <button
           type="submit"
           disabled={isSubmitting}
@@ -767,6 +798,81 @@ export default function MobileVendorPublish({
               <ArrowRight className="h-3.5 w-3.5" />
             </>
           )}
+        </button>
+
+        <button
+          type="button"
+          disabled={isSubmitting}
+          onClick={async (e) => {
+            e.preventDefault();
+            if (isSubmitting) return;
+            // Execute quick submit & reset
+            const numericPrice = Number(rawPrice.replace(/[^0-9.]/g, ''));
+            if (!name.trim()) {
+              setErrorMessage('Please enter garment title.');
+              return;
+            }
+            if (!rawPrice || isNaN(numericPrice) || numericPrice <= 0) {
+              setErrorMessage('Please enter a valid price in Naira.');
+              return;
+            }
+            setIsSubmitting(true);
+            setErrorMessage('');
+            try {
+              const activeVendorId = getActiveVendorId();
+              const finalImageUrl = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
+              const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
+              
+              const payload = {
+                name: name.trim(),
+                price: numericPrice,
+                category,
+                genderTarget,
+                garmentOriginType: 'ready_made_boutique',
+                imageUrl: finalImageUrl,
+                image_url: finalImageUrl,
+                description: description.trim(),
+                tags,
+                colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
+                sizes: enabledSizes.length > 0 ? enabledSizes : ['M', 'L', 'XL'],
+                sizeStock,
+                stockQuantity: totalStock,
+                vendorId: activeVendorId,
+                vendorName: vendorProfile.brandName || 'Verified Partner',
+                is_published: true,
+              };
+
+              const res = await vendorFetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+
+              const data = await res.json();
+              if (res.ok && data.success) {
+                confetti({ particleCount: 60, spread: 60, origin: { y: 0.8 } });
+                setSuccessToast(`"${name.trim()}" published! Form cleared for your next piece.`);
+                setTimeout(() => setSuccessToast(''), 4000);
+                setName('');
+                setRawPrice('');
+                setDescription('');
+                setImageFile(null);
+                setImagePreview(null);
+                setTags([]);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                setErrorMessage(data.error || 'Failed to publish piece');
+              }
+            } catch (err) {
+              setErrorMessage('Network error while publishing');
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+          className="w-full py-3.5 rounded-full surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--gold-accent)] font-mono-luxury uppercase text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span>Publish &amp; Add Another Piece</span>
         </button>
       </div>
 

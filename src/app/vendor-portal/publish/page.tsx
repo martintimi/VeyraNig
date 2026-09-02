@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import MobileVendorPublish from '@/components/vendor/MobileVendorPublish';
+import BatchProductUploadView from '@/components/vendor/BatchProductUploadView';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 
 // Standard Apparel Colors Palette for Boutiques & Designers
@@ -107,6 +108,9 @@ export default function PublishGarmentPage() {
     rejectionReason: string;
   } | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+  // Mode: single garment or multi-photo batch drop
+  const [uploadMode, setUploadMode] = useState<'single' | 'batch'>('single');
 
   // Department / Gender Filter: male | female | unisex
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
@@ -567,6 +571,18 @@ export default function PublishGarmentPage() {
   // =========================================================================
   // AUTHORIZED / APPROVED PUBLISHING FORM
   // =========================================================================
+  if (uploadMode === 'batch') {
+    return (
+      <div className="p-4 sm:p-10 max-w-5xl mx-auto">
+        <BatchProductUploadView
+          vendorProfile={vendorProfile}
+          getActiveVendorId={getActiveVendorId}
+          onSwitchToSingle={() => setUploadMode('single')}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       {/* 1. DEDICATED MOBILE VENDOR PUBLISH */}
@@ -577,12 +593,36 @@ export default function PublishGarmentPage() {
           }}
           vendorProfile={vendorProfile}
           getActiveVendorId={getActiveVendorId}
+          onSwitchToBatch={() => setUploadMode('batch')}
         />
       </div>
 
       {/* 2. DESKTOP LUXURY VENDOR PUBLISH */}
       <div className="hidden md:block p-6 sm:p-10 max-w-5xl mx-auto space-y-8 animate-fadeIn pb-24">
       
+      {/* Mode Switcher */}
+      <div className="flex items-center justify-between gap-4 p-1.5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] w-fit">
+        <button
+          type="button"
+          onClick={() => setUploadMode('single')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-mono-luxury font-bold transition-all cursor-pointer ${
+            uploadMode === 'single'
+              ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          Single Piece Form
+        </button>
+        <button
+          type="button"
+          onClick={() => setUploadMode('batch')}
+          className="px-5 py-2.5 rounded-xl text-xs font-mono-luxury font-bold text-[var(--gold-accent)] hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <Sparkles className="h-3.5 w-3.5 fill-current" />
+          <span>⚡ Multi-Photo Batch Drop (Bulk Upload)</span>
+        </button>
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-6">
         <div>
@@ -1101,24 +1141,93 @@ export default function PublishGarmentPage() {
               Cancel
             </Link>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-8 py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-            >
-              {isSubmitting ? (
-                <>
-                  <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
-                  <span>Publishing Piece to Catalog...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  <span>Publish Piece to Catalog</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (isSubmitting) return;
+                  const numericPrice = Number(rawPrice.replace(/[^0-9.]/g, ''));
+                  if (!name.trim()) {
+                    setErrorMessage('Please enter garment name.');
+                    return;
+                  }
+                  if (!rawPrice || isNaN(numericPrice) || numericPrice <= 0) {
+                    setErrorMessage('Please enter a valid price in Naira.');
+                    return;
+                  }
+                  setIsSubmitting(true);
+                  setErrorMessage('');
+                  try {
+                    const activeVendorId = getActiveVendorId();
+                    const finalImageUrl = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
+                    const enabledSizes = Object.keys(sizeStock).filter(s => sizeStock[s]?.enabled && Number(sizeStock[s]?.quantity) > 0);
+                    
+                    const payload = {
+                      name: name.trim(),
+                      price: numericPrice,
+                      category,
+                      genderTarget,
+                      garmentOriginType: 'ready_made_boutique',
+                      imageUrl: finalImageUrl,
+                      image_url: finalImageUrl,
+                      description: description.trim(),
+                      tags,
+                      colors: category === 'accessories' ? [] : selectedColors.map(c => ({ name: c.name, hex: c.hex })),
+                      sizes: enabledSizes.length > 0 ? enabledSizes : ['M', 'L', 'XL'],
+                      sizeStock,
+                      stockQuantity: totalStockCount,
+                      vendorId: activeVendorId,
+                      vendorName: vendorProfile.brandName || 'Verified Partner',
+                      is_published: true,
+                    };
+
+                    const res = await vendorFetch('/api/products', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                    });
+
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                      confetti({ particleCount: 70, spread: 60, origin: { y: 0.8 } });
+                      resetForm();
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                      setErrorMessage(data.error || 'Failed to publish piece');
+                    }
+                  } catch (err) {
+                    setErrorMessage('Network error while publishing');
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+                className="px-6 py-4 rounded-full surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--gold-accent)] font-mono-luxury uppercase text-xs font-bold transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Publish &amp; Add Another Piece</span>
+              </button>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-8 py-4 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xl flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
+                    <span>Publishing Piece to Catalog...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span>Publish Piece to Catalog</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
         </form>
