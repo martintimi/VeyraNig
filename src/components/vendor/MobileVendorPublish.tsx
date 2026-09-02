@@ -645,50 +645,23 @@ export default function MobileVendorPublish({
             </span>
           </div>
 
-          {/* Quick Segment Tabs with Lucide Icons */}
-          <div className="flex items-center gap-1.5 mb-2 overflow-x-auto no-scrollbar pb-0.5">
-            {[
-              { id: 'all', label: 'All', icon: Layers, allowed: vendorSpecialty === 'multi_department' },
-              { id: 'apparel', label: 'Apparel', icon: Shirt, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel' },
-              { id: 'footwear', label: 'Footwear', icon: Footprints, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'footwear' },
-              { id: 'accessories', label: 'Jewelry & Accessories', icon: Gem, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry' },
-            ].filter(t => t.allowed).map((tab) => {
-              const IconComp = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setCatFilterTab(tab.id as any)}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono-luxury font-bold shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
-                    catFilterTab === tab.id
-                      ? 'bg-[var(--gold-accent)] text-black shadow-sm'
-                      : 'bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                  }`}
-                >
-                  <IconComp className="h-3 w-3" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Clean Category Grid */}
-          <div className="grid grid-cols-2 gap-1.5">
+          <select
+            value={subCategory}
+            onChange={(e) => {
+              const selectedId = e.target.value;
+              const matched = currentCategoryList.find(c => c.id === selectedId) || UNISEX_CATEGORIES.find(c => c.id === selectedId);
+              if (matched) {
+                handleCategorySelect(matched.id, matched.generalCat);
+              }
+            }}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs font-mono-luxury font-bold focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
+          >
             {filteredCategoryList.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => handleCategorySelect(cat.id, cat.generalCat)}
-                className={`p-2.5 rounded-xl border text-left text-[11px] font-mono-luxury transition-all cursor-pointer ${
-                  subCategory === cat.id
-                    ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)]'
-                    : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'
-                }`}
-              >
+              <option key={cat.id} value={cat.id}>
                 {cat.label}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
         {/* AI Generator Button */}
