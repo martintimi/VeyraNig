@@ -14,6 +14,7 @@ const ITEMS_PER_PAGE = 8;
 export default function MobileShopView() {
   const {
     allProducts,
+    isProductsLoading,
     toggleVaultItem,
     isInVault,
     fetchProductsFromDb,
@@ -151,15 +152,36 @@ export default function MobileShopView() {
 
       {/* ITEM COUNT */}
       <div className="px-4 pb-3 flex items-center justify-between text-xs text-[var(--text-secondary)]">
-        <span>{filteredProducts.length} items</span>
-        {totalPages > 1 && (
+        {isProductsLoading ? (
+          <span className="flex items-center gap-1.5 text-[11px] text-[var(--gold-accent)] font-mono-luxury font-bold animate-pulse">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold-accent)] animate-ping" />
+            <span>Loading pieces...</span>
+          </span>
+        ) : (
+          <span>{filteredProducts.length} items</span>
+        )}
+        {totalPages > 1 && !isProductsLoading && (
           <span className="font-mono-luxury text-[11px]">Page {currentPage} of {totalPages}</span>
         )}
       </div>
 
       {/* PRODUCT GRID */}
-      {filteredProducts.length === 0 ? (
-        <div className="px-6 py-15 flex flex-col items-center text-center gap-4">
+      {isProductsLoading ? (
+        <div className="grid grid-cols-2 px-2 gap-x-2.5 gap-y-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex flex-col justify-between h-full space-y-2 animate-pulse">
+              <div className="relative aspect-[4/5] w-full bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
+              </div>
+              <div className="space-y-1 px-0.5">
+                <div className="h-3.5 w-4/5 bg-[var(--bg-secondary)] rounded-md" />
+                <div className="h-3 w-1/3 bg-[var(--bg-secondary)] rounded-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="px-6 py-15 flex flex-col items-center text-center gap-4 animate-fadeIn">
           {/* Minimal icon */}
           <div className="h-16 w-16 rounded-full border-2 border-dashed border-[var(--border-subtle)] flex items-center justify-center">
             <span className="text-2xl opacity-30">
@@ -180,7 +202,6 @@ export default function MobileShopView() {
             Clear Filters
           </button>
         </div>
-
       ) : (
         <>
           <div className="grid grid-cols-2 px-2 gap-x-2.5 gap-y-6">

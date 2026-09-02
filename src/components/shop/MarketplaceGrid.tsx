@@ -23,6 +23,7 @@ export default function MarketplaceGrid() {
     removeOutfitItem,
     addToCart,
     allProducts,
+    isProductsLoading,
     selectedGender,
     setSelectedGender,
     selectedOriginType,
@@ -298,7 +299,19 @@ export default function MarketplaceGrid() {
       {/* ======================================================== */}
       {/* 4. GARMENTS GRID OR ANIMATED EMPTY STATE */}
       {/* ======================================================== */}
-      {filteredProducts.length === 0 ? (
+      {isProductsLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="rounded-2xl sm:rounded-3xl surface-card p-4 space-y-3 animate-pulse border border-[var(--border-subtle)]">
+              <div className="aspect-[4/5] w-full bg-[var(--bg-secondary)] rounded-2xl" />
+              <div className="space-y-2">
+                <div className="h-4 w-3/4 bg-[var(--bg-secondary)] rounded-md" />
+                <div className="h-3 w-1/2 bg-[var(--bg-secondary)] rounded-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredProducts.length === 0 ? (
         
         /* ANIMATED NO RESULTS EMPTY STATE */
         <div className="p-12 sm:p-16 rounded-3xl surface-card border border-[var(--border-subtle)] text-center space-y-6 animate-fadeIn max-w-xl mx-auto shadow-xl">

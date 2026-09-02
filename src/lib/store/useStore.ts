@@ -51,6 +51,7 @@ interface VeyraState {
 
   // Catalog Products (Initial + Vendor Uploaded)
   allProducts: Product[];
+  isProductsLoading: boolean;
   addCustomProduct: (product: Product) => void;
   setAllProducts: (products: Product[]) => void;
   fetchProductsFromDb: () => Promise<void>;
@@ -516,8 +517,10 @@ export const useStore = create<VeyraState>()(
 
       // Products Catalog (with dynamic uploads)
       allProducts: [],
+      isProductsLoading: true,
       setAllProducts: (products) => set({ allProducts: products }),
       fetchProductsFromDb: async () => {
+        set({ isProductsLoading: true });
         try {
           const res = await fetch('/api/products', { cache: 'no-store' });
           const data = await res.json();
@@ -578,6 +581,8 @@ export const useStore = create<VeyraState>()(
           }
         } catch (e) {
           console.error('Error hydrating products from DB:', e);
+        } finally {
+          set({ isProductsLoading: false });
         }
       },
       addCustomProduct: (newProduct) => {
