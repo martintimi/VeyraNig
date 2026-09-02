@@ -473,7 +473,7 @@ export default function MobileVendorPublish({
               className="py-2 rounded-xl text-[var(--gold-accent)] hover:text-white transition-all flex items-center justify-center gap-1 cursor-pointer"
             >
               <Sparkles className="h-3 w-3 fill-current" />
-              <span>⚡ Multi-Photo Batch</span>
+              <span>Multi-Photo Batch</span>
             </button>
           </div>
         )}

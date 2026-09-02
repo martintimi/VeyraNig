@@ -16,6 +16,7 @@ interface BatchItem {
   id: string;
   name: string;
   price: string;
+  quantityPerSize: number;
   category: GarmentCategory;
   subCategory: string;
   genderTarget: GenderTarget;
@@ -101,8 +102,8 @@ export default function BatchProductUploadView({
 
   // Bulk Apply Toolbar State
   const [bulkPrice, setBulkPrice] = useState('');
+  const [bulkQuantity, setBulkQuantity] = useState('15');
   const [bulkCategory, setBulkCategory] = useState(CATEGORY_OPTIONS[0].id);
-  const [bulkDept, setBulkDept] = useState<GenderTarget>('unisex');
   const [bulkSizes, setBulkSizes] = useState<string[]>(['M', 'L', 'XL']);
 
   // Handle multi-file selection from gallery / camera / desktop
@@ -111,6 +112,7 @@ export default function BatchProductUploadView({
     if (!files || files.length === 0) return;
 
     const fileList = Array.from(files);
+    const defaultQty = Number(bulkQuantity) || 15;
 
     fileList.forEach((file, index) => {
       const reader = new FileReader();
@@ -124,6 +126,7 @@ export default function BatchProductUploadView({
             id: `batch-${Date.now()}-${index}-${Math.random()}`,
             name: cleanFileNameToTitle(file.name),
             price: bulkPrice || '',
+            quantityPerSize: defaultQty,
             category: defaultCat.generalCat,
             subCategory: defaultCat.id,
             genderTarget: defaultCat.dept,
@@ -182,6 +185,11 @@ export default function BatchProductUploadView({
     setItems(prev => prev.map(item => ({ ...item, price: bulkPrice })));
   };
 
+  const applyQuantityToAll = () => {
+    const qty = Math.max(1, Number(bulkQuantity) || 1);
+    setItems(prev => prev.map(item => ({ ...item, quantityPerSize: qty })));
+  };
+
   const applyCategoryToAll = () => {
     const matched = CATEGORY_OPTIONS.find(c => c.id === bulkCategory);
     if (!matched) return;
@@ -207,9 +215,9 @@ export default function BatchProductUploadView({
     if (items.length === 0) return;
 
     // Validation
-    const invalidItem = items.find(i => !i.name.trim() || !i.price || Number(i.price) <= 0);
+    const invalidItem = items.find(i => !i.name.trim() || !i.price || Number(String(i.price).replace(/[^0-9.]/g, '')) <= 0);
     if (invalidItem) {
-      setErrorMessage(`Please make sure every item has a title and a valid price (₦).`);
+      setErrorMessage(`Please make sure every item has a title and a valid price in Naira.`);
       return;
     }
 
@@ -222,15 +230,18 @@ export default function BatchProductUploadView({
 
       const payloadItems = items.map(item => {
         const cleanPrice = Number(String(item.price).replace(/[^0-9.]/g, '')) || 10000;
+        const qtyPerSize = Math.max(1, item.quantityPerSize || 10);
         const sizeStockObj: { [k: string]: { enabled: boolean; quantity: number } } = {};
         
         if (item.category === 'accessories') {
-          sizeStockObj['One Size'] = { enabled: true, quantity: 20 };
+          sizeStockObj['One Size'] = { enabled: true, quantity: qtyPerSize };
         } else {
           item.selectedSizes.forEach(sz => {
-            sizeStockObj[sz] = { enabled: true, quantity: 15 };
+            sizeStockObj[sz] = { enabled: true, quantity: qtyPerSize };
           });
         }
+
+        const totalItemStock = Object.values(sizeStockObj).reduce((sum, s) => sum + s.quantity, 0);
 
         return {
           name: item.name.trim(),
@@ -245,7 +256,7 @@ export default function BatchProductUploadView({
           colors: item.category === 'accessories' ? [] : item.selectedColors,
           sizes: item.category === 'accessories' ? ['One Size'] : item.selectedSizes,
           sizeStock: sizeStockObj,
-          stockQuantity: Object.keys(sizeStockObj).length * 15,
+          stockQuantity: totalItemStock,
           vendorId: activeVendorId,
           vendorName: vendorProfile?.brandName || 'Verified Partner',
           is_published: true,
@@ -294,10 +305,10 @@ export default function BatchProductUploadView({
 
         <div className="space-y-2">
           <h2 className="font-editorial text-3xl font-bold text-[var(--text-primary)]">
-            {publishedCount} Pieces Published Live! 🚀
+            {publishedCount} Pieces Published Live
           </h2>
           <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
-            Your collection has been published instantly and is now live across the Veyra catalog, available for orders and Shipbubble courier delivery.
+            Your collection has been published and is now live across the Veyra catalog, available for orders and Shipbubble courier delivery.
           </p>
         </div>
 
@@ -352,7 +363,7 @@ export default function BatchProductUploadView({
             Quick Batch Upload Drop
           </h1>
           <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-            Select 2 to 20 garment photos at once from your phone or studio gallery and launch your collection in 60 seconds.
+            Select 2 to 20 garment photos at once from your phone or studio gallery and launch your collection in seconds.
           </p>
         </div>
 
@@ -393,13 +404,13 @@ export default function BatchProductUploadView({
               Tap to Select Multiple Garment Photos
             </h3>
             <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
-              Select 5, 10, or 20 pictures of your new hoodies, kaftans, dresses, or footwear directly from your phone gallery or files.
+              Select pictures of your new hoodies, kaftans, dresses, or footwear directly from your phone gallery or files.
             </p>
           </div>
 
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury text-xs font-bold uppercase tracking-wider shadow-lg group-hover:opacity-90">
             <Plus className="h-3.5 w-3.5" />
-            <span>Choose 2–20 Photos</span>
+            <span>Choose Photos</span>
           </div>
         </div>
       ) : (
@@ -423,7 +434,7 @@ export default function BatchProductUploadView({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono-luxury">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono-luxury">
               
               {/* Preset 1: Price */}
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
@@ -444,21 +455,43 @@ export default function BatchProductUploadView({
                     type="button"
                     onClick={applyPriceToAll}
                     disabled={!bulkPrice}
-                    className="px-3 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 disabled:opacity-30 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 disabled:opacity-30 cursor-pointer"
                   >
-                    Apply All
+                    Apply
                   </button>
                 </div>
               </div>
 
-              {/* Preset 2: Category */}
+              {/* Preset 2: Quantity per size */}
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">2. Category Preset</span>
+                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">2. Stock Qty / Size</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    value={bulkQuantity}
+                    onChange={(e) => setBulkQuantity(e.target.value)}
+                    placeholder="15"
+                    className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none font-bold font-mono-luxury"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyQuantityToAll}
+                    className="px-2.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* Preset 3: Category */}
+              <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
+                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">3. Category Preset</span>
                 <div className="flex items-center gap-2">
                   <select
                     value={bulkCategory}
                     onChange={(e) => setBulkCategory(e.target.value)}
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
+                    className="flex-1 px-2.5 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
                   >
                     {CATEGORY_OPTIONS.map(c => (
                       <option key={c.id} value={c.id}>{c.label}</option>
@@ -467,24 +500,24 @@ export default function BatchProductUploadView({
                   <button
                     type="button"
                     onClick={applyCategoryToAll}
-                    className="px-3 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
                   >
-                    Apply All
+                    Apply
                   </button>
                 </div>
               </div>
 
-              {/* Preset 3: Sizing */}
+              {/* Preset 4: Sizing */}
               <div className="p-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
-                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">3. Available Sizes</span>
-                <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold block">4. Available Sizes</span>
+                <div className="flex items-center justify-between gap-1">
                   <div className="flex items-center gap-1">
                     {STANDARD_SIZES.map(sz => (
                       <button
                         key={sz}
                         type="button"
                         onClick={() => toggleBulkSize(sz)}
-                        className={`h-7 w-7 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`h-6 w-6 rounded-md border text-[9px] font-bold transition-all cursor-pointer ${
                           bulkSizes.includes(sz)
                             ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
                             : 'bg-[var(--bg-primary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
@@ -497,9 +530,9 @@ export default function BatchProductUploadView({
                   <button
                     type="button"
                     onClick={applySizesToAll}
-                    className="px-2.5 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
+                    className="px-2 py-1.5 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold text-[10px] uppercase tracking-wider hover:opacity-90 cursor-pointer"
                   >
-                    Apply All
+                    Apply
                   </button>
                 </div>
               </div>
@@ -523,141 +556,167 @@ export default function BatchProductUploadView({
             </div>
 
             <div className="space-y-3">
-              {items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="p-4 sm:p-5 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--border-hover)] transition-all space-y-3.5 shadow-sm"
-                >
-                  <div className="flex items-start gap-4">
-                    
-                    {/* Item Thumbnail */}
-                    <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-2xl overflow-hidden bg-black border border-[var(--border-subtle)] shrink-0 shadow-sm">
-                      <Image
-                        src={item.imagePreview}
-                        alt={item.name}
-                        fill
-                        unoptimized
-                        className="object-cover object-center"
-                      />
-                      <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[9px] font-mono-luxury font-bold text-white border border-white/20">
-                        #{index + 1}
-                      </span>
-                    </div>
+              {items.map((item, index) => {
+                const totalItemStock = item.category === 'accessories'
+                  ? item.quantityPerSize
+                  : item.selectedSizes.length * (item.quantityPerSize || 1);
 
-                    {/* Main Specs */}
-                    <div className="flex-1 space-y-2.5 min-w-0">
+                return (
+                  <div
+                    key={item.id}
+                    className="p-4 sm:p-5 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--border-hover)] transition-all space-y-3.5 shadow-sm"
+                  >
+                    <div className="flex items-start gap-4">
                       
-                      {/* Name & Remove */}
-                      <div className="flex items-center justify-between gap-2">
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                          placeholder="Garment Title (e.g. Vintage Wash Hoodie)"
-                          className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
+                      {/* Item Thumbnail */}
+                      <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-2xl overflow-hidden bg-black border border-[var(--border-subtle)] shrink-0 shadow-sm">
+                        <Image
+                          src={item.imagePreview}
+                          alt={item.name}
+                          fill
+                          unoptimized
+                          className="object-cover object-center"
                         />
-
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id)}
-                          className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
-                          title="Remove from batch"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[9px] font-mono-luxury font-bold text-white border border-white/20">
+                          #{index + 1}
+                        </span>
                       </div>
 
-                      {/* Price & Category Row */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono-luxury">
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
+                      {/* Main Specs */}
+                      <div className="flex-1 space-y-2.5 min-w-0">
+                        
+                        {/* Name & Remove */}
+                        <div className="flex items-center justify-between gap-2">
                           <input
                             type="text"
-                            inputMode="numeric"
-                            value={item.price}
-                            onChange={(e) => updateItem(item.id, { price: formatPriceString(e.target.value) })}
-                            placeholder="30,000"
-                            className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
+                            value={item.name}
+                            onChange={(e) => updateItem(item.id, { name: e.target.value })}
+                            placeholder="Garment Title (e.g. Vintage Wash Hoodie)"
+                            className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                           />
+
+                          <button
+                            type="button"
+                            onClick={() => removeItem(item.id)}
+                            className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
+                            title="Remove from batch"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
 
-                        <select
-                          value={item.subCategory}
-                          onChange={(e) => {
-                            const subId = e.target.value;
-                            const matched = CATEGORY_OPTIONS.find(c => c.id === subId);
-                            if (matched) {
-                              updateItem(item.id, {
-                                subCategory: subId,
-                                category: matched.generalCat,
-                                genderTarget: matched.dept,
-                              });
-                            }
-                          }}
-                          className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
-                        >
-                          {CATEGORY_OPTIONS.map(c => (
-                            <option key={c.id} value={c.id}>{c.label}</option>
-                          ))}
-                        </select>
-                      </div>
+                        {/* Price, Stock Quantity & Category Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono-luxury">
+                          {/* Price */}
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gold-accent)] font-bold">₦</span>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={item.price}
+                              onChange={(e) => updateItem(item.id, { price: formatPriceString(e.target.value) })}
+                              placeholder="Price in ₦"
+                              className="w-full pl-7 pr-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
+                            />
+                          </div>
 
-                      {/* Colors & Sizes Row */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 text-xs font-mono-luxury border-t border-[var(--border-subtle)]">
-                        
-                        {/* Color Selector */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Colors:</span>
-                          {PRESET_COLORS.slice(0, 6).map(c => {
-                            const isSelected = item.selectedColors.some(sc => sc.name === c.name);
-                            return (
-                              <button
-                                key={c.name}
-                                type="button"
-                                onClick={() => toggleItemColor(item.id, c)}
-                                className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 transition-all cursor-pointer ${
-                                  isSelected
-                                    ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold'
-                                    : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                                }`}
-                              >
-                                <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
-                                <span>{c.name}</span>
-                              </button>
-                            );
-                          })}
+                          {/* Stock Quantity per Size */}
+                          <div className="relative flex items-center gap-1.5">
+                            <span className="text-[10px] text-[var(--text-secondary)] font-bold shrink-0">Qty / Size:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantityPerSize}
+                              onChange={(e) => updateItem(item.id, { quantityPerSize: Math.max(1, Number(e.target.value)) })}
+                              className="w-full px-2.5 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold font-mono-luxury"
+                            />
+                          </div>
+
+                          {/* Category Selector */}
+                          <select
+                            value={item.subCategory}
+                            onChange={(e) => {
+                              const subId = e.target.value;
+                              const matched = CATEGORY_OPTIONS.find(c => c.id === subId);
+                              if (matched) {
+                                updateItem(item.id, {
+                                  subCategory: subId,
+                                  category: matched.generalCat,
+                                  genderTarget: matched.dept,
+                                });
+                              }
+                            }}
+                            className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-primary)] focus:outline-none"
+                          >
+                            {CATEGORY_OPTIONS.map(c => (
+                              <option key={c.id} value={c.id}>{c.label}</option>
+                            ))}
+                          </select>
                         </div>
 
-                        {/* Size Selector */}
-                        {item.category !== 'accessories' && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold mr-1">Sizes:</span>
-                            {STANDARD_SIZES.map(sz => {
-                              const isSelected = item.selectedSizes.includes(sz);
+                        {/* Colors & Sizes Row */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 text-xs font-mono-luxury border-t border-[var(--border-subtle)]">
+                          
+                          {/* Color Selector */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Colors:</span>
+                            {PRESET_COLORS.slice(0, 6).map(c => {
+                              const isSelected = item.selectedColors.some(sc => sc.name === c.name);
                               return (
                                 <button
-                                  key={sz}
+                                  key={c.name}
                                   type="button"
-                                  onClick={() => toggleItemSize(item.id, sz)}
-                                  className={`h-6 w-6 rounded-md border text-[10px] font-bold transition-all cursor-pointer ${
+                                  onClick={() => toggleItemColor(item.id, c)}
+                                  className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 transition-all cursor-pointer ${
                                     isSelected
-                                      ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
-                                      : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                                      ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold'
+                                      : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
                                   }`}
                                 >
-                                  {sz}
+                                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
+                                  <span>{c.name}</span>
                                 </button>
                               );
                             })}
                           </div>
-                        )}
+
+                          {/* Size Selector & Total Stock Pill */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            {item.category !== 'accessories' && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold mr-1">Sizes:</span>
+                                {STANDARD_SIZES.map(sz => {
+                                  const isSelected = item.selectedSizes.includes(sz);
+                                  return (
+                                    <button
+                                      key={sz}
+                                      type="button"
+                                      onClick={() => toggleItemSize(item.id, sz)}
+                                      className={`h-6 w-6 rounded-md border text-[10px] font-bold transition-all cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-[var(--gold-accent)] text-black border-[var(--gold-accent)]'
+                                          : 'bg-[var(--bg-secondary)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                                      }`}
+                                    >
+                                      {sz}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                              {totalItemStock} in Stock
+                            </span>
+                          </div>
+
+                        </div>
 
                       </div>
-
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* STICKY BOTTOM ACTION BAR */}
@@ -695,7 +754,7 @@ export default function BatchProductUploadView({
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 fill-black" />
-                      <span>Publish All ({items.length} Pieces) 🚀</span>
+                      <span>Publish All ({items.length} Pieces)</span>
                     </>
                   )}
                 </button>

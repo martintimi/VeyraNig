@@ -619,7 +619,7 @@ export default function PublishGarmentPage() {
           className="px-5 py-2.5 rounded-xl text-xs font-mono-luxury font-bold text-[var(--gold-accent)] hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
         >
           <Sparkles className="h-3.5 w-3.5 fill-current" />
-          <span>⚡ Multi-Photo Batch Drop (Bulk Upload)</span>
+          <span>Multi-Photo Batch Drop (Bulk Upload)</span>
         </button>
       </div>
 
