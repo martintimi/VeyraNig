@@ -22,15 +22,17 @@ import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
   { name: 'White', hex: '#ffffff' },
+  { name: 'Black & White', hex: '#111111' },
+  { name: 'Multi-Color / Pattern', hex: '#6366f1' },
+  { name: 'Khaki / Beige', hex: '#d4b996' },
+  { name: 'Chocolate Brown', hex: '#451a03' },
+  { name: 'Navy Blue', hex: '#1e3a8a' },
   { name: 'Heather Grey', hex: '#9ca3af' },
   { name: 'Charcoal Grey', hex: '#374151' },
-  { name: 'Navy Blue', hex: '#1e3a8a' },
   { name: 'Royal Blue', hex: '#2563eb' },
   { name: 'Sky Blue', hex: '#38bdf8' },
   { name: 'Forest Green', hex: '#065f46' },
   { name: 'Olive Green', hex: '#4d7c0f' },
-  { name: 'Khaki / Beige', hex: '#d4b996' },
-  { name: 'Chocolate Brown', hex: '#451a03' },
   { name: 'Wine / Burgundy', hex: '#831843' },
   { name: 'Crimson Red', hex: '#dc2626' },
   { name: 'Mustard Yellow', hex: '#d97706' },
@@ -962,8 +964,12 @@ export default function PublishGarmentPage() {
                       }`}
                     >
                       <span
-                        className="h-3 w-3 rounded-full border border-white/20 shrink-0"
-                        style={{ backgroundColor: c.hex }}
+                        className="h-3.5 w-3.5 rounded-full border border-white/20 shrink-0"
+                        style={{
+                          background: c.name.toLowerCase().includes('multi')
+                            ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                            : c.hex
+                        }}
                       />
                       <span>{c.name}</span>
                       {isSelected && <Check className="h-3 w-3 text-[var(--gold-accent)]" />}

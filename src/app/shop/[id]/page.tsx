@@ -376,7 +376,11 @@ export default function ProductDetailPage() {
                     >
                       <span
                         className="h-4 w-4 rounded-full border border-white/30 shadow-sm shrink-0"
-                        style={{ backgroundColor: colorHex }}
+                        style={{
+                          background: colorName.toLowerCase().includes('multi')
+                            ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                            : colorHex
+                        }}
                       />
                       <span className="text-xs font-mono-luxury font-bold">{colorName}</span>
                     </button>

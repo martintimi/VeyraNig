@@ -17,13 +17,15 @@ import { vendorFetch } from '@/lib/services/apiClient';
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
   { name: 'White', hex: '#ffffff' },
-  { name: 'Heather Grey', hex: '#9ca3af' },
+  { name: 'Black & White', hex: '#111111' },
+  { name: 'Multi-Color / Pattern', hex: '#6366f1' },
+  { name: 'Khaki / Beige', hex: '#d4b996' },
+  { name: 'Chocolate Brown', hex: '#451a03' },
   { name: 'Navy Blue', hex: '#1e3a8a' },
+  { name: 'Heather Grey', hex: '#9ca3af' },
   { name: 'Royal Blue', hex: '#2563eb' },
   { name: 'Forest Green', hex: '#065f46' },
   { name: 'Olive Green', hex: '#4d7c0f' },
-  { name: 'Khaki / Beige', hex: '#d4b996' },
-  { name: 'Chocolate Brown', hex: '#451a03' },
   { name: 'Wine / Burgundy', hex: '#831843' },
   { name: 'Crimson Red', hex: '#dc2626' },
   { name: 'Emerald Gold', hex: '#e6c367' },
@@ -756,28 +758,93 @@ export default function MobileVendorPublish({
       {/* 5. Color Palette (Only shown for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
       {category !== 'accessories' && (
         <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm font-mono-luxury text-xs">
-          <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-            4. Colorways & Finishes
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+              4. Colorways &amp; Finishes
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowCustomColor(!showCustomColor)}
+              className="text-[10px] text-[var(--gold-accent)] font-bold hover:underline cursor-pointer"
+            >
+              {showCustomColor ? 'Close' : '+ Custom Color'}
+            </button>
+          </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {STANDARD_COLORS.slice(0, 10).map((c) => {
-              const isSel = selectedColors.some(sc => sc.name === c.name);
+          <div className="flex flex-wrap gap-1.5 items-center">
+            {STANDARD_COLORS.map((c) => {
+              const isSel = selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
+              const isMulti = c.name.toLowerCase().includes('multi');
               return (
                 <button
                   key={c.name}
                   type="button"
                   onClick={() => toggleColor(c)}
-                  className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 ${
-                    isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)]' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                  className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                    isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)] shadow-sm' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
                   }`}
                 >
-                  <span className="h-2.5 w-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                  <span
+                    className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
+                    style={{
+                      background: isMulti
+                        ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                        : c.hex
+                    }}
+                  />
                   <span>{c.name}</span>
                 </button>
               );
             })}
+
+            {/* Native Visual Color Wheel Trigger */}
+            <label
+              title="Pick exact shade"
+              className="px-2.5 py-1 rounded-xl border border-[var(--border-subtle)] text-[11px] flex items-center gap-1.5 cursor-pointer hover:border-[var(--gold-accent)] bg-[var(--bg-secondary)]"
+            >
+              <input
+                type="color"
+                value={customHex}
+                onChange={(e) => {
+                  setCustomHex(e.target.value);
+                  setShowCustomColor(true);
+                }}
+                className="sr-only"
+              />
+              <span
+                className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
+                style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+              />
+              <span className="text-[var(--gold-accent)] font-bold">Color Wheel</span>
+            </label>
           </div>
+
+          {/* Custom Color Input */}
+          {showCustomColor && (
+            <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/50 mt-1 animate-fadeIn">
+              <input
+                type="color"
+                value={customHex}
+                onChange={(e) => setCustomHex(e.target.value)}
+                className="h-7 w-7 rounded-lg border border-white/20 cursor-pointer bg-transparent shrink-0"
+              />
+              <input
+                type="text"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="Type custom color (e.g. Sage Green, Tie Dye)"
+                className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomColor}
+                disabled={!customName.trim()}
+                className="px-3 py-1 rounded-lg bg-[var(--gold-accent)] text-black font-bold text-[10px] uppercase tracking-wider shrink-0 cursor-pointer disabled:opacity-40"
+              >
+                Add
+              </button>
+            </div>
+          )}
         </div>
       )}
 

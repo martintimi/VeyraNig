@@ -287,7 +287,11 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                   >
                     <span
                       className="h-3.5 w-3.5 rounded-full border border-white/30 shrink-0"
-                      style={{ backgroundColor: colorHex }}
+                      style={{
+                        background: colorName.toLowerCase().includes('multi')
+                          ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                          : colorHex
+                      }}
                     />
                     <span className="text-[11px] font-mono-luxury font-bold">{colorName}</span>
                   </button>

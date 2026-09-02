@@ -55,17 +55,18 @@ const CATEGORY_OPTIONS = [
   { id: 'unisex_bags', label: 'Bags & Backpacks', generalCat: 'accessories' as GarmentCategory, dept: 'unisex' as GenderTarget },
 ];
 
-const POPULAR_COLORS = [
+const POPULAR_SWATCHES = [
   { name: 'Black', hex: '#111111' },
   { name: 'White', hex: '#ffffff' },
-  { name: 'Black & White', hex: '#111111' },
+  { name: 'Off-White / Cream', hex: '#fdfbf7' },
   { name: 'Khaki / Beige', hex: '#d4b996' },
   { name: 'Chocolate Brown', hex: '#451a03' },
   { name: 'Navy Blue', hex: '#1e3a8a' },
-  { name: 'Heather Grey', hex: '#9ca3af' },
+  { name: 'Olive Green', hex: '#556b2f' },
   { name: 'Forest Green', hex: '#065f46' },
   { name: 'Wine / Burgundy', hex: '#831843' },
   { name: 'Crimson Red', hex: '#dc2626' },
+  { name: 'Heather Grey', hex: '#9ca3af' },
   { name: 'Multi-Color / Pattern', hex: '#6366f1' },
 ];
 
@@ -141,7 +142,7 @@ export default function BatchProductUploadView({
             genderTarget: defaultCat.dept,
             imageFile: file,
             imagePreview: previewUrl,
-            selectedColor: POPULAR_COLORS[0],
+            selectedColor: POPULAR_SWATCHES[0],
             isCustomColorOpen: false,
             customColorText: '',
             sizeStock: initSizeStock,
@@ -601,6 +602,7 @@ export default function BatchProductUploadView({
               {items.map((item, index) => {
                 const totalItemStock = calculateTotalStock(item);
                 const sizeList = item.category === 'footwear' ? FOOTWEAR_SIZES : APPAREL_SIZES;
+                const isMulti = item.selectedColor?.name?.toLowerCase().includes('multi');
 
                 return (
                   <div
@@ -684,67 +686,112 @@ export default function BatchProductUploadView({
                           </select>
                         </div>
 
-                        {/* Color Selector: Popular Quick Pills + Write Any Custom Color */}
+                        {/* Visual Swatch Color Palette + Native Color Wheel Picker */}
                         {item.category !== 'accessories' && (
                           <div className="space-y-1.5 pt-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold mr-1">Color:</span>
-                              
-                              {POPULAR_COLORS.map(c => {
-                                const isSelected = item.selectedColor?.name === c.name && !item.isCustomColorOpen;
-                                return (
-                                  <button
-                                    key={c.name}
-                                    type="button"
-                                    onClick={() => updateItem(item.id, {
-                                      selectedColor: c,
-                                      isCustomColorOpen: false
-                                    })}
-                                    className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 transition-all cursor-pointer ${
-                                      isSelected
-                                        ? 'border-[var(--gold-accent)] bg-[var(--gold-subtle)] text-[var(--gold-accent)] font-bold ring-1 ring-[var(--gold-accent)]'
-                                        : 'border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'
-                                    }`}
-                                  >
-                                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
-                                    <span>{c.name}</span>
-                                  </button>
-                                );
-                              })}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 text-xs font-mono-luxury">
+                                <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Color:</span>
+                                <span className="font-bold text-[var(--text-primary)] text-xs flex items-center gap-1.5">
+                                  <span
+                                    className="inline-block h-3 w-3 rounded-full border border-white/20 shadow-sm"
+                                    style={{
+                                      background: isMulti
+                                        ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                                        : (item.selectedColor?.hex || '#111111')
+                                    }}
+                                  />
+                                  <span>{item.selectedColor?.name || 'Black'}</span>
+                                </span>
+                              </div>
 
-                              {/* Custom / Other Color Trigger */}
                               <button
                                 type="button"
                                 onClick={() => updateItem(item.id, {
                                   isCustomColorOpen: !item.isCustomColorOpen,
-                                  customColorText: item.customColorText || (item.selectedColor ? item.selectedColor.name : '')
+                                  customColorText: item.selectedColor?.name || ''
                                 })}
-                                className={`px-2 py-0.5 rounded-lg border text-[10px] flex items-center gap-1 font-bold transition-all cursor-pointer ${
-                                  item.isCustomColorOpen
-                                    ? 'border-[var(--gold-accent)] bg-[var(--gold-accent)] text-black'
-                                    : 'border-[var(--border-subtle)] text-[var(--gold-accent)] bg-[var(--bg-secondary)] hover:border-[var(--gold-accent)]'
-                                }`}
+                                className="text-[10px] text-[var(--gold-accent)] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                               >
                                 <Edit3 className="h-2.5 w-2.5" />
-                                <span>+ Write Custom Color</span>
+                                <span>{item.isCustomColorOpen ? 'Close edit' : 'Edit name'}</span>
                               </button>
                             </div>
 
-                            {/* Inline Custom Color Text Input */}
+                            {/* 1-Line Visual Circular Swatches */}
+                            <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+                              {POPULAR_SWATCHES.map(c => {
+                                const isSelected = item.selectedColor?.name === c.name && !item.isCustomColorOpen;
+                                const isSwatchMulti = c.name.toLowerCase().includes('multi');
+                                return (
+                                  <button
+                                    key={c.name}
+                                    type="button"
+                                    title={c.name}
+                                    onClick={() => updateItem(item.id, {
+                                      selectedColor: c,
+                                      isCustomColorOpen: false
+                                    })}
+                                    className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full shrink-0 transition-all cursor-pointer relative ${
+                                      isSelected
+                                        ? 'ring-2 ring-[var(--gold-accent)] ring-offset-2 ring-offset-black scale-110 shadow-md'
+                                        : 'hover:scale-105 border border-white/20 opacity-80 hover:opacity-100'
+                                    }`}
+                                    style={{
+                                      background: isSwatchMulti
+                                        ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                                        : c.hex
+                                    }}
+                                  />
+                                );
+                              })}
+
+                              {/* Native Visual Color Wheel Swatch */}
+                              <label
+                                title="Custom Visual Color Wheel"
+                                className="relative h-5 w-5 sm:h-6 sm:w-6 rounded-full shrink-0 border border-white/30 cursor-pointer overflow-hidden flex items-center justify-center hover:scale-110 transition-all shadow-sm group"
+                                style={{
+                                  background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'
+                                }}
+                              >
+                                <input
+                                  type="color"
+                                  value={item.selectedColor?.hex || '#2563eb'}
+                                  onChange={(e) => {
+                                    const hex = e.target.value;
+                                    updateItem(item.id, {
+                                      selectedColor: {
+                                        name: item.customColorText?.trim() || 'Custom Shade',
+                                        hex
+                                      },
+                                      isCustomColorOpen: true,
+                                      customColorText: item.customColorText || 'Custom Shade'
+                                    });
+                                  }}
+                                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                />
+                                <Palette className="h-3 w-3 text-white drop-shadow pointer-events-none group-hover:scale-110" />
+                              </label>
+                            </div>
+
+                            {/* Inline Custom Color Name Input */}
                             {item.isCustomColorOpen && (
-                              <div className="flex items-center gap-2 p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/50 animate-fadeIn">
-                                <Palette className="h-3.5 w-3.5 text-[var(--gold-accent)] shrink-0" />
+                              <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/40 animate-fadeIn">
+                                <span
+                                  className="h-4 w-4 rounded-full border border-white/20 shrink-0"
+                                  style={{ backgroundColor: item.selectedColor?.hex || '#111111' }}
+                                />
                                 <input
                                   type="text"
-                                  value={item.customColorText !== undefined ? item.customColorText : item.selectedColor.name}
+                                  value={item.customColorText !== undefined ? item.customColorText : item.selectedColor?.name}
                                   onChange={(e) => {
                                     const text = e.target.value;
                                     updateItem(item.id, {
                                       customColorText: text,
-                                      selectedColor: { name: text.trim() || 'Custom Shade', hex: item.selectedColor.hex || '#111111' }
+                                      selectedColor: { name: text.trim() || 'Custom Shade', hex: item.selectedColor?.hex || '#111111' }
                                     });
                                   }}
-                                  placeholder="Type any color/pattern (e.g. Black & White Fleece, Tie Dye, Vintage Camo)"
+                                  placeholder="Type color/pattern (e.g. Sage Green, Black & White Fleece, Tie Dye)"
                                   className="w-full px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
                                   autoFocus
                                 />
