@@ -23,11 +23,11 @@ export default function Home() {
         {/* Dual-Row Velocity Kinetic Marquee */}
         <KineticMarquee />
 
-        {/* Curated Nigerian Ateliers (Bright, Crisp HD Editorial Cards) */}
-        <CuratedAteliers />
-
-        {/* The Veyra Standards Luxury Pillars */}
+        {/* The Veyra Standards Luxury Pillars (The Complete Nigerian Drip) */}
         <ProblemSolution />
+
+        {/* Curated Nigerian Designers (Featured Designers) */}
+        <CuratedAteliers />
 
         {/* Partner Brands & Fast Lagos Delivery Matrix */}
         <BrandShowcase />
