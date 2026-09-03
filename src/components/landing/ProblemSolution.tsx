@@ -70,8 +70,8 @@ export default function ProblemSolution() {
     },
     {
       icon: ShieldCheck,
-      title: 'Unified Cart & Escrow Security',
-      desc: 'Checkout clothes, shoes, bags, and jewelry from different Nigerian brands in one single luxury box. Funds stay 100% locked in escrow until you try it on and love the fit.',
+      title: 'Direct Dispatch & Escrow Security',
+      desc: 'Shop clothes, shoes, bags, and jewelry from verified Nigerian brands. Each designer dispatches directly to your doorstep, and funds stay 100% locked in escrow until you receive and inspect your pieces.',
       tag: '100% Escrow Protected',
       sub: 'Zero Risk · All 36 States',
       num: '04'

@@ -36,9 +36,9 @@ const vendorEditorialSlides = [
   },
   {
     image: '/images/products/UnisexSlides.jpg',
-    title: 'Lagos to Worldwide Logistics',
-    subtitle: 'Consolidated pickup from your atelier with white-glove quality control and single luxury box packaging.',
-    tag: 'Consolidated Delivery'
+    title: 'Nationwide Direct Dispatch',
+    subtitle: 'Doorstep pickup and delivery from your workshop directly to shoppers with live tracking and automated escrow payouts.',
+    tag: 'Direct Dispatch'
   }
 ];
 

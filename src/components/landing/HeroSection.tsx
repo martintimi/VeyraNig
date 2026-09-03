@@ -124,12 +124,12 @@ export default function HeroSection() {
             <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-[var(--text-primary)] leading-[1.1]">
               Shop Top Nigerian Brands.<br />
               <span className="italic font-normal shimmer-gold">Curated Luxury Pieces.</span><br />
-              Delivered in 1 Single Order.
+              100% Escrow Secured.
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
-              Discover Nigeria&apos;s premier multi-brand fashion marketplace. Shop bespoke native wear, streetwear drops, handcrafted footwear, and fine jewelry from verified independent designers—all in one seamless checkout.
+              Discover Nigeria&apos;s premier multi-brand fashion marketplace. Try on bespoke native wear, streetwear drops, handcrafted footwear, and fine jewelry on your 3D digital body twin. Each verified brand dispatches directly to your doorstep with total escrow payment protection.
             </p>
 
             {/* Action Buttons */}

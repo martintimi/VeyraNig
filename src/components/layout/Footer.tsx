@@ -38,7 +38,7 @@ export default function Footer() {
                 Doorstep Nationwide Delivery
               </h4>
               <p className="text-xs text-[var(--text-secondary)] mt-1 font-light leading-relaxed">
-                Combined express delivery from all Nigerian brands in one single package.
+                Direct doorstep delivery from each verified designer across all 36 Nigerian states.
               </p>
             </div>
           </div>

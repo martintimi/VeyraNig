@@ -287,7 +287,7 @@ export default function ProfilePage() {
               Your Orders & Tailoring Progress
             </h2>
             <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-              Consolidated single-box deliveries dispatched directly from Ìrísí Logistics Network across all 36 states.
+              Direct doorstep deliveries dispatched by each verified brand across all 36 states.
             </p>
           </div>
 
