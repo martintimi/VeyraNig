@@ -1,4 +1,4 @@
-// Automated Email Notification Service for Veyra Marketplace
+// Automated Email Notification Service for ÌRÍSÍ Marketplace
 
 export interface OrderEmailPayload {
   orderNumber: string;

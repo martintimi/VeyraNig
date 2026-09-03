@@ -23,7 +23,7 @@ export default function Home() {
         {/* Dual-Row Velocity Kinetic Marquee */}
         <KineticMarquee />
 
-        {/* The Veyra Standards Luxury Pillars (The Complete Nigerian Drip) */}
+        {/* The Ìrísí Standards Luxury Pillars (The Complete Nigerian Drip) */}
         <ProblemSolution />
 
         {/* Curated Nigerian Designers (Featured Designers) */}

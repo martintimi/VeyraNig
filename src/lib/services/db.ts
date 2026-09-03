@@ -18,7 +18,7 @@ export async function getProducts(): Promise<Product[]> {
     return data.map((item: any) => ({
       id: item.id,
       vendorId: item.vendor_id,
-      vendorName: item.vendors?.brand_name || 'Veyra Partner Atelier',
+      vendorName: item.vendors?.brand_name || 'Ìrísí Partner Brand',
       name: item.name,
       price: Number(item.price),
       description: item.description,

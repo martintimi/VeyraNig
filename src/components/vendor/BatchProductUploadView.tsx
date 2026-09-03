@@ -416,7 +416,7 @@ export default function BatchProductUploadView({
             {publishedCount} Pieces Published Live
           </h2>
           <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
-            Your collection has been published and is now live across the Veyra catalog, available for orders and Shipbubble courier delivery.
+            Your collection has been published and is now live across the Ìrísí catalog, available for orders and Shipbubble courier delivery.
           </p>
         </div>
 

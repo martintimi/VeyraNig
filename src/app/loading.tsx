@@ -10,8 +10,8 @@ export default function Loading() {
       </div>
 
       <div className="text-center space-y-1">
-        <div className="font-editorial text-xl font-bold tracking-[0.25em] text-[var(--text-primary)]">
-          VEYRA
+        <div className="font-editorial text-2xl font-bold tracking-[0.3em] text-[var(--text-primary)]">
+          Ì R Í S Í
         </div>
         <div className="text-[10px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--gold-accent)] font-semibold">
           Curating Luxury Feed...

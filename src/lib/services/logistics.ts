@@ -1,5 +1,5 @@
 /**
- * Veyra Nigerian Live Logistics & Carrier Service
+ * Ìrísí Nigerian Live Logistics & Carrier Service
  * Integrates with Shipbubble, Terminal Africa, and Intelligent State-to-State Distance Matrices.
  */
 
@@ -298,7 +298,7 @@ export async function createShipbubbleShipment(req: ShipmentBookingRequest): Pro
           },
           package: {
             weight: req.totalWeightKg || 1,
-            description: `Veyra Order #${req.orderNumber}`
+            description: `Ìrísí Order #${req.orderNumber}`
           }
         }),
         signal: AbortSignal.timeout(3000),

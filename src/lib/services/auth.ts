@@ -35,7 +35,7 @@ export async function signUpCustomer(data: CustomerSignUpData) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: data.email,
-        password: data.password || 'VeyraCustomer2026!',
+        password: data.password || 'IrisiCustomer2026!',
         fullName: data.fullName,
         phone: data.phone,
         gender: data.gender,
@@ -68,7 +68,7 @@ export async function signInCustomer(email: string, password?: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
-        password: password || 'VeyraCustomer2026!',
+        password: password || 'IrisiCustomer2026!',
         expectedRole: 'shopper',
       }),
     });
@@ -96,7 +96,7 @@ export async function signUpVendor(data: VendorSignUpData) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: data.email,
-        password: data.password || 'VeyraVendor2026!',
+        password: data.password || 'IrisiVendor2026!',
         brandName: data.brandName,
         designerName: data.designerName,
         phone: data.phone,
@@ -134,7 +134,7 @@ export async function signInVendor(email: string, password?: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
-        password: password || 'VeyraVendor2026!',
+        password: password || 'IrisiVendor2026!',
         expectedRole: 'vendor',
       }),
     });

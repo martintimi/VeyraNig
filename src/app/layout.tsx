@@ -41,8 +41,8 @@ export const metadata: Metadata = {
   title: 'ÌRÍSÍ Nigeria | Multi-Brand Virtual Dressing Room & Luxury Marketplace',
   description: 'Style Senator sets, bespoke native wear, streetwear hoodies, handcrafted leather footwear, bags, and fine jewelry from top Nigerian fashion designers on your digital body twin.',
   icons: {
-    icon: '/images/logo/veyra-icon.png',
-    apple: '/images/logo/veyra-icon.png',
+    icon: '/images/logo/irisi-icon.png',
+    apple: '/images/logo/irisi-icon.png',
   }
 };
 

@@ -245,8 +245,8 @@ export default function MobileHomeView() {
       >
         <Link href="/" className="flex items-center group">
           <Image
-            src="/images/logo/veyra-emblem.png"
-            alt="Veyra"
+            src="/images/logo/irisi-emblem.png"
+            alt="Ìrísí"
             width={34}
             height={34}
             priority

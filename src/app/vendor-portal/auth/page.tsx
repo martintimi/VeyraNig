@@ -13,6 +13,7 @@ import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import { signUpVendor, signInVendor, verifyOtpCode, resendOtpCode } from '@/lib/services/auth';
 import { isBoutiqueVendor } from '@/types';
+import BrandWordmark from '@/components/common/BrandWordmark';
 
 const vendorEditorialSlides = [
   {
@@ -135,8 +136,11 @@ export default function VendorAuthPage() {
       if (res.vendor) {
         const vId = res.vendor.id || res.vendor.email || loginIdentifier.trim();
         if (typeof window !== 'undefined') {
+          localStorage.setItem('irisi_vendor_id', vId);
+          localStorage.setItem('irisi_vendor_email', res.vendor.email || loginIdentifier.trim());
           localStorage.setItem('veyra_vendor_id', vId);
           localStorage.setItem('veyra_vendor_email', res.vendor.email || loginIdentifier.trim());
+          document.cookie = `irisi_vendor_id=${vId}; path=/; max-age=2592000`;
           document.cookie = `veyra_vendor_id=${vId}; path=/; max-age=2592000`;
         }
 
@@ -280,8 +284,11 @@ export default function VendorAuthPage() {
       const vId = activeProfile.id || res.user?.id || emailToVerify;
 
       if (typeof window !== 'undefined') {
+        localStorage.setItem('irisi_vendor_id', vId);
+        localStorage.setItem('irisi_vendor_email', emailToVerify);
         localStorage.setItem('veyra_vendor_id', vId);
         localStorage.setItem('veyra_vendor_email', emailToVerify);
+        document.cookie = `irisi_vendor_id=${vId}; path=/; max-age=2592000`;
         document.cookie = `veyra_vendor_id=${vId}; path=/; max-age=2592000`;
       }
 
@@ -425,13 +432,7 @@ export default function VendorAuthPage() {
         {/* Top Header */}
         <div className="flex items-center justify-between mb-8">
           <Link href="/" className="lg:hidden flex items-center gap-2">
-            <Image
-              src="/images/logo/veyra-logo.png"
-              alt="Veyra Atelier"
-              width={110}
-              height={32}
-              className="h-7 w-auto object-contain dark:invert"
-            />
+            <BrandWordmark size="sm" withSubtitle={false} />
           </Link>
           
           <div className="flex items-center gap-3 ml-auto">

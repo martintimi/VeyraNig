@@ -88,16 +88,16 @@ export default function ProductDetailPage() {
         <div className="relative flex flex-col items-center space-y-4 animate-pulse">
           <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/30 shadow-2xl p-3">
             <Image
-              src="/images/logo/veyra-emblem.png"
-              alt="Veyra"
+              src="/images/logo/irisi-emblem.png"
+              alt="Ìrísí"
               width={64}
               height={64}
               className="h-14 w-auto object-contain"
             />
           </div>
           <div className="text-center space-y-1">
-            <div className="font-editorial text-2xl font-bold tracking-[0.25em] text-[var(--text-primary)]">
-              VEYRA
+            <div className="font-editorial text-2xl font-bold tracking-[0.3em] text-[var(--text-primary)]">
+              Ì R Í S Í
             </div>
             <div className="text-[10px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--gold-accent)] font-bold">
               Loading Product Details...

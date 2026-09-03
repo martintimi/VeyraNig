@@ -31,7 +31,7 @@ export default function VendorOrdersPage() {
   // Read active vendor ID reliably from store, localStorage, or cookie
   const getActiveVendorId = useCallback(() => {
     if (typeof window !== 'undefined') {
-      const storedId = localStorage.getItem('veyra_vendor_id');
+      const storedId = localStorage.getItem('irisi_vendor_id') || localStorage.getItem('veyra_vendor_id');
       if (storedId) return storedId;
     }
     return vendorProfile.email || '';

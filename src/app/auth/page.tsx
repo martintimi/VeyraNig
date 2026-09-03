@@ -441,8 +441,8 @@ function AuthPageContent() {
 
           {/* Bottom Micro Footer */}
           <div className="flex items-center justify-between text-[11px] font-mono-luxury text-zinc-400 border-t border-white/10 pt-4">
-            <span>VEYRA SECURED GATEWAY</span>
-            <span>LAGOS · NIGERIA</span>
+            <span>ÌRÍSÍ SECURED GATEWAY</span>
+            <span>NATIONWIDE · NIGERIA</span>
           </div>
         </div>
 

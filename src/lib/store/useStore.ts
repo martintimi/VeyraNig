@@ -15,7 +15,7 @@ export interface UserAuth {
   userType: 'shopper' | 'vendor';
 }
 
-interface VeyraState {
+export interface IrisiState {
   // Theme Mode
   theme: 'dark' | 'light';
   toggleTheme: () => void;
@@ -268,7 +268,7 @@ const initialNotifications: NotificationItem[] = [
   {
     id: 'notif-3',
     type: 'order_status',
-    title: 'Payment Secured via Veyra Escrow',
+    title: 'Payment Secured via Ìrísí Escrow',
     message: 'Your payment was locked safely in escrow. Funds are held until you receive and inspect your clothes.',
     timestamp: '1 hour ago',
     read: true,
@@ -329,7 +329,21 @@ const initialStories: VendorStory[] = [
 
 const initialOutfit: ActiveOutfit = {};
 
-export const useStore = create<VeyraState>()(
+export type VeyraState = IrisiState;
+
+// Seamless migration of client storage from veyra-store-storage to irisi-store-storage
+if (typeof window !== 'undefined') {
+  try {
+    const legacyStorage = localStorage.getItem('veyra-store-storage');
+    if (legacyStorage && !localStorage.getItem('irisi-store-storage')) {
+      localStorage.setItem('irisi-store-storage', legacyStorage);
+    }
+  } catch (e) {
+    // Ignore storage errors in restrictive environments
+  }
+}
+
+export const useStore = create<IrisiState>()(
   persist(
     (set, get) => ({
       // Theme State
@@ -542,7 +556,7 @@ export const useStore = create<VeyraState>()(
               return {
                 id: p.id,
                 vendorId: p.vendorId || p.vendor_id || 'boutique',
-                vendorName: p.vendorName || p.vendor_name || (p.vendor_id ? p.vendor_id.replace(/-/g, ' ') : 'Veyra Partner'),
+                vendorName: p.vendorName || p.vendor_name || (p.vendor_id ? p.vendor_id.replace(/-/g, ' ') : 'Ìrísí Partner'),
                 vendorCity: p.vendorCity || p.vendor_city || '',
                 vendorState: p.vendorState || p.vendor_state || '',
                 vendorLocation: p.vendorLocation || p.vendor_location || '',
@@ -752,9 +766,13 @@ export const useStore = create<VeyraState>()(
         })),
       vendorLogout: () => {
         if (typeof window !== 'undefined') {
+          localStorage.removeItem('irisi_vendor_id');
+          localStorage.removeItem('irisi_vendor_token');
+          localStorage.removeItem('irisi_vendor_email');
           localStorage.removeItem('veyra_vendor_id');
           localStorage.removeItem('veyra_vendor_token');
           localStorage.removeItem('veyra_vendor_email');
+          document.cookie = 'irisi_vendor_id=; path=/; max-age=0';
           document.cookie = 'veyra_vendor_id=; path=/; max-age=0';
         }
         set({ isVendorLoggedIn: false, vendorProfile: defaultVendorProfile });
@@ -767,7 +785,7 @@ export const useStore = create<VeyraState>()(
       setIsAuthModalOpen: (open) => set({ isAuthModalOpen: open }),
     }),
     {
-      name: 'veyra-store-storage',
+      name: 'irisi-store-storage',
       partialize: (state) => ({
         theme: state.theme,
         selectedGender: state.selectedGender,

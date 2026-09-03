@@ -121,7 +121,7 @@ export default function DirectSalesAssistantPage() {
 
   const productLink = typeof window !== 'undefined' && activeProduct
     ? `${window.location.origin}/shop/${activeProduct.id}`
-    : activeProduct ? `https://veyra.ng/shop/${activeProduct.id}` : '';
+    : activeProduct ? `https://irisi.ng/shop/${activeProduct.id}` : '';
 
   const displayPrice = useMemo(() => {
     if (!activeProduct) return 0;
@@ -193,11 +193,11 @@ export default function DirectSalesAssistantPage() {
       ctx.font = 'bold 24px sans-serif';
       ctx.fillText((vendorProfile?.brandName || 'ATELIER').toUpperCase(), 80, 93);
 
-      // Top Right Veyra Badge
+      // Top Right Irisi Badge
       try {
         const logoImg = new (window as any).Image();
         logoImg.crossOrigin = 'anonymous';
-        logoImg.src = '/images/logo/veyra-logo.png';
+        logoImg.src = '/images/logo/irisi-logo.png';
         await new Promise((res) => {
           logoImg.onload = res;
           logoImg.onerror = res;
@@ -243,7 +243,7 @@ export default function DirectSalesAssistantPage() {
       const a = document.createElement('a');
       a.href = dataUrl;
       const fileSuffix = withPrice ? 'with-price' : 'no-price';
-      a.download = `veyra-${(vendorProfile?.brandName || 'brand').toLowerCase().replace(/\s+/g, '-')}-${product.id}-${fileSuffix}.png`;
+      a.download = `irisi-${(vendorProfile?.brandName || 'brand').toLowerCase().replace(/\s+/g, '-')}-${product.id}-${fileSuffix}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -481,7 +481,7 @@ export default function DirectSalesAssistantPage() {
               {/* Top Right Veyra Watermark */}
               <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-[var(--gold-accent)]/60 shadow-lg">
                 <span className="font-editorial text-xs font-bold text-white tracking-wider">
-                  VEYRA
+                  ÌRÍSÍ
                 </span>
                 <span className="text-[9px] font-mono-luxury font-bold text-[var(--gold-accent)]">
                   ● 3D STORE

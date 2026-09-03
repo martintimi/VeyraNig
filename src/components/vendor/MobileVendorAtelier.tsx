@@ -367,7 +367,7 @@ export default function MobileVendorAtelier({
             3. Dispatch Turnaround & Logistics
           </span>
           <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            Veyra Smart Rates
+            Ìrísí Smart Rates
           </span>
         </div>
 
@@ -396,15 +396,15 @@ export default function MobileVendorAtelier({
             <span>Automated Logistics & Delivery</span>
           </div>
           <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-            You don&apos;t have to calculate delivery fees! Veyra automatically calculates shipping at checkout based on destination states.
+            You don&apos;t have to calculate delivery fees! Ìrísí automatically calculates shipping at checkout based on destination states.
           </p>
           <div className="grid grid-cols-2 gap-2 pt-1 text-[10px]">
             <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-              <span className="font-bold text-[var(--text-primary)] block">🚚 Doorstep Courier</span>
+              <span className="font-bold text-[var(--text-primary)] block">Doorstep Courier</span>
               <span className="text-[var(--text-muted)]">Prepaid at checkout</span>
             </div>
             <div className="p-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
-              <span className="font-bold text-[var(--text-primary)] block">🚌 Park Waybill</span>
+              <span className="font-bold text-[var(--text-primary)] block">Park Waybill</span>
               <span className="text-[var(--text-muted)]">Buyer pays driver</span>
             </div>
           </div>

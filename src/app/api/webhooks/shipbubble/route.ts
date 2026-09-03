@@ -88,10 +88,10 @@ export async function POST(request: Request) {
 
       // Send emails
       if (isDelivered) {
-        sendDeliverySettledEmail('merchant@veyra.ng', {
+        sendDeliverySettledEmail('merchant@irisi.ng', {
           orderNumber: matchingOrder.order_number,
           customerName: matchingOrder.customer_name,
-          customerEmail: matchingOrder.customer_email || 'buyer@veyra.ng',
+          customerEmail: matchingOrder.customer_email || 'buyer@irisi.ng',
           deliveryAddress: matchingOrder.delivery_address || 'Nigeria',
           items: customerMeasurements.items || [],
           totalAmount: matchingOrder.total_amount || 0,
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         sendDispatchNotificationEmail({
           orderNumber: matchingOrder.order_number,
           customerName: matchingOrder.customer_name,
-          customerEmail: matchingOrder.customer_email || 'buyer@veyra.ng',
+          customerEmail: matchingOrder.customer_email || 'buyer@irisi.ng',
           waybillNumber: trackingNumber,
           driverPhone: shipmentData.driver_phone || shipmentData.courier_name || 'GIG Logistics Rider',
           deliveryAddress: matchingOrder.delivery_address || 'Nigeria',

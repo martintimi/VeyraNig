@@ -1,12 +1,12 @@
-// Centralized, Production-Grade API Client for Veyra Platform
+// Centralized, Production-Grade API Client for Ìrísí Platform
 
 export function getActiveVendorId(): string {
   if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('veyra_vendor_id');
+    const stored = localStorage.getItem('irisi_vendor_id') || localStorage.getItem('veyra_vendor_id');
     if (stored && stored.trim().length > 0 && stored !== 'undefined' && stored !== 'null') {
       return stored.trim();
     }
-    const storedEmail = localStorage.getItem('veyra_vendor_email');
+    const storedEmail = localStorage.getItem('irisi_vendor_email') || localStorage.getItem('veyra_vendor_email');
     if (storedEmail && storedEmail.trim().length > 0 && storedEmail !== 'undefined' && storedEmail !== 'null') {
       return storedEmail.trim();
     }
@@ -16,7 +16,7 @@ export function getActiveVendorId(): string {
 
 export function getActiveVendorToken(): string | null {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('veyra_vendor_token');
+    return localStorage.getItem('irisi_vendor_token') || localStorage.getItem('veyra_vendor_token');
   }
   return null;
 }

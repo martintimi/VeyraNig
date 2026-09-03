@@ -24,8 +24,8 @@ export default function LuxuryLoader() {
       <div className="relative flex flex-col items-center space-y-4 animate-pulse">
         <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/30 shadow-2xl p-3">
           <Image
-            src="/images/logo/veyra-emblem.png"
-            alt="Veyra"
+            src="/images/logo/irisi-emblem.png"
+            alt="Ìrísí"
             width={64}
             height={64}
             className="h-14 w-auto object-contain"

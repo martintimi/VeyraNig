@@ -147,7 +147,7 @@ export default function SuperAdminPage() {
   // Check saved session on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedAuth = localStorage.getItem('veyra_admin_auth');
+      const savedAuth = localStorage.getItem('irisi_admin_auth') || localStorage.getItem('veyra_admin_auth');
       if (savedAuth === 'true') {
         setIsAuthenticated(true);
       }
@@ -232,7 +232,7 @@ export default function SuperAdminPage() {
       if (res.ok && data.success) {
         setIsAuthenticated(true);
         if (typeof window !== 'undefined') {
-          localStorage.setItem('veyra_admin_auth', 'true');
+          localStorage.setItem('irisi_admin_auth', 'true');
         }
         confetti({
           particleCount: 60,
@@ -253,6 +253,7 @@ export default function SuperAdminPage() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('irisi_admin_auth');
       localStorage.removeItem('veyra_admin_auth');
     }
   };
@@ -828,7 +829,7 @@ export default function SuperAdminPage() {
                     required
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
-                    placeholder="admin@veyra.ng"
+                    placeholder="admin@irisi.ng"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
                   />
                 </div>

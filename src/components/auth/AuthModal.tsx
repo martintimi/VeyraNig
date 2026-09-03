@@ -37,27 +37,27 @@ export default function AuthModal() {
     setIsSubmitting(true);
 
     const userName = name || (email.split('@')[0] || 'Fashion Patron');
-    const twinId = `VY-NIG-${Math.floor(100 + Math.random() * 900)}`;
+    const twinId = `IR-NIG-${Math.floor(100 + Math.random() * 900)}`;
 
     try {
       if (accountType === 'shopper') {
         if (mode === 'signup') {
           await signUpCustomer({
             email,
-            password: password || 'Veyra2026!',
+            password: password || 'Irisi2026!',
             fullName: userName,
             gender,
             heightCm,
             weightKg,
           });
         } else {
-          await signInCustomer(email, password || 'Veyra2026!');
+          await signInCustomer(email, password || 'Irisi2026!');
         }
 
         setUserAuth({
           isLoggedIn: true,
           name: userName,
-          email: email || 'user@veyra.ng',
+          email: email || 'user@irisi.ng',
           gender,
           userType: 'shopper',
         });
@@ -82,7 +82,7 @@ export default function AuthModal() {
         if (mode === 'signup') {
           await signUpVendor({
             email,
-            password: password || 'Veyra2026!',
+            password: password || 'Irisi2026!',
             brandName: userName,
             designerName: userName,
             phone: '+234 802 345 6789',
@@ -90,7 +90,7 @@ export default function AuthModal() {
             vendorType: 'fashion_designer',
           });
         } else {
-          await signInVendor(email, password || 'Veyra2026!');
+          await signInVendor(email, password || 'Irisi2026!');
         }
 
         setIsVendorLoggedIn(true);

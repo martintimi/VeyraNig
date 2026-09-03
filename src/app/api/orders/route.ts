@@ -270,7 +270,7 @@ export async function POST(request: Request) {
       sendOrderConfirmationEmail({
         orderNumber,
         customerName: body.customerName,
-        customerEmail: body.customerEmail || 'buyer@veyra.ng',
+        customerEmail: body.customerEmail || 'buyer@irisi.ng',
         deliveryAddress: body.deliveryAddress,
         items: body.items || [],
         totalAmount: Number(body.totalAmount || 0),
@@ -280,10 +280,10 @@ export async function POST(request: Request) {
       // Notify each unique vendor
       const uniqueVendorIds = Array.from(new Set((body.items || []).map((i: any) => (i.vendorId || i.vendor_id || 'vendor').toLowerCase().trim())));
       uniqueVendorIds.forEach(vId => {
-        sendVendorNewOrderEmail(`${vId}@merchants.veyra.ng`, {
+        sendVendorNewOrderEmail(`${vId}@merchants.irisi.ng`, {
           orderNumber,
           customerName: body.customerName,
-          customerEmail: body.customerEmail || 'buyer@veyra.ng',
+          customerEmail: body.customerEmail || 'buyer@irisi.ng',
           deliveryAddress: body.deliveryAddress,
           items: (body.items || []).filter((i: any) => (i.vendorId || i.vendor_id || 'vendor').toLowerCase().trim() === vId),
           totalAmount: Number(body.totalAmount || 0),
@@ -479,7 +479,7 @@ export async function PATCH(request: Request) {
         sendDispatchNotificationEmail({
           orderNumber: existingOrder.order_number,
           customerName: existingOrder.customer_name,
-          customerEmail: existingOrder.customer_email || 'buyer@veyra.ng',
+          customerEmail: existingOrder.customer_email || 'buyer@irisi.ng',
           deliveryAddress: existingOrder.delivery_address,
           items: existingOrder.order_items || [],
           totalAmount: Number(existingOrder.total_amount || 0),
@@ -489,10 +489,10 @@ export async function PATCH(request: Request) {
           vendorName: targetVendorId || 'Store Merchant'
         }).catch(e => console.error('Dispatch email error:', e));
       } else if (status === 'delivered') {
-        sendDeliverySettledEmail(`${targetVendorId || 'merchant'}@merchants.veyra.ng`, {
+        sendDeliverySettledEmail(`${targetVendorId || 'merchant'}@merchants.irisi.ng`, {
           orderNumber: existingOrder.order_number,
           customerName: existingOrder.customer_name,
-          customerEmail: existingOrder.customer_email || 'buyer@veyra.ng',
+          customerEmail: existingOrder.customer_email || 'buyer@irisi.ng',
           deliveryAddress: existingOrder.delivery_address,
           items: existingOrder.order_items || [],
           totalAmount: Number(existingOrder.total_amount || 0),
