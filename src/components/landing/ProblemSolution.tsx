@@ -1,171 +1,162 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import Image from 'next/image';
-import { ShieldCheck, Truck, Sparkles, Layers, Scissors, Check, ArrowUpRight } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ShieldCheck, Sparkles, Flame, Layers, Check, ArrowUpRight, Crown } from 'lucide-react';
 
 export default function ProblemSolution() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Track scroll position for dynamic parallax reveal of flanking models
-  useEffect(() => {
-    let ticking = false;
+  // Smooth hardware-accelerated scroll parallax using Framer Motion
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start']
+  });
 
-    const handleScroll = () => {
-      if (!sectionRef.current) return;
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          if (!sectionRef.current) return;
-          const rect = sectionRef.current.getBoundingClientRect();
-          const windowHeight = window.innerHeight;
-          // Progress: 0 when top enters viewport, 1 when bottom leaves viewport
-          const progress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight + rect.height)));
-          setScrollProgress(progress);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
+  // Dynamic parallax transformations for the flanking models
+  const leftY = useTransform(scrollYProgress, [0, 1], [-100, 100]);
+  const rightY = useTransform(scrollYProgress, [0, 1], [100, -100]);
+  const leftScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.92, 1.05, 0.95]);
+  const rightScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.95, 1.05, 0.92]);
+  const modelOpacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.35, 0.85, 0.85, 0.35]);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const standards = [
+  // 4 Culturally authentic, unisex Nigerian luxury pillars
+  const pillars = [
     {
-      icon: Scissors,
-      title: 'Bespoke Measurement Calibration',
-      desc: 'Our sizing algorithm translates your height, weight, and shoulder specs into exact tailoring patterns across every partner designer brand.',
-      tag: 'Zero Sizing Error',
-      num: '01',
-      accent: 'merino wool tailoring'
+      icon: Crown,
+      title: 'Men & Women Native Couture',
+      desc: 'Bespoke Senator suits, ceremonial Agbada robes, and draped contemporary womenswear tailored to your exact twin measurements by master Nigerian designers.',
+      tag: 'Bespoke Unisex Tailoring',
+      sub: 'Senator · Agbada · Kaftans',
+      num: '01'
+    },
+    {
+      icon: Flame,
+      title: 'Lagos Streetwear Drops',
+      desc: 'Limited-edition 450gsm heavyweight hoodies, boxy luxury graphic tees, and wide-leg selvedge denim straight from Nigeria’s hottest independent street houses.',
+      tag: 'Ready-To-Wear Drops',
+      sub: 'Street Souk Editions',
+      num: '02'
     },
     {
       icon: Layers,
-      title: 'Cross-Brand Wardrobe Styling',
-      desc: 'Assemble complete luxury looks combining tailored Senator kaftans, urban streetwear drops, handcrafted leather slides, and fine jewelry.',
-      tag: 'Unified Try-On',
-      num: '02',
-      accent: 'pan-african curation'
-    },
-    {
-      icon: Truck,
-      title: 'Consolidated White-Glove Logistics',
-      desc: 'All pieces from distinct designers are quality-checked and dispatched directly to your doorstep in a single luxury box.',
-      tag: 'Doorstep Delivery',
-      num: '03',
-      accent: 'nationwide tracking'
+      title: 'One Cart, Any Nigerian Brand',
+      desc: 'Combine custom native tailoring from Sartorial Lagos with street drops from Street Souk in one seamless checkout. Dispatched together in one luxury box.',
+      tag: 'Consolidated Logistics',
+      sub: 'Lagos to 36 States',
+      num: '03'
     },
     {
       icon: ShieldCheck,
-      title: 'Guaranteed Fit Protection',
-      desc: 'Shop with absolute peace of mind. If any piece does not fit your body twin accurately, enjoy complimentary 7-day alterations or exchange.',
-      tag: '100% Fit Guarantee',
-      num: '04',
-      accent: 'escrow protected'
+      title: 'Secured Escrow Guarantee',
+      desc: 'Zero risk. Your payment stays locked in Veyra Escrow and is only released to the designer after your clothes arrive and you confirm the fit.',
+      tag: '100% Escrow Protected',
+      sub: 'Buyer Protection',
+      num: '04'
     }
   ];
 
   return (
     <section 
       ref={sectionRef} 
-      className="relative py-28 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] overflow-hidden transition-colors"
+      className="relative py-28 lg:py-36 border-b border-[var(--border-subtle)] bg-[#FAF9F5] dark:bg-[var(--bg-primary)] overflow-hidden transition-colors"
     >
       {/* ======================================================== */}
-      {/* 1. LEFT FLANKING EDITORIAL MODEL (SCROLL-REVEAL PARALLAX) */}
+      {/* 1. LEFT FLANK: BLACK MALE EDITORIAL MODEL (PARALLAX)    */}
       {/* ======================================================== */}
       <div 
-        className="absolute left-0 top-0 bottom-0 w-[26%] lg:w-[32%] xl:w-[35%] pointer-events-none overflow-hidden select-none z-0 hidden md:block"
+        className="absolute left-0 top-0 bottom-0 w-[28%] lg:w-[32%] xl:w-[35%] pointer-events-none overflow-hidden select-none z-0 hidden md:block"
         style={{
-          maskImage: 'linear-gradient(to right, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
+          maskImage: 'linear-gradient(to right, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
         }}
       >
-        <div 
-          className="relative w-full h-[135%] -top-[15%] will-change-transform transition-transform duration-300 ease-out"
+        <motion.div 
           style={{
-            transform: `translateY(${(1 - scrollProgress) * 90 - 20}px) scale(${0.96 + scrollProgress * 0.08})`,
-            opacity: Math.min(0.9, 0.35 + scrollProgress * 0.55),
+            y: leftY,
+            scale: leftScale,
+            opacity: modelOpacity
           }}
+          className="relative w-full h-[140%] -top-[20%] will-change-transform"
         >
           <Image
-            src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1400&auto=format&fit=crop"
-            alt="Veyra Nigerian Luxury Editorial Left"
+            src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1200&auto=format&fit=crop"
+            alt="Nigerian High-Fashion Menswear Editorial"
             fill
             unoptimized
             priority
-            className="object-cover object-top filter contrast-[1.08] saturate-[1.1] brightness-[0.92] dark:brightness-[0.85]"
+            className="object-cover object-top filter grayscale contrast-[1.12] brightness-[0.98] dark:brightness-[0.8] transition-all"
           />
-          {/* Subtle gradient vignette to blend softly into background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-primary)]/40 to-[var(--bg-primary)]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)]/80" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)]/90" />
-        </div>
+          {/* Subtle atmospheric vignette tailored for light & dark mode */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FAF9F5]/30 dark:via-[var(--bg-primary)]/40 to-[#FAF9F5] dark:to-[var(--bg-primary)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#FAF9F5] dark:from-[var(--bg-primary)] via-transparent to-[#FAF9F5]/80 dark:to-[var(--bg-primary)]/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F5] dark:from-[var(--bg-primary)] via-transparent to-[#FAF9F5]/90 dark:to-[var(--bg-primary)]/90" />
+        </motion.div>
 
-        {/* Vertical Editorial Caption Line */}
-        <div className="absolute bottom-12 left-6 z-10 hidden xl:flex items-center gap-3 rotate-[-90deg] origin-left text-[9px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--text-muted)] opacity-60">
-          <span>HAUTE COUTURE SPECIFICATION</span>
-          <span className="h-px w-10 bg-[var(--gold-accent)]" />
-          <span>EDITORIAL FIG. 01</span>
+        {/* Editorial Subtitle Label */}
+        <div className="absolute bottom-10 left-6 z-10 hidden xl:flex items-center gap-3 rotate-[-90deg] origin-left text-[9px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--text-muted)] opacity-60">
+          <span>NIGERIAN MENSWEAR</span>
+          <span className="h-px w-8 bg-[var(--gold-accent)]" />
+          <span>FIG. 01 BESPOKE</span>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 2. RIGHT FLANKING EDITORIAL MODEL (SCROLL-REVEAL PARALLAX) */}
+      {/* 2. RIGHT FLANK: BLACK FEMALE EDITORIAL MODEL (PARALLAX) */}
       {/* ======================================================== */}
       <div 
-        className="absolute right-0 top-0 bottom-0 w-[26%] lg:w-[32%] xl:w-[35%] pointer-events-none overflow-hidden select-none z-0 hidden md:block"
+        className="absolute right-0 top-0 bottom-0 w-[28%] lg:w-[32%] xl:w-[35%] pointer-events-none overflow-hidden select-none z-0 hidden md:block"
         style={{
-          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%)',
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%)',
         }}
       >
-        <div 
-          className="relative w-full h-[135%] -top-[15%] will-change-transform transition-transform duration-300 ease-out"
+        <motion.div 
           style={{
-            transform: `translateY(${(scrollProgress - 0.5) * -80}px) scale(${0.96 + scrollProgress * 0.08})`,
-            opacity: Math.min(0.9, 0.35 + scrollProgress * 0.55),
+            y: rightY,
+            scale: rightScale,
+            opacity: modelOpacity
           }}
+          className="relative w-full h-[140%] -top-[20%] will-change-transform"
         >
           <Image
-            src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=1400&auto=format&fit=crop"
-            alt="Veyra Nigerian Luxury Editorial Right"
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1200&auto=format&fit=crop"
+            alt="Nigerian High-Fashion Womenswear Editorial"
             fill
             unoptimized
             priority
-            className="object-cover object-top filter contrast-[1.08] saturate-[1.1] brightness-[0.92] dark:brightness-[0.85]"
+            className="object-cover object-top filter grayscale contrast-[1.12] brightness-[0.98] dark:brightness-[0.8] transition-all"
           />
-          {/* Subtle gradient vignette to blend softly into background */}
-          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[var(--bg-primary)]/40 to-[var(--bg-primary)]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)]/80" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)]/90" />
-        </div>
+          {/* Subtle atmospheric vignette tailored for light & dark mode */}
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#FAF9F5]/30 dark:via-[var(--bg-primary)]/40 to-[#FAF9F5] dark:to-[var(--bg-primary)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#FAF9F5] dark:from-[var(--bg-primary)] via-transparent to-[#FAF9F5]/80 dark:to-[var(--bg-primary)]/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F5] dark:from-[var(--bg-primary)] via-transparent to-[#FAF9F5]/90 dark:to-[var(--bg-primary)]/90" />
+        </motion.div>
 
-        {/* Vertical Editorial Caption Line */}
+        {/* Editorial Subtitle Label */}
         <div className="absolute top-28 right-6 z-10 hidden xl:flex items-center gap-3 rotate-[90deg] origin-right text-[9px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--text-muted)] opacity-60">
-          <span>MASTER CRAFTSMANSHIP</span>
-          <span className="h-px w-10 bg-[var(--gold-accent)]" />
-          <span>EDITORIAL FIG. 02</span>
+          <span>NIGERIAN WOMENSWEAR</span>
+          <span className="h-px w-8 bg-[var(--gold-accent)]" />
+          <span>FIG. 02 COUTURE</span>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 3. AMBIENT LUXURY GLOW SPOTLIGHT (CENTER STAGE) */}
+      {/* 3. CENTER AMBIENT LUXURY GLOW                            */}
       {/* ======================================================== */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[var(--gold-accent)]/8 dark:bg-[var(--gold-accent)]/10 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[var(--gold-accent)]/8 dark:bg-[var(--gold-accent)]/10 rounded-full blur-[140px] pointer-events-none z-0" />
 
       {/* ======================================================== */}
-      {/* 4. MAIN CONTENT CONTAINER */}
+      {/* 4. MAIN CONTENT CONTAINER                                */}
       {/* ======================================================== */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16 lg:mb-20">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-xs font-mono-luxury uppercase tracking-[0.2em] font-bold shadow-sm backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>THE VEYRA ADVANTAGE</span>
+            <span>THE VEYRA ADVANTAGE · UNISEX FASHION</span>
           </div>
 
           <h2 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-normal text-[var(--text-primary)] tracking-tight leading-[1.15]">
@@ -173,42 +164,45 @@ export default function ProblemSolution() {
           </h2>
 
           <p className="text-sm sm:text-base text-[var(--text-secondary)] font-light leading-relaxed max-w-2xl mx-auto">
-            Engineered to eliminate sizing uncertainty and unite Nigeria&apos;s finest independent fashion houses into one seamless virtual dressing room.
+            Discover authentic Nigerian native couture, bespoke tailoring, and Lagos afro-streetwear drops with unified checkout and guaranteed fit protection.
           </p>
         </div>
 
-        {/* 4 Ultra-Luxury Frosted Glass Cards */}
+        {/* 4 Solid High-Contrast Luxury Cards (Crisp on Light & Dark) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-          {standards.map((item, idx) => {
+          {pillars.map((item, idx) => {
             const Icon = item.icon;
             return (
               <div
                 key={idx}
-                className="relative p-8 rounded-3xl backdrop-blur-2xl bg-[var(--bg-surface)]/85 dark:bg-[#0c0c0e]/85 border border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/60 flex flex-col justify-between space-y-8 shadow-[0_10px_35px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_60px_rgba(216,179,87,0.18)] hover:-translate-y-2.5 transition-all duration-500 group cursor-default"
+                className="relative p-7 sm:p-8 rounded-3xl bg-white/95 dark:bg-[#101013]/90 backdrop-blur-xl border border-black/8 dark:border-white/10 hover:border-[var(--gold-accent)]/70 flex flex-col justify-between space-y-7 shadow-[0_12px_35px_rgba(0,0,0,0.05)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_50px_rgba(216,179,87,0.18)] hover:-translate-y-2 transition-all duration-500 group cursor-default"
               >
-                {/* Top Subtle Hover Accent Light */}
-                <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-[var(--gold-accent)]/0 group-hover:via-[var(--gold-accent)]/80 to-transparent transition-all duration-500" />
+                {/* Top Subtle Hover Accent Bar */}
+                <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-[var(--gold-accent)]/0 group-hover:via-[var(--gold-accent)]/90 to-transparent transition-all duration-500" />
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {/* Top Bar: Icon Monogram + Pill Number */}
                   <div className="flex items-center justify-between">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[var(--gold-subtle)] to-[var(--gold-accent)]/20 border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-sm">
+                    <div className="h-13 w-13 rounded-2xl bg-gradient-to-br from-[var(--gold-subtle)] to-[var(--gold-accent)]/20 border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-sm">
                       <Icon className="h-6 w-6 stroke-[1.8]" />
                     </div>
 
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-primary)]/80 border border-[var(--border-subtle)] group-hover:border-[var(--gold-accent)]/40 transition-colors">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] group-hover:border-[var(--gold-accent)]/40 transition-colors">
                       <span className="text-[10px] font-mono-luxury font-bold tracking-widest text-[var(--gold-accent)]">
                         {item.num}
                       </span>
                     </div>
                   </div>
 
-                  {/* Title */}
-                  <div className="space-y-2 pt-1">
+                  {/* Title & Micro Divider */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[9px] font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold block">
+                      {item.sub}
+                    </span>
                     <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-accent)] transition-colors duration-300 leading-snug">
                       {item.title}
                     </h3>
-                    <div className="h-0.5 w-8 bg-[var(--gold-accent)]/30 group-hover:w-16 group-hover:bg-[var(--gold-accent)] transition-all duration-500 rounded-full" />
+                    <div className="h-0.5 w-8 bg-[var(--gold-accent)]/30 group-hover:w-14 group-hover:bg-[var(--gold-accent)] transition-all duration-500 rounded-full" />
                   </div>
 
                   {/* Description */}
@@ -218,8 +212,8 @@ export default function ProblemSolution() {
                 </div>
 
                 {/* Footer Meta Badge */}
-                <div className="pt-5 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono-luxury">
-                  <span className="text-emerald-500 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono-luxury">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
                     <Check className="h-3.5 w-3.5 stroke-[3]" />
                     <span>{item.tag}</span>
                   </span>
@@ -234,11 +228,11 @@ export default function ProblemSolution() {
           })}
         </div>
 
-        {/* Bottom Luxury Guarantee Bar */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-xl bg-[var(--bg-surface)]/70 border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-secondary)] shadow-sm">
+        {/* Bottom Luxury Guarantee Banner */}
+        <div className="mt-14 text-center">
+          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/90 dark:bg-[var(--bg-surface)]/70 border border-black/8 dark:border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-secondary)] shadow-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Escrow Settlement Guarantee: Funds locked until you try on & confirm perfection</span>
+            <span>Escrow Guarantee: 100% money-back security across all 36 Nigerian states</span>
           </div>
         </div>
 
