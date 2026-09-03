@@ -13,6 +13,7 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav';
 import MobileHeader from '@/components/layout/MobileHeader';
 import WardrobeVaultDrawer from '@/components/vault/WardrobeVaultDrawer';
 import AmbientScreenSaver from '@/components/common/AmbientScreenSaver';
+import WhatsAppConciergeWidget from '@/components/common/WhatsAppConciergeWidget';
 
 export default function AppLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -59,6 +60,8 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       <SplitCartDrawer />
       <WardrobeVaultDrawer />
       <BodyTwinWizard />
+      {/* WhatsApp VIP Concierge & Style Advisor */}
+      <WhatsAppConciergeWidget />
       {/* Floating Glassmorphic Mobile Bottom Dock (Strictly Mobile) */}
       <MobileBottomNav />
 

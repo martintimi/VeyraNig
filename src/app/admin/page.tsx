@@ -10,11 +10,13 @@ import {
   ShoppingBag, ArrowRight, Star, RefreshCw, Loader2, Store, AlertCircle,
   Lock, KeyRound, Layers, BarChart3, Settings, ShieldAlert,
   EyeOff, Zap, ShoppingCart, Truck, CreditCard, Trash2, Download,
-  SlidersHorizontal, CheckSquare, FileText, Wallet
+  SlidersHorizontal, CheckSquare, FileText, Wallet,
+  MessageCircle, Copy, Save, PhoneCall, Send
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import { getConciergeConfig, saveConciergeConfig, generateWhatsAppUrl, ConciergeConfig } from '@/lib/config/concierge';
 
 const adminEditorialSlides = [
   {
@@ -69,7 +71,15 @@ export default function SuperAdminPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'catalog' | 'approvals' | 'finance' | 'customers'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'catalog' | 'approvals' | 'finance' | 'customers' | 'concierge'>('overview');
+
+  // VIP Concierge Settings State
+  const [conciergeConfig, setConciergeConfig] = useState<ConciergeConfig>(getConciergeConfig());
+  const [conciergePhoneInput, setConciergePhoneInput] = useState(conciergeConfig.whatsappNumber);
+  const [conciergeHoursInput, setConciergeHoursInput] = useState(conciergeConfig.businessHours);
+  const [conciergeNameInput, setConciergeNameInput] = useState(conciergeConfig.advisorName);
+  const [conciergeEnabled, setConciergeEnabled] = useState(conciergeConfig.isEnabled);
+  const [copiedTemplateIdx, setCopiedTemplateIdx] = useState<number | null>(null);
 
   // Live Orders Data from DB
   const [orders, setOrders] = useState<any[]>([]);
@@ -673,6 +683,13 @@ export default function SuperAdminPage() {
       label: 'Shoppers Directory',
       icon: Users,
       badge: `${customersList.length}`
+    },
+    {
+      id: 'concierge',
+      label: 'WhatsApp Concierge',
+      icon: MessageCircle,
+      badge: conciergeConfig.isEnabled ? 'Live' : 'Off',
+      badgeColor: conciergeConfig.isEnabled ? 'bg-emerald-500 text-black font-bold' : 'bg-zinc-500 text-white font-bold'
     },
   ];
 
@@ -2130,6 +2147,296 @@ export default function SuperAdminPage() {
                   </div>
                 </div>
               )}
+
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB 7: VIP CONCIERGE & WHATSAPP HUB                      */}
+          {/* ======================================================== */}
+          {activeTab === 'concierge' && (
+            <div className="space-y-8 animate-fadeIn">
+              
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] flex items-center gap-3">
+                    <span>VIP Concierge & WhatsApp Hub</span>
+                    <span className={`text-[10px] font-mono-luxury px-3 py-1 rounded-full uppercase font-bold ${
+                      conciergeEnabled ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-500/20 text-zinc-400'
+                    }`}>
+                      {conciergeEnabled ? 'Widget Live' : 'Widget Disabled'}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+                    Direct VIP support connecting shoppers to your WhatsApp for sizing calibration, custom orders, and escrow reassurance.
+                  </p>
+                </div>
+
+                {/* Quick Test Button */}
+                <a
+                  href={generateWhatsAppUrl(conciergePhoneInput, 'Hello Admin, this is a live test from Veyra Platform Command Center.')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white text-xs font-mono-luxury uppercase font-bold shadow-md transition-all self-start sm:self-auto cursor-pointer"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  <span>Test Connection on WhatsApp</span>
+                </a>
+              </div>
+
+              {/* 3 Executive Concierge Stat Tiles */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                
+                {/* Active Phone Tile */}
+                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2">
+                  <div className="flex items-center justify-between text-[var(--text-muted)]">
+                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Active Support Line</span>
+                    <PhoneCall className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <div className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                    +{conciergeConfig.whatsappNumber}
+                  </div>
+                  <p className="text-[11px] font-mono-luxury text-emerald-400 flex items-center gap-1.5 pt-1">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Routing live customer inquiries</span>
+                  </p>
+                </div>
+
+                {/* Response SLA */}
+                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2">
+                  <div className="flex items-center justify-between text-[var(--text-muted)]">
+                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Operating Hours</span>
+                    <Clock className="h-4 w-4 text-[var(--gold-accent)]" />
+                  </div>
+                  <div className="font-editorial text-2xl font-bold text-[var(--gold-accent)]">
+                    {conciergeConfig.businessHours.split('(')[0] || '8 AM – 10 PM'}
+                  </div>
+                  <p className="text-[11px] font-mono-luxury text-[var(--text-muted)] pt-1">
+                    7 Days a week nationwide coverage
+                  </p>
+                </div>
+
+                {/* Conversion Impact */}
+                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2">
+                  <div className="flex items-center justify-between text-[var(--text-muted)]">
+                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Escrow Guarantee Integration</span>
+                    <ShieldCheck className="h-4 w-4 text-[var(--gold-accent)]" />
+                  </div>
+                  <div className="font-editorial text-2xl font-bold text-emerald-400">
+                    100% Protected
+                  </div>
+                  <p className="text-[11px] font-mono-luxury text-[var(--text-muted)] pt-1">
+                    Direct bank transfer verification supported
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Main Configuration Card */}
+              <div className="surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-6">
+                <div>
+                  <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                    Concierge Configuration
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-0.5">
+                    Update the WhatsApp destination phone number and widget visibility across the store in real time.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  {/* WhatsApp Number Field */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-muted)] block">
+                      Support WhatsApp Phone Number:
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={conciergePhoneInput}
+                        onChange={(e) => setConciergePhoneInput(e.target.value)}
+                        placeholder="e.g. 2348030000000"
+                        className="w-full pl-4 pr-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
+                      />
+                    </div>
+                    <p className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                      Include country code without plus sign (e.g., 2348123456789 for Nigeria).
+                    </p>
+                  </div>
+
+                  {/* Operational Hours */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-muted)] block">
+                      Operating Hours Notice:
+                    </label>
+                    <input
+                      type="text"
+                      value={conciergeHoursInput}
+                      onChange={(e) => setConciergeHoursInput(e.target.value)}
+                      placeholder="e.g. 8:00 AM – 10:00 PM WAT (7 Days)"
+                      className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
+                    />
+                    <p className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                      Displayed on the customer-facing concierge card.
+                    </p>
+                  </div>
+
+                  {/* Concierge Name */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-muted)] block">
+                      Concierge Advisor Name:
+                    </label>
+                    <input
+                      type="text"
+                      value={conciergeNameInput}
+                      onChange={(e) => setConciergeNameInput(e.target.value)}
+                      placeholder="e.g. Veyra Style Concierge"
+                      className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
+                    />
+                  </div>
+
+                  {/* Widget Enable Toggle */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-muted)] block">
+                      Customer Widget Visibility:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setConciergeEnabled(!conciergeEnabled)}
+                      className={`w-full py-3 px-4 rounded-xl border flex items-center justify-between text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                        conciergeEnabled
+                          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
+                          : 'bg-zinc-500/10 border-zinc-500/30 text-zinc-400'
+                      }`}
+                    >
+                      <span>{conciergeEnabled ? 'Floating Widget Enabled' : 'Widget Disabled'}</span>
+                      <span className={`h-2.5 w-2.5 rounded-full ${conciergeEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+                    </button>
+                    <p className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                      Toggles the floating concierge pill on customer-facing pages.
+                    </p>
+                  </div>
+
+                </div>
+
+                {/* Save Button */}
+                <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
+                  <span className="text-[11px] font-mono-luxury text-[var(--text-muted)]">
+                    Changes take effect across all browsers immediately upon saving.
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = saveConciergeConfig({
+                        whatsappNumber: conciergePhoneInput.trim(),
+                        businessHours: conciergeHoursInput.trim(),
+                        advisorName: conciergeNameInput.trim(),
+                        isEnabled: conciergeEnabled
+                      });
+                      setConciergeConfig(updated);
+                      confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+                      setActionSuccessMsg('WhatsApp Concierge settings updated successfully!');
+                    }}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--gold-accent)] hover:bg-[var(--gold-hover)] text-black text-xs font-mono-luxury uppercase font-bold shadow-lg transition-all cursor-pointer"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>Save Settings</span>
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Instant Response Toolkit (Quick-Copy Scripts for WhatsApp) */}
+              <div className="surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-6">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold mb-2">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Rapid WhatsApp Reply Toolkit</span>
+                  </div>
+                  <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                    Instant Admin Reply Scripts
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-0.5">
+                    Click to copy professional responses to paste directly into your WhatsApp chats with shoppers.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      title: 'Sizing & Body Twin Advice',
+                      category: 'Sizing Help',
+                      script: `Hello! For our bespoke Senator sets and hoodies, our Twin Fit algorithm matches your chest and height. Share your height (cm) and chest size, and we will guarantee the exact fit or exchange it 100% free under Veyra Escrow.`
+                    },
+                    {
+                      title: 'Delivery & State Dispatch Times',
+                      category: 'Shipping',
+                      script: `Good day! Deliveries within major centers arrive in 24-48 hours. Nationwide deliveries to all other states take 2-4 business days with live doorstep tracking and SMS updates.`
+                    },
+                    {
+                      title: 'Bank Transfer & Escrow Details',
+                      category: 'Payment Reassurance',
+                      script: `Hello! Yes, you can pay via direct bank transfer into Veyra Escrow. Your funds remain 100% protected and are only disbursed to the designer after you receive the package and confirm it fits perfectly.`
+                    },
+                    {
+                      title: 'Custom Alterations & Embroidery',
+                      category: 'Bespoke Customization',
+                      script: `Hello! Our verified designers can customize embroidery thread (gold/silver) or adjust sleeve and trouser lengths to your exact measurements. Please share your custom notes!`
+                    }
+                  ].map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="p-5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-3 flex flex-col justify-between hover:border-[var(--gold-accent)]/40 transition-colors"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold">
+                            {item.category}
+                          </span>
+                          <span className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
+                            Template #{idx + 1}
+                          </span>
+                        </div>
+                        <h4 className="font-editorial text-base font-bold text-[var(--text-primary)]">
+                          {item.title}
+                        </h4>
+                        <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed italic bg-[var(--bg-primary)] p-3 rounded-xl border border-[var(--border-subtle)]">
+                          &quot;{item.script}&quot;
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.script);
+                          setCopiedTemplateIdx(idx);
+                          setTimeout(() => setCopiedTemplateIdx(null), 2500);
+                        }}
+                        className={`w-full py-2 px-3 rounded-xl border text-[11px] font-mono-luxury uppercase font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                          copiedTemplateIdx === idx
+                            ? 'bg-emerald-500 text-black border-emerald-500'
+                            : 'surface-card border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-primary)]'
+                        }`}
+                      >
+                        {copiedTemplateIdx === idx ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 stroke-[3]" />
+                            <span>Copied to Clipboard!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>Copy Template</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
 
             </div>
           )}
