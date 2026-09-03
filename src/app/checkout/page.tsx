@@ -68,6 +68,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'bank_transfer'>('paystack');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPaystackSimModal, setShowPaystackSimModal] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState<any>(null);
 
   // Group items by vendor
@@ -300,9 +301,18 @@ export default function CheckoutPage() {
   };
 
   const handlePayWithPaystack = async () => {
+    const rawKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY;
+    const isRealKey = rawKey && !rawKey.includes('e3ea86fb5d808e0018ff9f2fc278a2eecdf04523') && (rawKey.startsWith('pk_test_') || rawKey.startsWith('pk_live_'));
+
+    if (!isRealKey) {
+      setShowPaymentModal(false);
+      setShowPaystackSimModal(true);
+      return;
+    }
+
     setIsProcessing(true);
     const paymentRef = `vy_escrow_${Date.now()}`;
-    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY || 'pk_test_e3ea86fb5d808e0018ff9f2fc278a2eecdf04523';
+    const paystackKey = rawKey;
 
     try {
       const loaded = await loadPaystackScript();
@@ -948,6 +958,90 @@ export default function CheckoutPage() {
                 Cancel & Return
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAYSTACK SANDBOX SIMULATOR MODAL */}
+      {showPaystackSimModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm surface-card rounded-3xl border border-[var(--border-subtle)] p-6 space-y-5 shadow-2xl animate-scaleUp text-center">
+            
+            {/* Paystack Header */}
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono-luxury font-bold uppercase tracking-wider">
+                <CreditCard className="h-3.5 w-3.5" />
+                <span>Paystack Sandbox Simulation</span>
+              </div>
+              <div className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                ₦{grandTotal.toLocaleString()}
+              </div>
+              <p className="text-[11px] font-mono-luxury text-[var(--text-muted)]">
+                Recipient: Veyra Escrow Treasury
+              </p>
+            </div>
+
+            {/* Simulated Debit Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-black border border-white/10 text-white text-left space-y-3 shadow-xl">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-zinc-400">TEST DEBIT CARD</span>
+                <span className="text-[var(--gold-accent)] font-bold">VERVE / MASTERCARD</span>
+              </div>
+              <div className="font-mono text-base tracking-widest text-zinc-100 font-bold py-1">
+                4084 •••• •••• 0840
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                <div>
+                  <span>EXPIRY: </span>
+                  <strong className="text-white">12/28</strong>
+                </div>
+                <div>
+                  <span>CVV: </span>
+                  <strong className="text-white">408</strong>
+                </div>
+                <div>
+                  <span>PIN: </span>
+                  <strong className="text-white">1234</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono-luxury text-amber-400 text-left leading-relaxed">
+              <strong>Test Mode:</strong> No personal Paystack key added in <code className="text-white">.env.local</code> yet. This simulates a successful Paystack card payment and secures your order into Veyra Escrow.
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowPaystackSimModal(false);
+                  await handleCompleteOrder(`paystack_sim_${Date.now()}`);
+                }}
+                disabled={isProcessing}
+                className="w-full py-3.5 rounded-full bg-emerald-500 text-black font-mono-luxury uppercase text-xs font-bold hover:bg-emerald-400 transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <>
+                    <Sparkles className="h-4 w-4 animate-spin text-black" />
+                    <span>Securing Escrow...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 stroke-[2]" />
+                    <span>Simulate Successful Payment</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPaystackSimModal(false)}
+                className="w-full py-2.5 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              >
+                Cancel Payment
+              </button>
+            </div>
+
           </div>
         </div>
       )}
