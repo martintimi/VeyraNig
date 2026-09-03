@@ -4,13 +4,13 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import {
   ShieldCheck, LayoutDashboard, Users, PackageCheck, Scissors,
-  DollarSign, TrendingUp, Search, Filter, CheckCircle2, XCircle,
+  TrendingUp, Search, Filter, CheckCircle2, XCircle,
   AlertTriangle, Eye, ArrowUpRight, Phone, Mail, MapPin, Building,
   Clock, Sun, Moon, ExternalLink, LogOut, Sparkles, Check, ChevronRight,
   ShoppingBag, ArrowRight, Star, RefreshCw, Loader2, Store, AlertCircle,
   Lock, KeyRound, Layers, BarChart3, Settings, ShieldAlert,
   EyeOff, Zap, ShoppingCart, Truck, CreditCard, Trash2, Download,
-  SlidersHorizontal, CheckSquare, FileText
+  SlidersHorizontal, CheckSquare, FileText, Wallet
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -83,12 +83,17 @@ export default function SuperAdminPage() {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [productSearch, setProductSearch] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
+  const [selectedProductModal, setSelectedProductModal] = useState<any | null>(null);
 
   // Live Vendors Data from DB
   const [vendors, setVendors] = useState<any[]>([]);
   const [isLoadingVendors, setIsLoadingVendors] = useState(true);
   const [vendorSearch, setVendorSearch] = useState('');
   const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+
+  // Escrow Ledger Interactive State
+  const [financeFilter, setFinanceFilter] = useState<'all' | 'locked' | 'settled'>('all');
+  const [financeSearch, setFinanceSearch] = useState('');
 
   // Action states
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -217,28 +222,7 @@ export default function SuperAdminPage() {
     }
   };
 
-  // 1. ORDER ACTIONS
-  const handleUpdateOrderStage = async (orderId: string, stage: number) => {
-    try {
-      setActionLoadingId(orderId);
-      const res = await fetch('/api/admin/orders', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, trackingStage: stage })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setActionSuccessMsg(`Order ${orderId} advanced to Stage ${stage}`);
-        await fetchOrdersList();
-        setTimeout(() => setActionSuccessMsg(''), 4000);
-      }
-    } catch (err) {
-      console.error('Error updating order:', err);
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
+  // ORDER ACTIONS: Release Escrow (once delivered or verified)
   const handleReleaseEscrow = async (orderId: string) => {
     if (!confirm('Are you sure you want to release escrow funds for this order to the vendor?')) return;
     try {
@@ -250,7 +234,7 @@ export default function SuperAdminPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccessMsg(`Escrow released for order ${orderId}! Payout logged.`);
+        setActionSuccessMsg(`Escrow released for order ${orderId}! Vendor payout recorded.`);
         await fetchOrdersList();
         setTimeout(() => setActionSuccessMsg(''), 4000);
       }
@@ -282,7 +266,7 @@ export default function SuperAdminPage() {
     }
   };
 
-  // 2. PRODUCT ACTIONS
+  // PRODUCT ACTIONS
   const handleToggleProductFeatured = async (productId: string, currentFeatured: boolean) => {
     try {
       setActionLoadingId(productId);
@@ -293,7 +277,7 @@ export default function SuperAdminPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccessMsg(currentFeatured ? 'Product removed from featured' : 'Product featured on homepage!');
+        setActionSuccessMsg(currentFeatured ? 'Product removed from homepage showcase' : 'Product highlighted on homepage lookbook!');
         await fetchProductsList();
         setTimeout(() => setActionSuccessMsg(''), 4000);
       }
@@ -324,7 +308,7 @@ export default function SuperAdminPage() {
     }
   };
 
-  // 3. VENDOR ACTIONS
+  // VENDOR ACTIONS
   const handleApproveBrand = async (vendorId: string) => {
     try {
       setActionLoadingId(vendorId);
@@ -402,6 +386,57 @@ export default function SuperAdminPage() {
     };
   }, [orders]);
 
+  // Derived Vendor Escrow Balances Breakdown
+  const vendorEscrowBreakdown = useMemo(() => {
+    const map = new Map<string, {
+      vendorId: string;
+      vendorName: string;
+      totalSales: number;
+      pendingEscrow: number;
+      settledPayouts: number;
+      ordersCount: number;
+      bankName: string;
+      accountNumber: string;
+      accountName: string;
+    }>();
+
+    orders.forEach((ord) => {
+      (ord.items || []).forEach((item: any) => {
+        const vId = (item.vendorId || item.vendor_id || 'vendor').toLowerCase();
+        const vName = item.vendorName || vId.toUpperCase();
+        const itemTotal = Number(item.price || 0) * Number(item.quantity || 1);
+        const isDelivered = ord.status === 'delivered' || ord.trackingStage >= 4;
+
+        const matchedVendor = vendors.find(v => v.id === vId || (v.name && v.name.toLowerCase() === vName.toLowerCase()));
+
+        if (!map.has(vId)) {
+          map.set(vId, {
+            vendorId: vId,
+            vendorName: vName,
+            totalSales: itemTotal,
+            pendingEscrow: isDelivered ? 0 : itemTotal * 0.9,
+            settledPayouts: isDelivered ? itemTotal * 0.9 : 0,
+            ordersCount: 1,
+            bankName: matchedVendor?.bankName || 'Verified Bank',
+            accountNumber: matchedVendor?.accountNumber || '0123456789',
+            accountName: matchedVendor?.accountName || vName,
+          });
+        } else {
+          const rec = map.get(vId)!;
+          rec.totalSales += itemTotal;
+          if (isDelivered) {
+            rec.settledPayouts += itemTotal * 0.9;
+          } else {
+            rec.pendingEscrow += itemTotal * 0.9;
+          }
+          rec.ordersCount += 1;
+        }
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.totalSales - a.totalSales);
+  }, [orders, vendors]);
+
   // Derived Unique Customers Directory from real database orders
   const customersList = useMemo(() => {
     const customerMap = new Map<string, {
@@ -409,6 +444,7 @@ export default function SuperAdminPage() {
       email: string;
       phone: string;
       city: string;
+      state: string;
       ordersCount: number;
       totalSpend: number;
       lastOrderDate: string;
@@ -423,7 +459,8 @@ export default function SuperAdminPage() {
           name: ord.customerName || 'Shopper',
           email: ord.customerEmail || 'N/A',
           phone: ord.customerPhone || 'N/A',
-          city: ord.deliveryCity || 'Nigeria',
+          city: ord.deliveryCity || 'Lagos',
+          state: ord.deliveryState || '',
           ordersCount: 1,
           totalSpend: spend,
           lastOrderDate: ord.date || ord.createdAt || 'Recent',
@@ -494,6 +531,32 @@ export default function SuperAdminPage() {
     });
   }, [vendors, vendorSearch, approvalFilter]);
 
+  // Filtered Finance Ledger
+  const filteredLedger = useMemo(() => {
+    return orders.filter(ord => {
+      const q = financeSearch.toLowerCase().trim();
+      const matchesSearch = !q ||
+        (ord.orderNumber || '').toLowerCase().includes(q) ||
+        (ord.customerName || '').toLowerCase().includes(q);
+
+      let matchesFilter = true;
+      if (financeFilter === 'locked') matchesFilter = ord.status !== 'delivered' && ord.status !== 'cancelled';
+      if (financeFilter === 'settled') matchesFilter = ord.status === 'delivered' || ord.trackingStage >= 4;
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [orders, financeSearch, financeFilter]);
+
+  // Category product counters
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((p) => {
+      const cat = (p.category || 'other').toLowerCase();
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
   const pendingCount = vendors.filter(v => v.approvalStatus === 'pending' || !v.isVerified).length;
   const approvedCount = vendors.filter(v => v.approvalStatus === 'approved' || v.isVerified).length;
 
@@ -527,7 +590,7 @@ export default function SuperAdminPage() {
     {
       id: 'finance',
       label: 'Escrow & Treasury',
-      icon: DollarSign,
+      icon: Wallet,
     },
     {
       id: 'customers',
@@ -728,7 +791,7 @@ export default function SuperAdminPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors flex flex-col">
       
-      {/* ── TOP EXECUTIVE HEADER BAR ── */}
+      {/* TOP EXECUTIVE HEADER BAR */}
       <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-md px-6 sm:px-10 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
@@ -787,7 +850,7 @@ export default function SuperAdminPage() {
         </div>
       </header>
 
-      {/* ── BODY SHELL ── */}
+      {/* BODY SHELL */}
       <div className="flex-1 flex">
         
         {/* Left Sticky Sidebar (Desktop) */}
@@ -811,10 +874,10 @@ export default function SuperAdminPage() {
               </div>
 
               <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-mono-luxury">
-                <span className="text-[var(--text-muted)]">Database:</span>
+                <span className="text-[var(--text-muted)]">System Status:</span>
                 <span className="text-emerald-500 font-bold flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Supabase Live
+                  Operational
                 </span>
               </div>
             </div>
@@ -891,66 +954,106 @@ export default function SuperAdminPage() {
                   Platform Command Center
                 </h1>
                 <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                  Real-time live monitoring of marketplace transactions, brand verifications, and escrow status.
+                  Real-time live monitoring of marketplace transactions, brand verifications, catalog size, and escrow status.
                 </p>
               </div>
 
-              {/* 5 Master KPI Metric Tiles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2">
+              {/* 5 Master KPI Metric Tiles - ALL CLICKABLE */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                
+                {/* 1. GMV -> Takes to Finance */}
+                <button
+                  onClick={() => setActiveTab('finance')}
+                  className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] transition-all space-y-2 text-left cursor-pointer group shadow-sm hover:shadow-md"
+                >
                   <div className="flex items-center justify-between text-[var(--text-muted)]">
-                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Gross Merchandise Value</span>
-                    <DollarSign className="h-4 w-4 text-[var(--gold-accent)]" />
+                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Gross Sales (GMV)</span>
+                    <TrendingUp className="h-4 w-4 text-[var(--gold-accent)] group-hover:scale-110 transition-transform" />
                   </div>
-                  <div className="font-editorial text-3xl font-bold text-[var(--gold-accent)]">
+                  <div className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--gold-accent)]">
                     ₦{financialStats.totalGMV.toLocaleString()}
                   </div>
-                  <div className="text-[10px] font-mono-luxury text-emerald-500 font-bold">
-                    {orders.length} total customer orders
+                  <div className="text-[10px] font-mono-luxury text-emerald-500 font-bold flex items-center justify-between">
+                    <span>{orders.length} total orders</span>
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform text-[var(--gold-accent)]" />
                   </div>
-                </div>
+                </button>
 
-                <div className="p-6 rounded-3xl surface-card border border-amber-500/20 bg-amber-500/5 space-y-2">
+                {/* 2. Escrow Locked -> Takes to Finance */}
+                <button
+                  onClick={() => { setFinanceFilter('locked'); setActiveTab('finance'); }}
+                  className="p-6 rounded-3xl surface-card border border-amber-500/20 bg-amber-500/5 hover:border-amber-500/50 transition-all space-y-2 text-left cursor-pointer group shadow-sm hover:shadow-md"
+                >
                   <div className="flex items-center justify-between text-amber-400">
                     <span className="text-[10px] font-mono-luxury uppercase font-bold">Escrow Locked</span>
-                    <Lock className="h-4 w-4" />
+                    <Lock className="h-4 w-4 group-hover:scale-110 transition-transform" />
                   </div>
-                  <div className="font-editorial text-3xl font-bold text-amber-400">
+                  <div className="font-editorial text-2xl sm:text-3xl font-bold text-amber-400">
                     ₦{financialStats.escrowLocked.toLocaleString()}
                   </div>
-                  <div className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
-                    Funds safe pending delivery
+                  <div className="text-[10px] font-mono-luxury text-[var(--text-muted)] flex items-center justify-between">
+                    <span>Pending delivery</span>
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform text-amber-400" />
                   </div>
-                </div>
+                </button>
 
-                <div className="p-6 rounded-3xl surface-card border border-emerald-500/20 bg-emerald-500/5 space-y-2">
+                {/* 3. Settled to Brands -> Takes to Finance */}
+                <button
+                  onClick={() => { setFinanceFilter('settled'); setActiveTab('finance'); }}
+                  className="p-6 rounded-3xl surface-card border border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 transition-all space-y-2 text-left cursor-pointer group shadow-sm hover:shadow-md"
+                >
                   <div className="flex items-center justify-between text-emerald-400">
-                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Settled to Brands</span>
-                    <ShieldCheck className="h-4 w-4" />
+                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Settled Payouts</span>
+                    <ShieldCheck className="h-4 w-4 group-hover:scale-110 transition-transform" />
                   </div>
-                  <div className="font-editorial text-3xl font-bold text-emerald-400">
+                  <div className="font-editorial text-2xl sm:text-3xl font-bold text-emerald-400">
                     ₦{financialStats.settledPayouts.toLocaleString()}
                   </div>
-                  <div className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
-                    Delivered & confirmed orders
+                  <div className="text-[10px] font-mono-luxury text-[var(--text-muted)] flex items-center justify-between">
+                    <span>Delivered orders</span>
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform text-emerald-400" />
                   </div>
-                </div>
+                </button>
 
-                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2">
+                {/* 4. Total Catalog Items -> Takes to Catalog */}
+                <button
+                  onClick={() => setActiveTab('catalog')}
+                  className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] transition-all space-y-2 text-left cursor-pointer group shadow-sm hover:shadow-md"
+                >
                   <div className="flex items-center justify-between text-[var(--text-muted)]">
-                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Verified Designers</span>
-                    <Store className="h-4 w-4 text-[var(--gold-accent)]" />
+                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Total Catalog</span>
+                    <ShoppingBag className="h-4 w-4 text-[var(--gold-accent)] group-hover:scale-110 transition-transform" />
                   </div>
-                  <div className="font-editorial text-3xl font-bold text-[var(--text-primary)]">
+                  <div className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                    {products.length}
+                  </div>
+                  <div className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold flex items-center justify-between">
+                    <span>Live Garments</span>
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform text-[var(--gold-accent)]" />
+                  </div>
+                </button>
+
+                {/* 5. Verified Designers -> Takes to Approvals */}
+                <button
+                  onClick={() => setActiveTab('approvals')}
+                  className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] transition-all space-y-2 text-left cursor-pointer group shadow-sm hover:shadow-md"
+                >
+                  <div className="flex items-center justify-between text-[var(--text-muted)]">
+                    <span className="text-[10px] font-mono-luxury uppercase font-bold">Verified Brands</span>
+                    <Store className="h-4 w-4 text-[var(--gold-accent)] group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
                     {approvedCount}
                   </div>
-                  <div className="text-[10px] font-mono-luxury text-amber-400 font-bold">
-                    {pendingCount} applications pending
+                  <div className="text-[10px] font-mono-luxury text-amber-400 font-bold flex items-center justify-between">
+                    <span>{pendingCount} pending review</span>
+                    <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform text-amber-400" />
                   </div>
-                </div>
+                </button>
+
               </div>
 
-              {/* Recent Orders Ticker */}
+              {/* Recent Orders Ticker - Clickable Rows */}
               <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -958,7 +1061,7 @@ export default function SuperAdminPage() {
                       Recent Marketplace Orders
                     </h3>
                     <span className="text-xs text-[var(--text-secondary)] font-mono-luxury">
-                      Live customer orders placed across all verified stores
+                      Click on any order to open its complete receipt dossier
                     </span>
                   </div>
 
@@ -978,11 +1081,21 @@ export default function SuperAdminPage() {
                 ) : (
                   <div className="divide-y divide-[var(--border-subtle)]">
                     {orders.slice(0, 5).map((ord) => (
-                      <div key={ord.id} className="py-3 flex items-center justify-between gap-4 text-xs font-mono-luxury flex-wrap">
-                        <div>
-                          <strong className="text-[var(--text-primary)]">{ord.orderNumber}</strong>
-                          <span className="text-[var(--text-muted)] ml-2">• {ord.customerName} ({ord.deliveryCity || 'Lagos'})</span>
+                      <div
+                        key={ord.id}
+                        onClick={() => setSelectedOrderModal(ord)}
+                        className="py-3 px-2 rounded-xl hover:bg-[var(--bg-surface)] transition-all flex items-center justify-between gap-4 text-xs font-mono-luxury flex-wrap cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Eye className="h-3.5 w-3.5 text-[var(--gold-accent)] opacity-60" />
+                          <div>
+                            <strong className="text-[var(--text-primary)]">{ord.orderNumber}</strong>
+                            <span className="text-[var(--text-muted)] ml-2">
+                              • {ord.customerName} ({ord.deliveryCity}{ord.deliveryState ? `, ${ord.deliveryState}` : ''})
+                            </span>
+                          </div>
                         </div>
+
                         <div className="flex items-center gap-3">
                           <span className="text-[var(--gold-accent)] font-bold">₦{Number(ord.totalAmount || 0).toLocaleString()}</span>
                           <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold ${
@@ -1012,7 +1125,7 @@ export default function SuperAdminPage() {
                     Customer Orders Management
                   </h1>
                   <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                    Inspect every customer order, verify multi-vendor packages, update shipping stages, or release escrow payouts.
+                    Inspect every customer order, verify destination address, view courier tracking, or release escrow payouts.
                   </p>
                 </div>
 
@@ -1115,13 +1228,15 @@ export default function SuperAdminPage() {
                           <div>
                             <span className="text-[10px] uppercase text-[var(--text-muted)] block">Delivery Destination:</span>
                             <strong className="text-[var(--text-primary)]">{ord.deliveryAddress}</strong>
-                            <div className="text-[11px] text-[var(--text-muted)]">{ord.deliveryCity}</div>
+                            <div className="text-[11px] text-[var(--gold-accent)] font-bold">
+                              City: {ord.deliveryCity || 'Lagos'}{ord.deliveryState ? ` • State: ${ord.deliveryState}` : ''}
+                            </div>
                           </div>
 
                           <div>
                             <span className="text-[10px] uppercase text-[var(--text-muted)] block">Fulfillment / Courier:</span>
                             <strong className="text-emerald-400">{ord.trackingDetails?.courierName || 'Shipbubble Live Dispatch'}</strong>
-                            <div className="text-[11px] text-[var(--text-muted)]">Waybill: {ord.trackingDetails?.waybillNumber || 'Pending pickup'}</div>
+                            <div className="text-[11px] text-[var(--text-muted)]">Waybill: {ord.trackingDetails?.waybillNumber || 'Assigned on dispatch'}</div>
                           </div>
                         </div>
 
@@ -1140,31 +1255,15 @@ export default function SuperAdminPage() {
                           ))}
                         </div>
 
-                        {/* Actions Toolbar */}
+                        {/* Status Display & Super Admin Payout Release */}
                         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--border-subtle)]">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)]">Advance Stage:</span>
-                            <button
-                              onClick={() => handleUpdateOrderStage(ord.id, 2)}
-                              disabled={isActioning}
-                              className="px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[10px] font-mono-luxury font-bold uppercase transition-all cursor-pointer"
-                            >
-                              Packing (Stage 2)
-                            </button>
-                            <button
-                              onClick={() => handleUpdateOrderStage(ord.id, 3)}
-                              disabled={isActioning}
-                              className="px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[10px] font-mono-luxury font-bold uppercase transition-all cursor-pointer"
-                            >
-                              Dispatched (Stage 3)
-                            </button>
-                            <button
-                              onClick={() => handleUpdateOrderStage(ord.id, 4)}
-                              disabled={isActioning}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 text-[10px] font-mono-luxury font-bold uppercase transition-all cursor-pointer"
-                            >
-                              Delivered (Stage 4)
-                            </button>
+                          
+                          {/* Current Fulfillment Stage Display */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)]">Fulfillment Stage:</span>
+                            <span className="px-3 py-1 rounded-full bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--gold-accent)] uppercase">
+                              {ord.trackingStage >= 4 ? 'Stage 4: Delivered to Customer' : ord.trackingStage === 3 ? 'Stage 3: Dispatched via Courier' : ord.trackingStage === 2 ? 'Stage 2: Vendor Packaging' : 'Stage 1: Awaiting Vendor Dispatch'}
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -1172,9 +1271,9 @@ export default function SuperAdminPage() {
                               <button
                                 onClick={() => handleReleaseEscrow(ord.id)}
                                 disabled={isActioning}
-                                className="px-3 py-1.5 rounded-full bg-emerald-500 text-black text-xs font-mono-luxury uppercase font-bold hover:bg-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                className="px-3.5 py-1.5 rounded-full bg-emerald-500 text-black text-xs font-mono-luxury uppercase font-bold hover:bg-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                               >
-                                <DollarSign className="h-3.5 w-3.5" />
+                                <CreditCard className="h-3.5 w-3.5" />
                                 <span>Release Escrow Payout</span>
                               </button>
                             )}
@@ -1215,11 +1314,16 @@ export default function SuperAdminPage() {
               
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-                    Marketplace Catalog Moderation
-                  </h1>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+                      Marketplace Catalog Moderation
+                    </h1>
+                    <span className="px-3 py-1 rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-xs font-mono-luxury font-bold uppercase">
+                      {products.length} Products Live
+                    </span>
+                  </div>
                   <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                    Monitor, inspect, feature, or remove product drops from all Nigerian designers.
+                    Monitor, inspect, feature on lookbook, or remove garments from any Nigerian designer.
                   </p>
                 </div>
 
@@ -1256,7 +1360,7 @@ export default function SuperAdminPage() {
                           : 'surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                       }`}
                     >
-                      {cat}
+                      {cat} {cat !== 'all' && categoryCounts[cat] ? `(${categoryCounts[cat]})` : ''}
                     </button>
                   ))}
                 </div>
@@ -1300,7 +1404,10 @@ export default function SuperAdminPage() {
                         className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/50 transition-all flex flex-col justify-between space-y-3 shadow-md group"
                       >
                         <div className="space-y-3">
-                          <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-black">
+                          <div
+                            onClick={() => setSelectedProductModal(p)}
+                            className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-black cursor-pointer"
+                          >
                             <Image
                               src={p.imageUrl || p.image_url || '/images/products/BlackTrapStarHoodie.jpg'}
                               alt={p.name}
@@ -1310,7 +1417,7 @@ export default function SuperAdminPage() {
                             />
                             {p.is_featured && (
                               <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-[var(--gold-accent)] text-black text-[9px] font-mono-luxury font-bold uppercase">
-                                Featured
+                                Lookbook Featured
                               </span>
                             )}
                           </div>
@@ -1320,7 +1427,10 @@ export default function SuperAdminPage() {
                               <span className="text-[var(--gold-accent)] uppercase font-bold text-[10px]">{p.category || 'Fashion'}</span>
                               <strong className="text-[var(--text-primary)]">₦{Number(p.price || 0).toLocaleString()}</strong>
                             </div>
-                            <h4 className="font-editorial text-base font-bold text-[var(--text-primary)] line-clamp-1 mt-0.5">
+                            <h4
+                              onClick={() => setSelectedProductModal(p)}
+                              className="font-editorial text-base font-bold text-[var(--text-primary)] line-clamp-1 mt-0.5 cursor-pointer hover:text-[var(--gold-accent)] transition-colors"
+                            >
                               {p.name}
                             </h4>
                             <p className="text-[11px] text-[var(--text-muted)] font-mono-luxury truncate">
@@ -1332,24 +1442,32 @@ export default function SuperAdminPage() {
                         {/* Super Admin Action Bar */}
                         <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2">
                           <button
-                            onClick={() => handleToggleProductFeatured(p.id, p.is_featured)}
-                            disabled={isActioning}
-                            className={`px-3 py-1 rounded-xl text-[10px] font-mono-luxury uppercase font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                              p.is_featured
-                                ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                                : 'surface-card border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                            }`}
+                            onClick={() => setSelectedProductModal(p)}
+                            className="px-3 py-1 rounded-xl text-[10px] font-mono-luxury uppercase font-bold surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-primary)] transition-all cursor-pointer flex items-center gap-1"
                           >
-                            <Star className={`h-3 w-3 ${p.is_featured ? 'fill-current' : ''}`} />
-                            <span>{p.is_featured ? 'Featured' : 'Feature'}</span>
+                            <Eye className="h-3 w-3 text-[var(--gold-accent)]" />
+                            <span>View Details</span>
                           </button>
 
                           <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleToggleProductFeatured(p.id, p.is_featured)}
+                              disabled={isActioning}
+                              className={`p-1.5 rounded-xl border border-[var(--border-subtle)] transition-all cursor-pointer ${
+                                p.is_featured
+                                  ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                                  : 'hover:border-[var(--gold-accent)] text-[var(--text-muted)] hover:text-amber-400'
+                              }`}
+                              title={p.is_featured ? 'Remove from Homepage Lookbook' : 'Highlight on Homepage Lookbook'}
+                            >
+                              <Star className={`h-3.5 w-3.5 ${p.is_featured ? 'fill-current' : ''}`} />
+                            </button>
+
                             <Link
                               href={`/shop/${p.id}`}
                               target="_blank"
                               className="p-1.5 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
-                              title="View in Live Shop"
+                              title="Open in Customer Live Shop"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                             </Link>
@@ -1386,7 +1504,7 @@ export default function SuperAdminPage() {
                     Brand Governance & Verification
                   </h1>
                   <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                    Review designer onboarding, verify Nigerian bank settlement accounts, and manage storefront status.
+                    Review designer onboarding, inspect Nigerian bank settlement accounts, and manage storefront status.
                   </p>
                 </div>
 
@@ -1534,7 +1652,7 @@ export default function SuperAdminPage() {
                           </div>
                         </div>
 
-                        {/* Middle: Bank Settlement Account & Socials */}
+                        {/* Bank Settlement Account & Socials */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[var(--border-subtle)] text-xs font-mono-luxury">
                           <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
                             <span className="text-[10px] text-[var(--text-muted)] uppercase font-bold block flex items-center gap-1">
@@ -1571,7 +1689,7 @@ export default function SuperAdminPage() {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 5: ESCROW & TREASURY */}
+          {/* TAB 5: ESCROW & TREASURY - DYNAMIC & INTERACTIVE */}
           {/* ======================================================== */}
           {activeTab === 'finance' && (
             <div className="space-y-8 animate-fadeIn">
@@ -1585,47 +1703,144 @@ export default function SuperAdminPage() {
                 </p>
               </div>
 
-              {/* 4 Financial Tiles */}
+              {/* 4 Financial Tiles - Filterable */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-1">
+                <button
+                  onClick={() => setFinanceFilter('all')}
+                  className={`p-6 rounded-3xl surface-card border transition-all space-y-1 text-left cursor-pointer ${
+                    financeFilter === 'all' ? 'border-[var(--gold-accent)] ring-1 ring-[var(--gold-accent)]/30' : 'border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/50'
+                  }`}
+                >
                   <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">Gross Marketplace Volume</span>
                   <strong className="font-editorial text-3xl font-bold text-[var(--gold-accent)]">₦{financialStats.totalGMV.toLocaleString()}</strong>
-                  <span className="text-[10px] font-mono-luxury text-zinc-400 block">Total sales processed</span>
-                </div>
+                  <span className="text-[10px] font-mono-luxury text-zinc-400 block">{orders.length} transactions processed</span>
+                </button>
 
-                <div className="p-6 rounded-3xl surface-card border border-amber-500/20 bg-amber-500/5 space-y-1">
+                <button
+                  onClick={() => setFinanceFilter('locked')}
+                  className={`p-6 rounded-3xl surface-card border transition-all space-y-1 text-left cursor-pointer ${
+                    financeFilter === 'locked' ? 'border-amber-500 ring-1 ring-amber-500/30 bg-amber-500/10' : 'border-amber-500/20 bg-amber-500/5 hover:border-amber-500/50'
+                  }`}
+                >
                   <span className="text-[10px] font-mono-luxury uppercase text-amber-400 font-bold block">Active Escrow Locked</span>
                   <strong className="font-editorial text-3xl font-bold text-amber-400">₦{financialStats.escrowLocked.toLocaleString()}</strong>
                   <span className="text-[10px] font-mono-luxury text-zinc-400 block">Pending customer delivery</span>
-                </div>
+                </button>
 
-                <div className="p-6 rounded-3xl surface-card border border-emerald-500/20 bg-emerald-500/5 space-y-1">
+                <button
+                  onClick={() => setFinanceFilter('settled')}
+                  className={`p-6 rounded-3xl surface-card border transition-all space-y-1 text-left cursor-pointer ${
+                    financeFilter === 'settled' ? 'border-emerald-500 ring-1 ring-emerald-500/30 bg-emerald-500/10' : 'border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50'
+                  }`}
+                >
                   <span className="text-[10px] font-mono-luxury uppercase text-emerald-400 font-bold block">Settled to Vendors</span>
                   <strong className="font-editorial text-3xl font-bold text-emerald-400">₦{financialStats.settledPayouts.toLocaleString()}</strong>
-                  <span className="text-[10px] font-mono-luxury text-zinc-400 block">Completed orders</span>
-                </div>
+                  <span className="text-[10px] font-mono-luxury text-zinc-400 block">Delivered & confirmed</span>
+                </button>
 
                 <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-1">
-                  <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">Platform Commission (10%)</span>
+                  <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">Platform Fee (10%)</span>
                   <strong className="font-editorial text-3xl font-bold text-cyan-400">₦{financialStats.platformCommission.toLocaleString()}</strong>
                   <span className="text-[10px] font-mono-luxury text-zinc-400 block">Calculated revenue</span>
                 </div>
               </div>
 
-              {/* Transaction Accounting Ledger */}
+              {/* Vendor Escrow Balances Table */}
               <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                    Transaction Accounting Ledger
-                  </h3>
-                  <span className="text-xs font-mono-luxury text-[var(--text-muted)]">
-                    {orders.length} transactions recorded in database
-                  </span>
+                  <div>
+                    <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                      Vendor Escrow Balances & Payout Accounts
+                    </h3>
+                    <span className="text-xs font-mono-luxury text-[var(--text-secondary)]">
+                      Pending escrow vs settled payouts mapped to verified Nigerian bank accounts
+                    </span>
+                  </div>
                 </div>
 
-                {orders.length === 0 ? (
+                {vendorEscrowBreakdown.length === 0 ? (
+                  <div className="py-6 text-center text-xs font-mono-luxury text-[var(--text-muted)]">
+                    No vendor balances recorded yet.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-mono-luxury">
+                      <thead>
+                        <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] uppercase text-[10px]">
+                          <th className="pb-3 font-bold">Brand / Designer</th>
+                          <th className="pb-3 font-bold">Total Sales</th>
+                          <th className="pb-3 font-bold">Locked in Escrow</th>
+                          <th className="pb-3 font-bold">Settled Payouts</th>
+                          <th className="pb-3 font-bold">Bank Details</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border-subtle)]">
+                        {vendorEscrowBreakdown.map((v) => (
+                          <tr key={v.vendorId} className="hover:bg-[var(--bg-surface)] transition-colors">
+                            <td className="py-3 font-bold text-[var(--text-primary)]">
+                              {v.vendorName}
+                              <span className="text-[10px] text-[var(--text-muted)] block">{v.ordersCount} orders</span>
+                            </td>
+                            <td className="py-3 text-[var(--text-primary)] font-bold">₦{v.totalSales.toLocaleString()}</td>
+                            <td className="py-3 text-amber-400 font-bold">₦{v.pendingEscrow.toLocaleString()}</td>
+                            <td className="py-3 text-emerald-400 font-bold">₦{v.settledPayouts.toLocaleString()}</td>
+                            <td className="py-3 text-[var(--text-secondary)]">
+                              <div>{v.accountNumber} • {v.bankName}</div>
+                              <span className="text-[10px] text-[var(--text-muted)]">{v.accountName}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Transaction Accounting Ledger with Filter & Search */}
+              <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                      Transaction Accounting Ledger
+                    </h3>
+                    <span className="text-xs font-mono-luxury text-[var(--text-muted)]">
+                      Showing {filteredLedger.length} of {orders.length} orders • Click any row to view full receipt
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative min-w-[200px]">
+                      <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
+                      <input
+                        type="text"
+                        value={financeSearch}
+                        onChange={(e) => setFinanceSearch(e.target.value)}
+                        placeholder="Search ref, buyer..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {(['all', 'locked', 'settled'] as const).map((filter) => (
+                        <button
+                          key={filter}
+                          onClick={() => setFinanceFilter(filter)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                            financeFilter === filter
+                              ? 'bg-[var(--text-primary)] text-[var(--bg-primary)]'
+                              : 'surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                          }`}
+                        >
+                          {filter}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {filteredLedger.length === 0 ? (
                   <div className="py-8 text-center text-xs font-mono-luxury text-[var(--text-muted)]">
-                    No transactions recorded yet.
+                    No transactions matching your filter.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -1641,9 +1856,16 @@ export default function SuperAdminPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border-subtle)]">
-                        {orders.map((ord) => (
-                          <tr key={ord.id} className="hover:bg-[var(--bg-surface)] transition-colors">
-                            <td className="py-3 font-bold text-[var(--text-primary)]">{ord.orderNumber}</td>
+                        {filteredLedger.map((ord) => (
+                          <tr
+                            key={ord.id}
+                            onClick={() => setSelectedOrderModal(ord)}
+                            className="hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
+                          >
+                            <td className="py-3 font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                              <Eye className="h-3 w-3 text-[var(--gold-accent)]" />
+                              <span>{ord.orderNumber}</span>
+                            </td>
                             <td className="py-3 text-[var(--text-secondary)]">{ord.customerName}</td>
                             <td className="py-3 text-[var(--text-primary)]">₦{Number(ord.subtotal || 0).toLocaleString()}</td>
                             <td className="py-3 text-[var(--gold-accent)]">₦{Number(ord.shippingFee || 0).toLocaleString()}</td>
@@ -1711,7 +1933,9 @@ export default function SuperAdminPage() {
                             <td className="py-3 font-bold text-[var(--text-primary)]">{c.name}</td>
                             <td className="py-3 text-[var(--text-secondary)]">{c.email}</td>
                             <td className="py-3 text-[var(--text-secondary)]">{c.phone}</td>
-                            <td className="py-3 text-[var(--text-secondary)]">{c.city}</td>
+                            <td className="py-3 text-[var(--text-secondary)]">
+                              {c.city}{c.state ? `, ${c.state}` : ''}
+                            </td>
                             <td className="py-3 text-[var(--gold-accent)] font-bold">{c.ordersCount}</td>
                             <td className="py-3 font-bold text-emerald-400">₦{c.totalSpend.toLocaleString()}</td>
                           </tr>
@@ -1728,7 +1952,7 @@ export default function SuperAdminPage() {
         </main>
       </div>
 
-      {/* ── FULL ORDER RECEIPT & INSPECTION MODAL ── */}
+      {/* FULL ORDER RECEIPT & INSPECTION MODAL */}
       {selectedOrderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-2xl surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -1760,10 +1984,13 @@ export default function SuperAdminPage() {
                 <div className="truncate">Email: {selectedOrderModal.customerEmail}</div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
-                <span className="text-[10px] text-[var(--text-muted)] uppercase font-bold block">Delivery Address</span>
-                <div className="font-bold text-[var(--text-primary)]">{selectedOrderModal.deliveryAddress}</div>
-                <div>City / State: {selectedOrderModal.deliveryCity}</div>
+              <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1.5">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase font-bold block">Delivery Destination</span>
+                <div className="font-bold text-[var(--text-primary)] text-xs">{selectedOrderModal.deliveryAddress}</div>
+                <div className="flex items-center gap-2 text-[11px] text-[var(--gold-accent)] font-bold">
+                  <span>City: {selectedOrderModal.deliveryCity || 'Lagos'}</span>
+                  {selectedOrderModal.deliveryState && <span>• State: {selectedOrderModal.deliveryState}</span>}
+                </div>
               </div>
             </div>
 
@@ -1821,7 +2048,107 @@ export default function SuperAdminPage() {
         </div>
       )}
 
-      {/* ── REJECT / RETURN FEEDBACK MODAL ── */}
+      {/* FULL PRODUCT DOSSIER MODAL */}
+      {selectedProductModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-xl surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+              <div>
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold block">
+                  Product Dossier & Moderation
+                </span>
+                <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                  {selectedProductModal.name}
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setSelectedProductModal(null)}
+                className="p-2 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-black">
+              <Image
+                src={selectedProductModal.imageUrl || selectedProductModal.image_url || '/images/products/BlackTrapStarHoodie.jpg'}
+                alt={selectedProductModal.name}
+                fill
+                unoptimized
+                className="object-contain"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs font-mono-luxury">
+              <div className="p-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block">Category</span>
+                <strong className="text-[var(--gold-accent)] uppercase">{selectedProductModal.category}</strong>
+              </div>
+              <div className="p-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block">Retail Price</span>
+                <strong className="text-[var(--text-primary)] text-base">₦{Number(selectedProductModal.price || 0).toLocaleString()}</strong>
+              </div>
+              <div className="p-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block">Designer / Brand</span>
+                <strong className="text-[var(--text-primary)]">{selectedProductModal.vendorName || selectedProductModal.vendor_name || 'Designer Store'}</strong>
+              </div>
+              <div className="p-3 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block">Lookbook Status</span>
+                <strong className={selectedProductModal.is_featured ? 'text-amber-400' : 'text-[var(--text-muted)]'}>
+                  {selectedProductModal.is_featured ? 'Featured on Lookbook' : 'Standard Catalog'}
+                </strong>
+              </div>
+            </div>
+
+            {selectedProductModal.description && (
+              <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-secondary)] space-y-1">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase font-bold block">Product Description</span>
+                <p className="leading-relaxed">{selectedProductModal.description}</p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--border-subtle)]">
+              <button
+                onClick={() => {
+                  handleToggleProductFeatured(selectedProductModal.id, selectedProductModal.is_featured);
+                  setSelectedProductModal({ ...selectedProductModal, is_featured: !selectedProductModal.is_featured });
+                }}
+                className="px-4 py-2 rounded-full border border-[var(--border-subtle)] text-xs font-mono-luxury font-bold uppercase hover:border-[var(--gold-accent)] transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Star className={`h-3.5 w-3.5 ${selectedProductModal.is_featured ? 'fill-amber-400 text-amber-400' : ''}`} />
+                <span>{selectedProductModal.is_featured ? 'Remove from Lookbook' : 'Feature on Lookbook'}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/shop/${selectedProductModal.id}`}
+                  target="_blank"
+                  className="px-4 py-2 rounded-full bg-[var(--gold-accent)] text-black text-xs font-mono-luxury font-bold uppercase hover:bg-[#d8b357] transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Open in Live Shop</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+
+                <button
+                  onClick={() => {
+                    handleDeleteProduct(selectedProductModal.id, selectedProductModal.name);
+                    setSelectedProductModal(null);
+                  }}
+                  className="p-2 rounded-full border border-[var(--border-subtle)] hover:bg-rose-500/10 text-rose-400 cursor-pointer"
+                  title="Delete from Marketplace"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* REJECT / RETURN FEEDBACK MODAL */}
       {rejectionModalVendor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-lg surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-5 shadow-2xl">

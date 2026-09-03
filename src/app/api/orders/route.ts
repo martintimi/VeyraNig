@@ -126,6 +126,7 @@ export async function GET(request: Request) {
         customerPhone: o.customer_phone || '',
         deliveryAddress: o.delivery_address || 'Lagos, Nigeria',
         deliveryCity: o.delivery_city || 'Lagos',
+        deliveryState: o.customer_measurements?.deliveryState || o.customer_measurements?.state || o.delivery_state || '',
         subtotal: Number(o.subtotal || 0),
         shippingFee: Number(o.shipping_fee || 0),
         totalAmount: Number(o.total_amount || 0),
@@ -211,6 +212,7 @@ export async function POST(request: Request) {
       items: body.items || [],
       vendorPackages: initialVendorPackages,
       packageMethods: body.packageMethods || {},
+      deliveryState: body.deliveryState || body.state || '',
       trackingDetails: {}
     };
 
