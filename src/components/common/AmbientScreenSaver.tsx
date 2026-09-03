@@ -275,21 +275,38 @@ export default function AmbientScreenSaver() {
             <div
               key={slide.id}
               className={`absolute inset-0 transition-opacity duration-[1800ms] ease-in-out ${
-                isActive ? 'opacity-90' : 'opacity-0 pointer-events-none'
+                isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             >
-              <Image
-                src={slide.imageUrl}
-                alt={slide.title}
-                fill
-                priority={idx === 0}
-                className="object-cover object-center"
-                sizes="100vw"
-              />
+              {/* Layer A: Ambient Soft Blurred Background to avoid harsh borders */}
+              <div className="absolute inset-0">
+                <Image
+                  src={slide.imageUrl}
+                  alt=""
+                  fill
+                  priority={idx === 0}
+                  className="object-cover object-center filter blur-3xl scale-110 opacity-25"
+                  sizes="100vw"
+                />
+              </div>
+
+              {/* Layer B: Full Uncropped Hero Image - Not zoomed in, 100% visible from top to bottom */}
+              <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-12 lg:p-16">
+                <div className="relative w-full h-full max-w-5xl max-h-[84vh]">
+                  <Image
+                    src={slide.imageUrl}
+                    alt={slide.title}
+                    fill
+                    priority={idx === 0}
+                    className="object-contain object-center drop-shadow-2xl"
+                    sizes="100vw"
+                  />
+                </div>
+              </div>
 
               {/* Exact Cinematic Gradient Overlays from Signup Page */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/25" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-black/40" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-transparent to-black/50 pointer-events-none" />
             </div>
           );
         })}
