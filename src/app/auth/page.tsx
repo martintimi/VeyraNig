@@ -16,50 +16,38 @@ const editorialSlides = [
   {
     image: '/images/products/BlackAgbada.jpg',
     title: 'Bespoke Nigerian Couture',
-    subtitle: 'Hand-tailored Senator Kaftans, Royal Agbada robes, and tailored native wear from top Lagos ateliers.',
+    subtitle: 'Hand-tailored Senator Kaftans, Royal Agbada robes, and tailored native wear from top independent designers.',
     tag: 'Men & Unisex Native'
   },
   {
     image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1200&auto=format&fit=crop',
-    title: 'Artisanal Silk Boubous & Adire Gowns',
-    subtitle: 'Flowing silk Bubu dresses, hand-dyed Abeokuta Adire robes, and vibrant African heritage maxis.',
+    title: 'Artisanal Silk Boubous & Gowns',
+    subtitle: 'Flowing silk Bubu dresses, artisanal Adire robes, and vibrant African heritage maxis.',
     tag: "Women's Couture & Silks"
+  },
+  {
+    image: '/images/products/BlackTrapStarHoodie.jpg',
+    title: 'Urban Streetwear & Heavyweight Drops',
+    subtitle: 'Heavyweight 480GSM fleece hoodies, graphic co-ord sets, and statement street drops.',
+    tag: 'Streetwear & Hoodies'
   },
   {
     image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=1200&auto=format&fit=crop',
     title: 'Contemporary Dresses & Co-ord Sets',
-    subtitle: 'Tailored two-piece co-ord sets, evening gowns, pleated skirts, and chic ready-to-wear silhouettes.',
+    subtitle: 'Tailored two-piece co-ord sets, evening dresses, pleated skirts, and chic ready-to-wear silhouettes.',
     tag: "Women's Ready-to-Wear"
+  },
+  {
+    image: '/images/products/UnisexSlides.jpg',
+    title: 'Handcrafted Leather Slides & Palms',
+    subtitle: 'Authentic cowhide leather slides, ergonomic palms, and cushioned slip-ons made in Nigeria.',
+    tag: 'Footwear & Slides'
   },
   {
     image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop',
     title: 'Fine Jewelry & Luxury Watches',
     subtitle: 'Solid gold Cuban links, iced pendants, custom signet rings, layered chains, and luxury timepieces.',
-    tag: 'Jewelry & Timepieces'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=1200&auto=format&fit=crop',
-    title: 'Designer Backpacks & Leather Totes',
-    subtitle: 'Full-grain structured leather backpacks, crossbodies, travel duffels, and everyday luxury totes.',
-    tag: 'Backpacks & Bags'
-  },
-  {
-    image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=1200&auto=format&fit=crop',
-    title: 'Designer Heels, Mules & Sandals',
-    subtitle: 'Statement block heels, handcrafted leather mules, and elegant strappy sandals for every occasion.',
-    tag: "Women's Heels & Mules"
-  },
-  {
-    image: '/images/products/UnisexSlides.jpg',
-    title: 'Handcrafted Leather Slides & Palms',
-    subtitle: 'Authentic cowhide Kano leather slides, ergonomic palms, and cushioned slip-ons made in Nigeria.',
-    tag: 'Artisanal Slides'
-  },
-  {
-    image: '/images/products/BlackSmartShoes.jpg',
-    title: 'Smart Shoes & Luxury Footwear',
-    subtitle: 'Hand-burnished leather loafers, Italian-cut dress shoes, and contemporary streetwear sneakers.',
-    tag: 'Shoes & Footwear'
+    tag: 'Jewelry & Watches'
   },
   {
     image: '/images/products/BaggyJean.jpg',
@@ -68,10 +56,22 @@ const editorialSlides = [
     tag: 'Pants & Denim'
   },
   {
-    image: '/images/products/BlackTrapStarHoodie.jpg',
-    title: 'Urban Streetwear & Heavyweight Drops',
-    subtitle: 'Heavyweight 480GSM fleece hoodies, graphic co-ord sets, and statement streetwear drops.',
-    tag: 'Streetwear & Hoodies'
+    image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=1200&auto=format&fit=crop',
+    title: 'Designer Heels, Mules & Sandals',
+    subtitle: 'Statement block heels, handcrafted leather mules, and elegant strappy sandals for every occasion.',
+    tag: "Women's Heels & Mules"
+  },
+  {
+    image: '/images/products/BlackSmartShoes.jpg',
+    title: 'Smart Shoes & Luxury Footwear',
+    subtitle: 'Hand-burnished leather loafers, Italian-cut dress shoes, and contemporary footwear.',
+    tag: 'Shoes & Footwear'
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=1200&auto=format&fit=crop',
+    title: 'Designer Backpacks & Leather Totes',
+    subtitle: 'Full-grain structured leather backpacks, crossbodies, travel duffels, and everyday luxury totes.',
+    tag: 'Backpacks & Bags'
   },
   {
     image: '/images/products/PoloCap.jpg',
@@ -803,7 +803,7 @@ function AuthPageContent() {
                 rel="noopener noreferrer"
                 className="text-[var(--gold-accent)] font-semibold hover:underline inline-flex items-center gap-1"
               >
-                <span>Open Atelier Portal</span>
+                <span>Open Vendor Portal</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             </p>
