@@ -9,7 +9,7 @@ const DEFAULT_CONCIERGE_CONFIG: ConciergeConfig = {
   whatsappNumber: process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP || '2348000000000',
   isEnabled: true,
   businessHours: '8:00 AM – 10:00 PM WAT (7 Days)',
-  advisorName: 'Veyra Customer Support'
+  advisorName: 'Ìrísí Customer Support'
 };
 
 const STORAGE_KEY = 'veyra_concierge_config_v1';

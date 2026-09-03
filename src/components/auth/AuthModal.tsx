@@ -128,7 +128,7 @@ export default function AuthModal() {
             </div>
             <div>
               <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                {mode === 'signup' ? 'Create Veyra Account' : 'Welcome Back'}
+                {mode === 'signup' ? 'Create Ìrísí Account' : 'Welcome Back'}
               </h3>
               <p className="text-xs text-[var(--text-secondary)] font-mono-luxury">
                 {mode === 'signup' ? 'Setup your Digital Body Twin' : 'Sign in to your saved fitting room'}

@@ -259,7 +259,7 @@ export default function AmbientScreenSaver() {
   return (
     <div
       role="dialog"
-      aria-label="Veyra Ambient Fashion Screensaver"
+      aria-label="Ìrísí Ambient Fashion Screensaver"
       onClick={handleWakeUp}
       className={`fixed inset-0 z-[999999] bg-black text-white select-none transition-opacity duration-1000 ease-in-out ${
         isIdle
@@ -351,7 +351,7 @@ export default function AmbientScreenSaver() {
 
           {/* Micro Footer Bar Matching Signup Page */}
           <div className="pt-4 border-t border-white/15 flex items-center justify-between text-[10px] font-mono-luxury text-white/60 tracking-wider uppercase">
-            <span>Veyra Lookbook</span>
+            <span>Ìrísí Lookbook</span>
             <span>Doorstep Nationwide Delivery</span>
           </div>
 

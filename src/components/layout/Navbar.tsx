@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BrandWordmark from '@/components/common/BrandWordmark';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -97,18 +98,9 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* Center: Official Brand Logo (Large, Prominent & Rich Gold) */}
+        {/* Center: Official Brand Wordmark (Ì R Í S Í) */}
         <div className="flex items-center justify-center">
-          <Link href="/" className="group flex items-center">
-            <Image
-              src="/images/logo/veyra-logo-horizontal.png"
-              alt="Veyra Nigeria"
-              width={260}
-              height={70}
-              priority
-              className="h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
-            />
-          </Link>
+          <BrandWordmark size="md" />
         </div>
 
         {/* Right Actions: Notifications + Theme Toggle + User Profile + Shopping Bag */}

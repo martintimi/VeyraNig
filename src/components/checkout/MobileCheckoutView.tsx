@@ -626,7 +626,7 @@ export default function MobileCheckoutView() {
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                <span className="font-editorial text-lg font-bold text-[var(--text-primary)]">Veyra Escrow Gateway</span>
+                <span className="font-editorial text-lg font-bold text-[var(--text-primary)]">Ìrísí Escrow Gateway</span>
               </div>
               <span className="text-[10px] font-mono-luxury text-emerald-400 font-bold">256-Bit Encrypted</span>
             </div>
@@ -647,7 +647,7 @@ export default function MobileCheckoutView() {
             </div>
 
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono-luxury text-emerald-400 leading-relaxed">
-              Your money is locked safely in Veyra Escrow and only released to each designer after you confirm your clothes are delivered.
+              Your money is locked safely in Ìrísí Escrow and only released to each designer after you confirm your clothes are delivered.
             </div>
 
             <div className="space-y-2 pt-2">
@@ -707,7 +707,7 @@ export default function MobileCheckoutView() {
                 ₦{grandTotal.toLocaleString()}
               </div>
               <p className="text-[11px] font-mono-luxury text-[var(--text-muted)]">
-                Recipient: Veyra Escrow Treasury
+                Recipient: Ìrísí Escrow Treasury
               </p>
             </div>
 
@@ -737,7 +737,7 @@ export default function MobileCheckoutView() {
             </div>
 
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] font-mono-luxury text-amber-400 text-left leading-relaxed">
-              <strong>Test Mode:</strong> No personal Paystack key added in <code className="text-white">.env.local</code> yet. This simulates a successful Paystack card payment and secures your order into Veyra Escrow.
+              <strong>Test Mode:</strong> No personal Paystack key added in <code className="text-white">.env.local</code> yet. This simulates a successful Paystack card payment and secures your order into Ìrísí Escrow.
             </div>
 
             <div className="space-y-2 pt-1">

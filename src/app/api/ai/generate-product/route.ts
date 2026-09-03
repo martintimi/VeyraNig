@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const cleanTitle = (title || '').trim();
     const lower = cleanTitle.toLowerCase();
     const isBoutique = vendorType === 'boutique_seller' || vendorType === 'boutique_merchant';
-    const brand = brandName || 'Veyra Partner';
+    const brand = brandName || 'Ìrísí Partner';
     const cat = (category || '').toLowerCase();
     const gender = (genderTarget || 'unisex').toLowerCase();
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         }
 
         if (imagePart) {
-          const prompt = `You are a luxury Nigerian fashion and merchandise copywriter for Veyra Store.
+          const prompt = `You are a luxury Nigerian fashion and merchandise copywriter for Ìrísí.
 Analyze this product photo and details:
 Piece Title: "${cleanTitle || 'Product'}"
 Category: "${category || 'Ready-to-Wear'}"

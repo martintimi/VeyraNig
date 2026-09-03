@@ -51,25 +51,25 @@ export default function WhatsAppConciergeWidget() {
       id: 'debit',
       title: 'Money deducted but no order showing',
       icon: CreditCard,
-      template: 'Hello Veyra, my account was debited for payment, but my order is not showing on the app. Please help me confirm it.'
+      template: 'Hello Ìrísí, my account was debited for payment, but my order is not showing on the app. Please help me confirm it.'
     },
     {
       id: 'wrong_fit',
       title: 'Wrong size or cloth arrived damaged',
       icon: ShieldAlert,
-      template: 'Hello Veyra, my clothes arrived but the size does not fit / item is damaged. Please hold the escrow payment so we can arrange an exchange or return.'
+      template: 'Hello Ìrísí, my clothes arrived but the size does not fit / item is damaged. Please hold the escrow payment so we can arrange an exchange or return.'
     },
     {
       id: 'delayed',
       title: 'Order is delayed / vendor has not sent it',
       icon: Clock,
-      template: 'Hello Veyra, my order is delayed and the designer has not dispatched it yet. Can you please check on this for me?'
+      template: 'Hello Ìrísí, my order is delayed and the designer has not dispatched it yet. Can you please check on this for me?'
     },
     {
       id: 'rush',
       title: 'I need urgent / rush delivery for an event',
       icon: Truck,
-      template: `Hello Veyra, I have an upcoming event and I need this delivered urgently${bodyProfile?.state ? ` to ${bodyProfile.state}` : ''}. How fast can it get to me?`
+      template: `Hello Ìrísí, I have an upcoming event and I need this delivered urgently${bodyProfile?.state ? ` to ${bodyProfile.state}` : ''}. How fast can it get to me?`
     },
     {
       id: 'custom',
@@ -86,25 +86,25 @@ export default function WhatsAppConciergeWidget() {
       id: 'account_approval',
       title: 'My brand account is not yet approved',
       icon: ShieldCheck,
-      template: `Hello Veyra Team, I registered my fashion brand (${brandName}) and my account is still waiting for approval. Please when will it be approved?`
+      template: `Hello Ìrísí Team, I registered my fashion brand (${brandName}) and my account is still waiting for approval. Please when will it be approved?`
     },
     {
       id: 'payout',
       title: 'When will I receive my money / payout?',
       icon: CreditCard,
-      template: `Hello Veyra Finance, I have delivered orders and want to confirm when the payment will enter my bank account.`
+      template: `Hello Ìrísí Finance, I have delivered orders and want to confirm when the payment will enter my bank account.`
     },
     {
       id: 'pickup',
       title: 'Delivery rider has not picked up the order',
       icon: Truck,
-      template: `Hello Veyra Logistics, the package is ready for dispatch but the delivery rider has not come to pick it up.`
+      template: `Hello Ìrísí Logistics, the package is ready for dispatch but the delivery rider has not come to pick it up.`
     },
     {
       id: 'declined',
       title: 'My product was rejected / not approved',
       icon: PackageCheck,
-      template: `Hello Veyra, one of the products I uploaded was not approved. What do I need to fix so it can be approved?`
+      template: `Hello Ìrísí, one of the products I uploaded was not approved. What do I need to fix so it can be approved?`
     },
     {
       id: 'custom_vendor',
@@ -155,8 +155,8 @@ export default function WhatsAppConciergeWidget() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="group relative flex items-center justify-center h-12 w-12 md:h-auto md:w-auto md:px-4 md:py-3 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white shadow-[0_10px_25px_rgba(18,140,126,0.4)] border border-white/20 transition-all cursor-pointer"
-          title={isVendorMode ? 'Vendor Support' : 'Veyra Support'}
-          aria-label={isVendorMode ? 'Vendor Support' : 'Veyra Support'}
+          title={isVendorMode ? 'Vendor Support' : 'Ìrísí Support'}
+          aria-label={isVendorMode ? 'Vendor Support' : 'Ìrísí Support'}
         >
           {/* Active online pulse (desktop only) */}
           <span className="relative hidden md:inline-flex h-2.5 w-2.5 shrink-0 mr-2.5">
@@ -171,7 +171,7 @@ export default function WhatsAppConciergeWidget() {
 
           {/* Desktop Only Text Label */}
           <span className="font-mono-luxury text-xs uppercase font-bold tracking-wider hidden md:inline-block">
-            {isVendorMode ? 'Vendor Support' : 'Veyra Support'}
+            {isVendorMode ? 'Vendor Support' : 'Ìrísí Support'}
           </span>
 
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold-accent)] hidden md:inline-block" />
@@ -199,7 +199,7 @@ export default function WhatsAppConciergeWidget() {
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
                     <h3 className="font-editorial text-lg sm:text-xl font-bold tracking-wide">
-                      {isVendorMode ? 'Vendor Help Desk' : 'Veyra Customer Support'}
+                      {isVendorMode ? 'Vendor Help Desk' : 'Ìrísí Customer Support'}
                     </h3>
                   </div>
                   <p className="text-[11px] sm:text-xs font-mono-luxury text-emerald-100">

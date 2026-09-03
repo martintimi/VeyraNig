@@ -297,7 +297,7 @@ export async function GET(request: Request) {
         isCustomizable: p.is_customizable,
         tailoringSpecs: p.tailoring_specs,
         vendorId: p.vendor_id,
-        vendorName: vendorInfo?.brand_name || p.vendor_id?.replace(/-/g, ' ').toUpperCase() || 'Veyra Partner',
+        vendorName: vendorInfo?.brand_name || p.vendor_id?.replace(/-/g, ' ').toUpperCase() || 'Ìrísí Partner',
         vendorLocation: vendorInfo?.location || 'Lagos, Nigeria',
         vendorCity: vendorInfo?.city || 'Lagos',
         vendorState: vendorInfo?.state || 'Lagos',

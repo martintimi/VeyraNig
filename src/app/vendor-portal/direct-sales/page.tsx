@@ -232,11 +232,11 @@ export default function DirectSalesAssistantPage() {
 
         ctx.fillStyle = '#10b981';
         ctx.font = 'bold 24px sans-serif';
-        ctx.fillText('● 3D Virtual Fit & 24h Lagos Dispatch · veyra.ng', 50, 1265);
+        ctx.fillText('● 3D Virtual Fit & Doorstep Nationwide Dispatch · irisi.ng', 50, 1265);
       } else {
         ctx.fillStyle = '#10b981';
         ctx.font = 'bold 26px sans-serif';
-        ctx.fillText('● 3D Custom Fit on Veyra · Tap Link in Bio to Order', 50, 1245);
+        ctx.fillText('● 3D Custom Fit on Ìrísí · Tap Link in Bio to Order', 50, 1245);
       }
 
       const dataUrl = canvas.toDataURL('image/png');
@@ -305,7 +305,7 @@ export default function DirectSalesAssistantPage() {
             Direct Sales & Social Order Assistant
           </h1>
           <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1 max-w-2xl">
-            Generate high-resolution branded lookbook cards with Veyra watermarks and 1-tap direct checkout links to close customer sales across Instagram, WhatsApp, and messaging in seconds.
+            Generate high-resolution branded lookbook cards with Ìrísí watermarks and 1-tap direct checkout links to close customer sales across Instagram, WhatsApp, and messaging in seconds.
           </p>
         </div>
 
@@ -494,11 +494,11 @@ export default function DirectSalesAssistantPage() {
                   <h4 className="font-editorial text-xs font-bold text-white truncate">{activeProduct.name}</h4>
                   {includePrice ? (
                     <div className="text-[10px] font-mono-luxury text-amber-300 font-bold">
-                      ₦{Number(displayPrice).toLocaleString()} · <span className="text-emerald-400">3D Fit on Veyra</span>
+                      ₦{Number(displayPrice).toLocaleString()} · <span className="text-emerald-400">3D Fit on Ìrísí</span>
                     </div>
                   ) : (
                     <div className="text-[10px] font-mono-luxury text-emerald-400 font-bold">
-                      ● 3D Custom Fit on Veyra
+                      ● 3D Custom Fit on Ìrísí
                     </div>
                   )}
                 </div>
@@ -538,7 +538,7 @@ export default function DirectSalesAssistantPage() {
               )}
 
               <p className="text-[10px] font-mono-luxury text-[var(--text-muted)] text-center">
-                Downloads high-res card with Veyra watermark & automatically copies the direct checkout link!
+                Downloads high-res card with Ìrísí watermark & automatically copies the direct checkout link!
               </p>
             </div>
 

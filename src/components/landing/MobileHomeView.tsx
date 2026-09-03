@@ -519,12 +519,12 @@ export default function MobileHomeView() {
       {/* ── 8. TRUST PILLARS ─────────────────────────────────── */}
       <div className="px-4 pt-10 space-y-3">
         <FadeUp>
-          <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">The Veyra Standard</h3>
+          <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">The Ìrísí Standard</h3>
         </FadeUp>
         {[
           { icon: Lock, label: 'Paystack Escrow Security', desc: 'Funds held safely. Released only after delivery confirmation.', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
           { icon: Sparkles, label: '3D Digital Body Twin', desc: 'Input measurements once. Eliminate size guesswork forever.', color: 'text-[var(--gold-accent)]', bg: 'bg-[var(--gold-subtle)] border-[var(--gold-accent)]/30' },
-          { icon: Truck, label: 'Lagos & Interstate Dispatch', desc: 'Same-day Lagos delivery & express interstate waybills.', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+          { icon: Truck, label: 'Nationwide Express Delivery', desc: 'Fast doorstep delivery across all 36 Nigerian states.', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
         ].map((p, idx) => (
           <FadeUp key={idx} delay={idx * 0.08}>
             <div className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] flex items-start gap-3">
@@ -547,7 +547,7 @@ export default function MobileHomeView() {
             <Crown className="h-5 w-5 text-[var(--gold-accent)]" />
           </div>
           <div>
-            <h4 className="font-editorial text-xl font-bold text-[var(--text-primary)]">Join the Veyra Collective</h4>
+            <h4 className="font-editorial text-xl font-bold text-[var(--text-primary)]">Join the Ìrísí Collective</h4>
             <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs mx-auto leading-relaxed">
               Build your 3D twin, unlock private drops, track orders, and shop bespoke custom fits.
             </p>

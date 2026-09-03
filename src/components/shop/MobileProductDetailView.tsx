@@ -105,7 +105,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
         title: product.name,
-        text: `Check out ${product.name} on Veyra`,
+        text: `Check out ${product.name} on Ìrísí`,
         url: window.location.href,
       }).catch(() => {});
     } else if (typeof window !== 'undefined') {
@@ -408,7 +408,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                 reviewsData.reviews.map((rev, idx) => (
                   <div key={idx} className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-[var(--text-primary)] text-xs">{rev.customerName || 'Veyra Patron'}</span>
+                      <span className="font-bold text-[var(--text-primary)] text-xs">{rev.customerName || 'Ìrísí Patron'}</span>
                       <div className="flex items-center gap-0.5 text-amber-400">
                         {Array.from({ length: rev.rating || 5 }).map((_, i) => (
                           <Star key={i} className="h-3 w-3 fill-current" />
@@ -475,7 +475,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
             <div className="flex items-center justify-between text-white z-10" onClick={(e) => e.stopPropagation()}>
               <div className="space-y-0.5">
                 <span className="text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold block">
-                  {product.vendorName || 'Veyra Atelier'}
+                  {product.vendorName || 'Ìrísí Brand'}
                 </span>
                 <h3 className="font-editorial text-lg font-bold text-white truncate max-w-[240px]">
                   {product.name}

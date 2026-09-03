@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Sparkles, ShieldCheck, Truck, RotateCcw, Heart } from 'lucide-react';
 
 import Image from 'next/image';
+import BrandWordmark from '@/components/common/BrandWordmark';
 
 export default function Footer() {
   return (
@@ -64,17 +65,11 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           
           <div className="col-span-2 md:col-span-1 space-y-3">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/images/logo/veyra-logo-horizontal.png"
-                alt="Veyra Nigeria"
-                width={200}
-                height={55}
-                className="h-12 w-auto object-contain drop-shadow-sm"
-              />
-            </Link>
+            <div className="flex items-start">
+              <BrandWordmark size="md" />
+            </div>
             <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed max-w-xs">
-              Nigeria&apos;s premier multi-brand virtual fitting room and fashion marketplace.
+              Nigeria&apos;s premier multi-brand virtual fitting room and luxury fashion marketplace.
             </p>
           </div>
 
@@ -84,9 +79,9 @@ export default function Footer() {
             </h5>
             <ul className="space-y-2 text-xs text-[var(--text-secondary)]">
               <li><Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Senator & Native Sets</Link></li>
-              <li><Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Lagos Streetwear & Tees</Link></li>
-              <li><Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Hand-Dyed Adire Silk</Link></li>
-              <li><Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Kano Handcrafted Leather</Link></li>
+              <li><Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Nigerian Streetwear & Tees</Link></li>
+              <li><Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Handcrafted Shoes & Bags</Link></li>
+              <li><Link href="/shop" className="hover:text-[var(--text-primary)] transition-colors">Fine Jewelry & Statement Accents</Link></li>
             </ul>
           </div>
 
@@ -108,7 +103,7 @@ export default function Footer() {
             <ul className="space-y-2 text-xs text-[var(--text-secondary)]">
               <li>
                 <Link href="/vendor-portal/auth" className="hover:text-[var(--text-primary)] transition-colors font-bold text-[var(--gold-accent)]">
-                  Sell on Veyra →
+                  Sell on Ìrísí →
                 </Link>
               </li>
               <li>
@@ -117,7 +112,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <span className="text-[11px] text-[var(--text-muted)]">Lagos · Abuja · Nationwide</span>
+                <span className="text-[11px] text-[var(--text-muted)]">All 36 States · Nationwide Delivery</span>
               </li>
             </ul>
           </div>
@@ -126,10 +121,10 @@ export default function Footer() {
 
         <div className="pt-10 mt-10 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono-luxury text-[var(--text-muted)]">
           <div>
-            © {new Date().getFullYear()} VEYRA Technologies Ltd. All rights reserved.
+            © {new Date().getFullYear()} ÌRÍSÍ Technologies Ltd. All rights reserved.
           </div>
           <div className="mt-2 sm:mt-0">
-            Crafted for Nigerian Fashion
+            Appearance & Presence · Crafted for Nigerian Luxury
           </div>
         </div>
       </div>

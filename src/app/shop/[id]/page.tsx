@@ -495,7 +495,7 @@ export default function ProductDetailPage() {
           <div className="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center gap-3 text-xs font-mono-luxury text-[var(--text-secondary)]">
             <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
             <div>
-              <span className="font-bold text-[var(--text-primary)]">Veyra Escrow Protection:</span> Your payment is held safely until the item is delivered and inspected.
+              <span className="font-bold text-[var(--text-primary)]">Ìrísí Escrow Protection:</span> Your payment is held safely until the item is delivered and inspected.
             </div>
           </div>
 

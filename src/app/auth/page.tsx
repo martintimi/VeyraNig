@@ -461,7 +461,7 @@ function AuthPageContent() {
                 {mode === 'verify_otp'
                   ? 'Email Confirmation'
                   : mode === 'signup'
-                  ? 'Join Veyra Club'
+                  ? 'Join Ìrísí Club'
                   : 'Welcome Back'}
               </span>
             </div>
@@ -471,7 +471,7 @@ function AuthPageContent() {
                 ? 'Enter 6-Digit Code'
                 : mode === 'signup'
                 ? 'Create Your Account'
-                : 'Sign in to Veyra'}
+                : 'Sign in to Ìrísí'}
             </h1>
             
             <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">

@@ -8,6 +8,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   ShoppingBag, Sun, Moon, Bookmark
 } from 'lucide-react';
+import BrandWordmark from '@/components/common/BrandWordmark';
 
 export default function MobileHeader() {
   const pathname = usePathname();
@@ -33,17 +34,8 @@ export default function MobileHeader() {
     <header className="sticky top-0 z-40 w-full md:hidden bg-[var(--bg-primary)]/95 backdrop-blur-xl border-b border-[var(--border-subtle)] transition-all">
       <div className="h-16 flex items-center justify-between px-4">
         
-        {/* Left: Official Brand Logo */}
-        <Link href="/" className="flex items-center group">
-          <Image
-            src="/images/logo/veyra-emblem.png"
-            alt="Veyra Nigeria"
-            width={34}
-            height={34}
-            priority
-            className="h-8 w-8 object-contain transition-transform group-hover:scale-105 drop-shadow-sm"
-          />
-        </Link>
+        {/* Left: Official Brand Wordmark */}
+        <BrandWordmark size="sm" withSubtitle={false} />
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5">

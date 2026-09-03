@@ -149,7 +149,7 @@ export default function BrandStorefrontPage() {
           Storefront Not Found
         </h2>
         <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-md mx-auto">
-          {errorMsg || 'The requested brand does not currently have an active catalog on Veyra.'}
+          {errorMsg || 'The requested brand does not currently have an active catalog on Ìrísí.'}
         </p>
         <Link
           href="/shop"

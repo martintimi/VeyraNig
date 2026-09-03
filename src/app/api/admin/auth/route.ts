@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       message: 'Executive session authenticated.',
       admin: {
         id: 'admin-master-001',
-        name: 'Veyra Executive HQ',
+        name: 'Ìrísí Executive HQ',
         email: cleanEmail,
         role: 'Super Administrator'
       },

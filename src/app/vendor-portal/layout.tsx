@@ -174,25 +174,11 @@ export default function VendorPortalLayout({
           </button>
           
           <Link href="/vendor-portal" className="flex items-center gap-2 sm:gap-3 group shrink-0">
-            {/* Mobile App Icon (Customer-matched emblem) */}
-            <Image
-              src="/images/logo/veyra-emblem.png"
-              alt="Veyra"
-              width={34}
-              height={34}
-              priority
-              className="h-8 w-8 object-contain transition-transform group-hover:scale-105 sm:hidden drop-shadow-sm"
-            />
-            {/* Desktop Brand Logo */}
-            <Image
-              src="/images/logo/veyra-logo-horizontal.png"
-              alt="Veyra"
-              width={140}
-              height={38}
-              className="hidden sm:block h-8 sm:h-10 w-auto object-contain transition-transform group-hover:scale-105"
-            />
+            <span className="font-editorial text-xl sm:text-2xl font-bold tracking-[0.24em] text-[var(--text-primary)] group-hover:text-[var(--gold-accent)] transition-colors">
+              Ì R Í S Í
+            </span>
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20">
-              {specialty === 'jewelry' ? 'Jewelry & Watches' : specialty === 'footwear' ? 'Footwear & Slides' : specialty === 'apparel' ? 'Apparel Designer' : isBoutique ? 'Boutique Merchant' : 'Bespoke Atelier'}
+              {specialty === 'jewelry' ? 'Jewelry & Watches' : specialty === 'footwear' ? 'Footwear & Slides' : specialty === 'apparel' ? 'Apparel Designer' : isBoutique ? 'Boutique Merchant' : 'Bespoke Brand'}
             </span>
           </Link>
 
@@ -269,15 +255,8 @@ export default function VendorPortalLayout({
             {/* Mobile Drawer Top Header (Close button & Logo) */}
             <div className="flex items-center justify-between md:hidden pb-3 border-b border-[var(--border-subtle)]">
               <div className="flex items-center gap-2">
-                <Image
-                  src="/images/logo/veyra-emblem.png"
-                  alt="Veyra"
-                  width={34}
-                  height={34}
-                  className="h-8 w-8 object-contain"
-                />
-                <span className="font-editorial text-sm font-bold text-[var(--text-primary)] tracking-widest uppercase">
-                  Veyra Atelier
+                <span className="font-editorial text-lg font-bold text-[var(--text-primary)] tracking-widest uppercase">
+                  Ì R Í S Í
                 </span>
               </div>
               <button

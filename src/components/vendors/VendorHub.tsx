@@ -43,7 +43,7 @@ export default function VendorHub() {
       garmentOriginType: activeTab === 'designer' ? 'handmade_designer' : 'ready_made_boutique',
       price: Number(formData.price),
       imageUrl: formData.imageUrl,
-      description: `${formData.name} crafted by ${formData.vendorName}. Available for virtual try-on on Veyra.`,
+      description: `${formData.name} crafted by ${formData.vendorName}. Available for virtual try-on on Ìrísí.`,
       tags: formData.tags.split(',').map(t => t.trim()),
       colors: [{ name: 'Default Color', hex: '#111111' }],
       sizes: ['S', 'M', 'L', 'XL'],
@@ -101,7 +101,7 @@ export default function VendorHub() {
         </div>
 
         <h1 className="font-editorial text-3xl sm:text-5xl font-bold text-[var(--text-primary)]">
-          List Your Clothes on Veyra
+          List Your Clothes on Ìrísí
         </h1>
 
         <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light leading-relaxed">

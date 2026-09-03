@@ -94,7 +94,7 @@ export default function MobileQuickBuyDrawer({ product, onClose }: QuickBuyDrawe
             </div>
             <div>
               <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] uppercase font-bold">
-                {product.vendorName || 'Veyra Boutique'}
+                {product.vendorName || 'Ìrísí Boutique'}
               </span>
               <h3 className="font-bold text-sm text-[var(--text-primary)] line-clamp-1">
                 {product.name}

@@ -166,7 +166,7 @@ export default function ProfilePage() {
   };
 
   const unreadCount = userNotifications.filter(n => !n.read).length;
-  const displayName = profileForm.name || userAuth.name || (userAuth.email ? userAuth.email.split('@')[0] : 'Veyra Patron');
+  const displayName = profileForm.name || userAuth.name || (userAuth.email ? userAuth.email.split('@')[0] : 'Ìrísí Patron');
   const displayPhone = profileForm.phone || userAuth.phone || 'No phone added (Tap Details to Add)';
   const displayLocation = (profileForm.deliveryAddress || profileForm.city) ? `${profileForm.city}, ${profileForm.state}` : 'Lagos, Nigeria';
   const effectiveOrders = liveOrders.length > 0 ? liveOrders : userOrders;
@@ -287,7 +287,7 @@ export default function ProfilePage() {
               Your Orders & Tailoring Progress
             </h2>
             <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-              Consolidated single-box deliveries dispatched directly from Veyra Lagos Logistics Hub.
+              Consolidated single-box deliveries dispatched directly from Ìrísí Logistics Network across all 36 states.
             </p>
           </div>
 
@@ -539,7 +539,7 @@ export default function ProfilePage() {
                 Notifications & Order Updates
               </h2>
               <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                Real-time tracking notifications from Nigerian ateliers & Veyra Lagos delivery hub.
+                Real-time tracking notifications from Nigerian fashion houses & Ìrísí delivery network.
               </p>
             </div>
 

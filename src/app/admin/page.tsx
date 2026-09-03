@@ -739,13 +739,9 @@ export default function SuperAdminPage() {
 
           <div className="relative z-20 flex items-center justify-between">
             <Link href="/" className="group flex items-center gap-2">
-              <Image
-                src="/images/logo/veyra-logo.png"
-                alt="Veyra"
-                width={140}
-                height={42}
-                className="h-9 w-auto object-contain"
-              />
+              <span className="font-editorial text-2xl font-bold tracking-[0.26em] text-white group-hover:text-[var(--gold-accent)] transition-colors">
+                Ì R Í S Í
+              </span>
             </Link>
 
             <div className="flex items-center gap-2">
@@ -883,7 +879,7 @@ export default function SuperAdminPage() {
 
             <div className="pt-4 border-t border-[var(--border-subtle)] text-center">
               <Link href="/" className="text-xs font-mono-luxury text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-                Return to Veyra Home
+                Return to Ìrísí Home
               </Link>
             </div>
 
@@ -904,13 +900,9 @@ export default function SuperAdminPage() {
       <header className="sticky top-0 z-40 w-full border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/90 backdrop-blur-md px-6 sm:px-10 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <Image
-              src="/images/logo/veyra-logo-horizontal.png"
-              alt="Veyra"
-              width={150}
-              height={40}
-              className="h-9 w-auto object-contain"
-            />
+            <span className="font-editorial text-2xl font-bold tracking-[0.26em] text-[var(--text-primary)]">
+              Ì R Í S Í
+            </span>
             <span className="px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-mono-luxury uppercase font-bold tracking-widest">
               SUPER ADMIN
             </span>
@@ -2191,7 +2183,7 @@ export default function SuperAdminPage() {
 
                 {/* Quick Test Button */}
                 <a
-                  href={generateWhatsAppUrl(conciergePhoneInput, 'Hello Admin, this is a live test from Veyra Platform Command Center.')}
+                  href={generateWhatsAppUrl(conciergePhoneInput, 'Hello Admin, this is a live test from Ìrísí Platform Command Center.')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white text-xs font-mono-luxury uppercase font-bold shadow-md transition-all self-start sm:self-auto cursor-pointer"
@@ -2307,7 +2299,7 @@ export default function SuperAdminPage() {
                       type="text"
                       value={conciergeNameInput}
                       onChange={(e) => setConciergeNameInput(e.target.value)}
-                      placeholder="e.g. Veyra Style Concierge"
+                      placeholder="e.g. Ìrísí Customer Support"
                       className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
                     />
                   </div>
@@ -2384,7 +2376,7 @@ export default function SuperAdminPage() {
                     {
                       title: 'Sizing & Body Twin Advice',
                       category: 'Sizing Help',
-                      script: `Hello! For our bespoke Senator sets and hoodies, our Twin Fit algorithm matches your chest and height. Share your height (cm) and chest size, and we will guarantee the exact fit or exchange it 100% free under Veyra Escrow.`
+                      script: `Hello! For our bespoke Senator sets and hoodies, our Twin Fit algorithm matches your chest and height. Share your height (cm) and chest size, and we will guarantee the exact fit or exchange it 100% free under Ìrísí Escrow.`
                     },
                     {
                       title: 'Delivery & State Dispatch Times',
@@ -2394,7 +2386,7 @@ export default function SuperAdminPage() {
                     {
                       title: 'Bank Transfer & Escrow Details',
                       category: 'Payment Reassurance',
-                      script: `Hello! Yes, you can pay via direct bank transfer into Veyra Escrow. Your funds remain 100% protected and are only disbursed to the designer after you receive the package and confirm it fits perfectly.`
+                      script: `Hello! Yes, you can pay via direct bank transfer into Ìrísí Escrow. Your funds remain 100% protected and are only disbursed to the designer after you receive the package and confirm it fits perfectly.`
                     },
                     {
                       title: 'Custom Alterations & Embroidery',

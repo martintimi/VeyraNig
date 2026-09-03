@@ -168,12 +168,12 @@ export default function MobileProfileView() {
         <div className="p-5 rounded-3xl surface-card border border-[var(--border-subtle)] shadow-sm space-y-4">
           <div className="flex items-center gap-3.5">
             <div className="relative h-16 w-16 rounded-full overflow-hidden bg-[var(--gold-subtle)] border-2 border-[var(--gold-accent)] flex items-center justify-center text-xl font-bold text-[var(--gold-accent)] font-mono-luxury shrink-0">
-              {userAuth.name ? userAuth.name.charAt(0).toUpperCase() : 'V'}
+              {userAuth.name ? userAuth.name.charAt(0).toUpperCase() : 'Ì'}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <h2 className="font-editorial text-xl font-bold text-[var(--text-primary)] truncate">
-                  {userAuth.name || bodyProfile.name || 'Veyra Patron'}
+                  {userAuth.name || bodyProfile.name || 'Ìrísí Patron'}
                 </h2>
                 <ShieldCheck className="h-4 w-4 text-[var(--gold-accent)] shrink-0" />
               </div>
@@ -181,7 +181,7 @@ export default function MobileProfileView() {
                 {userAuth.email || 'Verified Patron'}
               </p>
               <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-[9px] font-mono-luxury font-bold uppercase">
-                Veyra Black Patron
+                Ìrísí Black Patron
               </span>
             </div>
           </div>

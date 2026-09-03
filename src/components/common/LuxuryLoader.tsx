@@ -34,11 +34,11 @@ export default function LuxuryLoader() {
         </div>
 
         <div className="text-center space-y-1">
-          <div className="font-editorial text-2xl font-bold tracking-[0.3em] text-[var(--text-primary)]">
-            VEYRA
+          <div className="font-editorial text-3xl font-bold tracking-[0.34em] text-[var(--text-primary)]">
+            Ì R Í S Í
           </div>
           <div className="text-[9px] font-mono-luxury uppercase tracking-[0.35em] text-[var(--gold-accent)] font-bold">
-            See It · Fit It · Own It
+            Appearance & Presence · Nigerian Luxury
           </div>
         </div>
 

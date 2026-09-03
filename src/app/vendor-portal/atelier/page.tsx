@@ -299,7 +299,7 @@ export default function VendorAtelierProfilePage() {
                   Store Profile Approved & Verified
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] font-mono-luxury">
-                  Your store profile and delivery rates are verified and live across the Veyra storefront.
+                  Your store profile and delivery rates are verified and live across the Ìrísí storefront.
                 </div>
               </div>
             </div>
@@ -541,7 +541,7 @@ export default function VendorAtelierProfilePage() {
               </div>
 
               <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
-                You don&apos;t have to calculate delivery fees! Veyra automatically calculates shipping rates at customer checkout based on your state ({form.state || 'Lagos'}) and the customer&apos;s delivery location.
+                You don&apos;t have to calculate delivery fees! Ìrísí automatically calculates shipping rates at customer checkout based on your state ({form.state || 'your state'}) and the customer&apos;s delivery location.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">

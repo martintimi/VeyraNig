@@ -416,7 +416,7 @@ export default function VendorOverviewPage() {
                   No product drops published yet
                 </h3>
                 <p className="text-xs font-mono-luxury text-[var(--text-secondary)] max-w-sm mx-auto">
-                  Upload your first ready-to-wear piece or custom collection to start selling on Veyra.
+                  Upload your first ready-to-wear piece or custom collection to start selling on Ìrísí.
                 </p>
                 <Link
                   href="/vendor-portal/publish"
