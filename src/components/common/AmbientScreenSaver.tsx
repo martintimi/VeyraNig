@@ -3,171 +3,170 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Gem, Footprints, Shirt } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 
 interface EditorialSlide {
   id: string;
   title: string;
   categoryName: string;
-  categoryIcon: 'gem' | 'footwear' | 'apparel';
-  atelierName: string;
-  price: number;
+  designerName: string;
   imageUrl: string;
   description: string;
-  location: string;
   linkUrl: string;
 }
 
-const CURATED_EDITORIAL_SLIDES: EditorialSlide[] = [
+const DEFAULT_EDITORIAL_SLIDES: EditorialSlide[] = [
   {
-    id: 'slide-jewelry-1',
-    title: '18K Heavy Cuban Link & Iced Chronograph Watch',
-    categoryName: 'Fine Jewelry & Timepieces',
-    categoryIcon: 'gem',
-    atelierName: 'Vee Collection Luxury',
-    price: 185000,
-    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1600&q=95',
-    description: 'Double-micro gold plating, micro-pave zirconia crystals with hand-polished luxury weight.',
-    location: 'Abeokuta, Nigeria',
+    id: 'slide-lv-hoodie',
+    title: 'Luxury Monogram Fleece Hoodie',
+    categoryName: 'Designer Streetwear',
+    designerName: 'Moji Wears',
+    imageUrl: '/images/products/LVhoodie.jpg',
+    description: 'High-density cotton knit with designer monogram embroidery and double-lined hood.',
     linkUrl: '/shop'
   },
   {
-    id: 'slide-agbada-1',
-    title: 'Midnight Obsidian Grand Agbada with Gold Placket',
-    categoryName: 'Men & Unisex Native Grandeur',
-    categoryIcon: 'apparel',
-    atelierName: 'Sartorial Lagos',
-    price: 98000,
-    imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1600&q=95',
-    description: 'Bespoke hand-tailored wool drape structured for royal weddings and high-profile ceremonies.',
-    location: 'Victoria Island, Lagos',
+    id: 'slide-white-brown-hoodie',
+    title: 'Cream & Mocha Streetwear Hoodie',
+    categoryName: 'Streetwear & Hoodies',
+    designerName: 'Moji Wears',
+    imageUrl: '/images/products/WhiteNdBrownHoodie.jpg',
+    description: 'Heavyweight 480GSM fleece with puff graphics, dropped shoulders, and relaxed streetwear fit.',
     linkUrl: '/shop'
   },
   {
-    id: 'slide-footwear-1',
-    title: 'Handcrafted Kano Cowhide Dual-Strap Leather Slides',
-    categoryName: 'Artisanal Footwear Atelier',
-    categoryIcon: 'footwear',
-    atelierName: 'Kano Artisan Footwear',
-    price: 35000,
-    imageUrl: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?auto=format&fit=crop&w=1600&q=95',
-    description: 'Full-grain Nigerian cowhide with shock-absorbing cork footbed and weather-sealed edge coats.',
-    location: 'Kano Municipal, Nigeria',
+    id: 'slide-agbada',
+    title: 'Bespoke Royal Heritage Agbada',
+    categoryName: 'Men & Unisex Native',
+    designerName: 'Sartorial Lagos',
+    imageUrl: '/images/products/BlackAgbada.jpg',
+    description: 'Hand-tailored wool drape structured for distinguished ceremonies and royal occasions.',
     linkUrl: '/shop'
   },
   {
-    id: 'slide-boubou-1',
-    title: 'Emerald Silk Organza Boubou with Adire Motifs',
+    id: 'slide-boubou',
+    title: 'Artisanal Silk Boubous & Gowns',
     categoryName: "Women's Couture & Silks",
-    categoryIcon: 'apparel',
-    atelierName: 'Arike Brand Atelier',
-    price: 85000,
-    imageUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1600&q=95',
-    description: 'Fluid rich-auntie silhouette in premium lustrous silk organza with metallic accents.',
-    location: 'Ikoyi, Lagos',
+    designerName: 'Arike Brand',
+    imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1400&auto=format&fit=crop',
+    description: 'Flowing rich-auntie silk Bubu dresses with vibrant African motifs and fluid silhouette.',
     linkUrl: '/shop'
   },
   {
-    id: 'slide-streetwear-1',
-    title: 'Heavyweight 480GSM TrapStar Graphic Drop Hoodie',
-    categoryName: 'Urban Streetwear Drops',
-    categoryIcon: 'apparel',
-    atelierName: 'Moji Wears',
-    price: 33000,
-    imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1600&q=95',
-    description: 'Dense double-faced combed cotton fleece with puff screen-printed street typography.',
-    location: 'Yaba, Lagos',
+    id: 'slide-slides',
+    title: 'Handcrafted Cowhide Leather Slides',
+    categoryName: 'Footwear & Slides',
+    designerName: 'Kano Artisan Footwear',
+    imageUrl: '/images/products/UnisexSlides.jpg',
+    description: 'Authentic cowhide leather slides with ergonomic shock-absorbing footbed and weather-sealed edges.',
     linkUrl: '/shop'
   },
   {
-    id: 'slide-heels-1',
-    title: 'Champagne Metallic Fluted Mules & Square-Toe Heels',
-    categoryName: "Women's Luxury Footwear",
-    categoryIcon: 'footwear',
-    atelierName: 'Veyra Runway Vault',
-    price: 52000,
-    imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1600&q=95',
-    description: 'Architectural fluted heel with padded memory-foam footbed and metallic champagne sheen.',
-    location: 'Lagos, Nigeria',
+    id: 'slide-carmo-cap',
+    title: 'Tactical Camo Streetwear Cap',
+    categoryName: 'Caps & Headwear',
+    designerName: 'Moji Wears',
+    imageUrl: '/images/products/CarmoCap.jpg',
+    description: 'Structured 6-panel camouflage dad hat with heavy-duty metal clasp and curved brim.',
     linkUrl: '/shop'
   },
   {
-    id: 'slide-senator-1',
-    title: 'Super 160s Sapphire Wool Senator Kaftan Set',
-    categoryName: 'Bespoke Senator & Kaftans',
-    categoryIcon: 'apparel',
-    atelierName: 'Sartorial Lagos',
-    price: 68000,
-    imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1600&q=95',
-    description: 'Non-crease tropical Italian wool tailored with sleek geometric chest embroidery.',
-    location: 'Abuja (FCT), Nigeria',
+    id: 'slide-jewelry',
+    title: '18K Cuban Chain & Luxury Watch',
+    categoryName: 'Fine Jewelry & Watches',
+    designerName: 'Vee Collection Luxury',
+    imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1400&auto=format&fit=crop',
+    description: 'Double-micro gold plating, micro-pave zirconia crystals with hand-polished luxury weight.',
+    linkUrl: '/shop'
+  },
+  {
+    id: 'slide-cap1',
+    title: 'Royal Velvet Embroidered Fila Cap',
+    categoryName: 'Native Headwear',
+    designerName: 'Sartorial Lagos',
+    imageUrl: '/images/products/Cap1.png',
+    description: 'Hand-tailored royal cotton velvet Fila cap with traditional geometric chest embroidery.',
+    linkUrl: '/shop'
+  },
+  {
+    id: 'slide-trapstar',
+    title: 'Trapstar Cyber Heavyweight Hoodie',
+    categoryName: 'Urban Streetwear',
+    designerName: 'Moji Wears',
+    imageUrl: '/images/products/BlackTrapStarHoodie.jpg',
+    description: 'Heavyweight brushed cotton fleece with gothic street typography and kangaroo pocket.',
+    linkUrl: '/shop'
+  },
+  {
+    id: 'slide-dresses',
+    title: 'Contemporary Dresses & Co-ord Sets',
+    categoryName: "Women's Ready-to-Wear",
+    designerName: 'Arike Brand',
+    imageUrl: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=1400&auto=format&fit=crop',
+    description: 'Tailored two-piece co-ord sets, evening dresses, pleated skirts, and chic ready-to-wear silhouettes.',
+    linkUrl: '/shop'
+  },
+  {
+    id: 'slide-smart-shoes',
+    title: 'Smart Shoes & Luxury Loafers',
+    categoryName: 'Shoes & Footwear',
+    designerName: 'Kano Artisan Footwear',
+    imageUrl: '/images/products/BlackSmartShoes.jpg',
+    description: 'Hand-burnished leather loafers, Italian-cut dress shoes, and contemporary luxury footwear.',
+    linkUrl: '/shop'
+  },
+  {
+    id: 'slide-baggy-jean',
+    title: 'Raw Selvedge Wide-Leg Baggy Denim',
+    categoryName: 'Pants & Denim',
+    designerName: 'Moji Wears',
+    imageUrl: '/images/products/BaggyJean.jpg',
+    description: 'Heavyweight 14oz wide-leg relaxed denim with reinforced pocket rivets and contrast stitching.',
     linkUrl: '/shop'
   }
 ];
 
-const INACTIVITY_TIMEOUT_MS = 60000; // 60s idle
+const INACTIVITY_TIMEOUT_MS = 60000; // 60s idle before activation
 const SLIDE_DURATION_MS = 6500; // 6.5s per slide
-
-// Helper to map local product image to background-removed transparent cutout
-function getProductCutoutUrl(rawUrl: string): string {
-  if (!rawUrl) return '';
-  if (rawUrl.startsWith('/images/products/') && !rawUrl.includes('/cutouts/')) {
-    const filename = rawUrl.replace('/images/products/', '');
-    const basename = filename.substring(0, filename.lastIndexOf('.')) || filename;
-    return `/images/products/cutouts/${basename}.png`;
-  }
-  return rawUrl;
-}
 
 export default function AmbientScreenSaver() {
   const router = useRouter();
   const { allProducts } = useStore();
   const [isIdle, setIsIdle] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [slides, setSlides] = useState<EditorialSlide[]>(DEFAULT_EDITORIAL_SLIDES);
 
-  // Slides state: initialized with fallback, replaced 100% by real products as soon as loaded
-  const [slides, setSlides] = useState<EditorialSlide[]>(CURATED_EDITORIAL_SLIDES);
-
-  // Helper to map product object to EditorialSlide with transparent cutouts
+  // Helper to map DB product to slide
   const mapProductToSlide = useCallback((p: any, idx: number): EditorialSlide => {
     const rawCat = (p.category || 'tops').toLowerCase();
-    let catIcon: 'gem' | 'footwear' | 'apparel' = 'apparel';
     let catName = 'Ready-to-Wear Fashion';
 
     if (rawCat === 'footwear' || rawCat.includes('shoe') || rawCat.includes('slide')) {
-      catIcon = 'footwear';
-      catName = 'Artisanal Footwear Atelier';
-    } else if (rawCat === 'accessories' || rawCat.includes('jewel') || rawCat.includes('watch') || rawCat.includes('cap') || rawCat.includes('bag')) {
-      catIcon = 'gem';
-      catName = 'Fine Jewelry & Luxury Accessories';
-    } else if (rawCat === 'outerwear' || rawCat.includes('agbada')) {
-      catName = 'Men & Unisex Native Grandeur';
+      catName = 'Footwear & Slides';
+    } else if (rawCat === 'accessories' || rawCat.includes('jewel') || rawCat.includes('watch')) {
+      catName = 'Fine Jewelry & Watches';
+    } else if (rawCat.includes('cap') || rawCat.includes('hat') || rawCat.includes('fila')) {
+      catName = 'Caps & Headwear';
+    } else if (rawCat === 'outerwear' || rawCat.includes('hoodie') || rawCat.includes('jacket')) {
+      catName = 'Streetwear & Hoodies';
     } else if (rawCat === 'dresses' || rawCat.includes('boubou') || rawCat.includes('gown')) {
       catName = "Women's Couture & Silks";
     }
 
-    const rawImg = p.imageUrl || p.image_url || '';
-    const cutoutImg = getProductCutoutUrl(rawImg);
-    const fallbackImg = CURATED_EDITORIAL_SLIDES[idx % CURATED_EDITORIAL_SLIDES.length].imageUrl;
-    const finalImg = cutoutImg || rawImg || fallbackImg;
-    const location = p.vendorLocation || (p.vendorCity && p.vendorState ? `${p.vendorCity}, ${p.vendorState}` : p.vendorCity || p.vendorState || 'Nigeria');
+    const finalImg = p.imageUrl || p.image_url || DEFAULT_EDITORIAL_SLIDES[idx % DEFAULT_EDITORIAL_SLIDES.length].imageUrl;
 
     return {
       id: `live-prod-${p.id || idx}`,
-      title: p.name || 'Artisanal Drop Piece',
+      title: p.name || 'Contemporary Fashion Drop',
       categoryName: catName,
-      categoryIcon: catIcon,
-      atelierName: p.vendorName || p.vendor_name || 'Veyra Atelier Partner',
-      price: Number(p.price) || 35000,
+      designerName: p.vendorName || p.vendor_name || 'Verified Nigerian Designer',
       imageUrl: finalImg,
-      description: p.description || p.fitNotes || 'Handcrafted contemporary Nigerian luxury piece ready for immediate delivery.',
-      location,
+      description: p.description || p.fitNotes || 'Handcrafted contemporary Nigerian design available for immediate delivery.',
       linkUrl: `/shop/${p.id}`
     };
   }, []);
 
-  // Fetch live products directly on mount - EXCLUSIVELY SHOW REAL PRODUCTS
+  // Fetch real database products on mount
   useEffect(() => {
     async function loadLiveProducts() {
       try {
@@ -175,11 +174,11 @@ export default function AmbientScreenSaver() {
         const data = await res.json();
         if (data.success && Array.isArray(data.products) && data.products.length > 0) {
           const liveSlides: EditorialSlide[] = data.products.map((p: any, idx: number) => mapProductToSlide(p, idx));
-          // Exclusively show real database products (no hardcoded mix)
-          setSlides(liveSlides);
+          // Interleave real products with default editorial slides
+          setSlides([...liveSlides, ...DEFAULT_EDITORIAL_SLIDES]);
         }
       } catch (err) {
-        console.error('Failed to load live products for screensaver:', err);
+        console.error('Failed to load products for screensaver:', err);
       }
     }
     loadLiveProducts();
@@ -189,7 +188,7 @@ export default function AmbientScreenSaver() {
   useEffect(() => {
     if (allProducts && allProducts.length > 0) {
       const dynamicSlides: EditorialSlide[] = allProducts.map((p, idx) => mapProductToSlide(p, idx));
-      setSlides(dynamicSlides);
+      setSlides([...dynamicSlides, ...DEFAULT_EDITORIAL_SLIDES]);
     }
   }, [allProducts, mapProductToSlide]);
 
@@ -238,7 +237,7 @@ export default function AmbientScreenSaver() {
     };
   }, [resetIdleTimer]);
 
-  // Auto-advance slides when idle
+  // Slow smooth crossfade auto-advance when idle
   useEffect(() => {
     if (!isIdle) return;
 
@@ -249,7 +248,7 @@ export default function AmbientScreenSaver() {
     return () => clearInterval(slideTimer);
   }, [isIdle, slides.length]);
 
-  // Dismiss screensaver on any movement/touch
+  // Dismiss screensaver on any movement or touch
   const handleWakeUp = () => {
     setIsIdle(false);
     resetIdleTimer();
@@ -261,117 +260,84 @@ export default function AmbientScreenSaver() {
     <div
       role="dialog"
       aria-label="Veyra Ambient Fashion Screensaver"
-      onClick={() => handleWakeUp()}
-      className={`fixed inset-0 z-[999999] bg-[#070709] text-white select-none transition-all duration-700 ease-in-out ${
+      onClick={handleWakeUp}
+      className={`fixed inset-0 z-[999999] bg-black text-white select-none transition-opacity duration-1000 ease-in-out ${
         isIdle
           ? 'opacity-100 pointer-events-auto'
           : 'opacity-0 pointer-events-none'
       }`}
     >
-      {/* 1. Ambient Background Layer: Soft ambient glow to avoid extreme crop */}
+      {/* ── 1. FULLSCREEN BACKGROUND IMAGES WITH ULTRA-SMOOTH SLOW FADE ── */}
       <div className="absolute inset-0 overflow-hidden">
-        {slides.map((slide, idx) => (
-          <div
-            key={`bg-${slide.id}`}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              idx === currentSlideIndex ? 'opacity-30' : 'opacity-0'
-            }`}
-          >
-            <Image
-              src={slide.imageUrl}
-              alt=""
-              fill
-              priority={idx === 0}
-              className="object-cover object-center filter blur-3xl scale-110"
-              sizes="100vw"
-            />
-          </div>
-        ))}
+        {slides.map((slide, idx) => {
+          const isActive = idx === currentSlideIndex;
+          return (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-[1800ms] ease-in-out ${
+                isActive ? 'opacity-90' : 'opacity-0 pointer-events-none'
+              }`}
+            >
+              <Image
+                src={slide.imageUrl}
+                alt={slide.title}
+                fill
+                priority={idx === 0}
+                className="object-cover object-center"
+                sizes="100vw"
+              />
 
-        {/* Cinematic Vignettes */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#070709] via-transparent to-[#070709]/80" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#070709] via-transparent to-[#070709]/70" />
+              {/* Exact Cinematic Gradient Overlays from Signup Page */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/25" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-black/40" />
+            </div>
+          );
+        })}
       </div>
 
-      {/* 2. Main High-Definition Center Showcase */}
-      <div className="relative z-10 w-full h-full flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 lg:p-16 gap-8">
+      {/* ── 2. FOREGROUND CONTENT MATCHING SIGNUP PAGE LAYOUT ── */}
+      <div className="relative z-10 w-full h-full flex flex-col justify-between p-6 sm:p-12 lg:p-16">
         
-        {/* Left: Fashion Editorial Information */}
-        <div className="w-full md:max-w-xl lg:max-w-2xl space-y-4 sm:space-y-6 animate-fadeIn self-end md:self-center">
+        {/* Top Header Row: Gold Capsule Category Pill */}
+        <div className="flex items-center justify-end">
+          <span className="px-3.5 py-1.5 rounded-full bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-xs font-mono-luxury uppercase tracking-widest font-bold backdrop-blur-md">
+            {activeSlide.categoryName}
+          </span>
+        </div>
+
+        {/* Bottom Editorial Caption & Micro-Footer */}
+        <div className="space-y-6 max-w-2xl animate-fadeIn">
           
-          {/* Category Tag */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-accent)]/15 border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold tracking-wider backdrop-blur-md">
-            {activeSlide.categoryIcon === 'gem' ? (
-              <Gem className="h-3.5 w-3.5" />
-            ) : activeSlide.categoryIcon === 'footwear' ? (
-              <Footprints className="h-3.5 w-3.5" />
-            ) : (
-              <Shirt className="h-3.5 w-3.5" />
-            )}
-            <span>{activeSlide.categoryName}</span>
-            <span className="text-white/30">•</span>
-            <span className="text-white/80">{activeSlide.atelierName}</span>
+          {/* Dot Indicator Row */}
+          <div className="flex items-center gap-1.5">
+            {slides.slice(0, 14).map((_, idx) => (
+              <div
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-700 ${
+                  idx === (currentSlideIndex % 14)
+                    ? 'w-8 bg-[var(--gold-accent)]'
+                    : 'w-1.5 bg-white/30'
+                }`}
+              />
+            ))}
           </div>
 
-          {/* Slide Title */}
-          <h1 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight drop-shadow-xl tracking-tight">
+          {/* Editorial Serif Title */}
+          <h1 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-normal text-white leading-tight drop-shadow-xl">
             {activeSlide.title}
           </h1>
 
-          {/* Description */}
-          <p className="text-xs sm:text-sm text-white/75 font-sans leading-relaxed line-clamp-3 drop-shadow">
+          {/* Editorial Subtitle Description */}
+          <p className="text-sm sm:text-base text-white/75 font-light leading-relaxed max-w-xl drop-shadow">
             {activeSlide.description}
           </p>
 
-          {/* Price & Location Details */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-mono-luxury pt-1">
-            <span className="text-2xl sm:text-3xl font-bold text-[var(--gold-accent)]">
-              ₦{activeSlide.price.toLocaleString()}
-            </span>
-            <span className="text-white/30">|</span>
-            <span className="text-white/70">
-              {activeSlide.location}
-            </span>
-            <span className="text-white/30">|</span>
-            <span className="text-emerald-400 font-bold">
-              ● Shipbubble Live Courier
-            </span>
+          {/* Micro Footer Bar Matching Signup Page */}
+          <div className="pt-4 border-t border-white/15 flex items-center justify-between text-[10px] font-mono-luxury text-white/60 tracking-wider uppercase">
+            <span>Veyra Lookbook</span>
+            <span>Doorstep Nationwide Delivery</span>
           </div>
 
-          {/* Subtle Resume Hint */}
-          <div className="pt-2">
-            <p className="text-[11px] font-mono-luxury text-white/50 tracking-wider">
-              Touch screen or move mouse anywhere to resume session
-            </p>
-          </div>
-
-        </div>
-
-        {/* Right: Crisp, Floating Background-Free Fashion Cutout Showcase */}
-        <div className="w-full md:w-1/2 h-[50vh] sm:h-[65vh] md:h-[80vh] relative flex items-center justify-center pointer-events-none">
-          {slides.map((slide, idx) => (
-            <div
-              key={`fg-${slide.id}`}
-              className={`absolute inset-0 flex items-center justify-center md:justify-end transition-all duration-1000 ease-out ${
-                idx === currentSlideIndex
-                  ? 'opacity-100 scale-100 translate-y-0'
-                  : 'opacity-0 scale-95 translate-y-4 pointer-events-none'
-              }`}
-            >
-              <div className="relative w-full h-full max-h-[76vh] flex items-center justify-center">
-                {/* Floating Ambient Ground Shadow */}
-                <div className="absolute bottom-4 w-2/3 h-10 bg-black/90 blur-2xl rounded-full" />
-                <Image
-                  src={slide.imageUrl}
-                  alt={slide.title}
-                  fill
-                  priority={idx === 0}
-                  className="object-contain object-center drop-shadow-[0_20px_35px_rgba(0,0,0,0.85)] filter"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
-              </div>
-            </div>
-          ))}
         </div>
 
       </div>
