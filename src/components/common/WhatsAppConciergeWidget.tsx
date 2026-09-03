@@ -13,12 +13,17 @@ import { useStore } from '@/lib/store/useStore';
 
 export default function WhatsAppConciergeWidget() {
   const pathname = usePathname();
-  const { cart, bodyProfile, vendorProfile } = useStore();
+  const { cart, bodyProfile, vendorProfile, userAuth } = useStore();
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState(getConciergeConfig());
 
   // Check if current page is in Vendor Portal
   const isVendorMode = pathname.startsWith('/vendor');
+
+  // Only show for logged in customers or logged in vendors
+  const isCustomerLoggedIn = !!userAuth?.isLoggedIn;
+  const isVendorLoggedIn = !!vendorProfile?.email || !!vendorProfile?.brandName;
+  const isAuthorized = isVendorMode ? (isVendorLoggedIn || isCustomerLoggedIn) : isCustomerLoggedIn;
 
   // Reload config when changed in Super Admin
   useEffect(() => {
@@ -124,40 +129,43 @@ export default function WhatsAppConciergeWidget() {
     setIsOpen(false);
   };
 
-  // Hide only on Super Admin
-  if (!config.isEnabled || pathname.startsWith('/admin')) {
+  // Only show if enabled, logged in, and not on Super Admin
+  if (!config.isEnabled || !isAuthorized || pathname.startsWith('/admin')) {
     return null;
   }
 
   return (
     <>
-      {/* 1. FLOATING WHATSAPP BUTTON (BOTTOM-RIGHT) */}
+      {/* 1. FLOATING WHATSAPP BUTTON (ROUND ICON ON MOBILE, BADGE ON DESKTOP) */}
       <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-40">
         <motion.button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          className="group relative flex items-center gap-2.5 px-4 py-3 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white shadow-[0_10px_25px_rgba(18,140,126,0.35)] border border-white/20 transition-all cursor-pointer"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="group relative flex items-center justify-center h-12 w-12 md:h-auto md:w-auto md:px-4 md:py-3 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white shadow-[0_10px_25px_rgba(18,140,126,0.4)] border border-white/20 transition-all cursor-pointer"
+          title={isVendorMode ? 'Vendor Support' : 'Veyra Support'}
+          aria-label={isVendorMode ? 'Vendor Support' : 'Veyra Support'}
         >
-          {/* Active online pulse */}
-          <span className="relative flex h-2.5 w-2.5 shrink-0">
+          {/* Active online pulse (desktop only) */}
+          <span className="relative hidden md:inline-flex h-2.5 w-2.5 shrink-0 mr-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-200" />
           </span>
 
           {/* Official WhatsApp Glyph */}
-          <svg className="h-4 w-4 fill-current shrink-0" viewBox="0 0 24 24">
+          <svg className="h-6 w-6 md:h-4 md:w-4 fill-current shrink-0" viewBox="0 0 24 24">
             <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
           </svg>
 
-          <span className="font-mono-luxury text-xs uppercase font-bold tracking-wider">
+          {/* Desktop Only Text Label */}
+          <span className="font-mono-luxury text-xs uppercase font-bold tracking-wider hidden md:inline-block">
             {isVendorMode ? 'Vendor Support' : 'Veyra Support'}
           </span>
 
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold-accent)] hidden sm:inline-block" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold-accent)] hidden md:inline-block" />
 
-          <span className="text-[10px] font-mono-luxury text-emerald-100 hidden sm:inline-block">
+          <span className="text-[10px] font-mono-luxury text-emerald-100 hidden md:inline-block">
             Online
           </span>
         </motion.button>
