@@ -430,7 +430,7 @@ export default function CheckoutPage() {
           </div>
 
           <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)] leading-tight pt-1">
-            Order Sent to Boutique Ateliers!
+            Order Sent to Designers & Brands!
           </h1>
           <p className="text-xs font-mono-luxury text-[var(--gold-accent)] font-bold tracking-wider">
             Order Reference: {orderPlaced.orderNumber}

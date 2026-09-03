@@ -337,7 +337,7 @@ export default function MobileCheckoutView() {
           </div>
 
           <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-            Order Dispatched to Ateliers!
+            Order Dispatched to Designers & Brands!
           </h1>
           <p className="text-xs font-mono-luxury text-[var(--gold-accent)] font-bold">
             Reference: {orderPlaced.orderNumber}
