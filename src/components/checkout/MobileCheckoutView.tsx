@@ -12,12 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 
-const NIGERIAN_STATES = [
-  'Lagos', 'Ogun', 'Oyo', 'FCT - Abuja', 'Rivers', 'Anambra', 'Enugu', 'Delta',
-  'Edo', 'Kano', 'Kaduna', 'Ondo', 'Osun', 'Ekiti', 'Kwara', 'Abia', 'Akwa Ibom',
-  'Bayelsa', 'Benue', 'Cross River', 'Ebonyi', 'Gombe', 'Imo', 'Jigawa', 'Katsina',
-  'Kebbi', 'Kogi', 'Nasarawa', 'Niger', 'Plateau', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Bauchi', 'Borno', 'Adamawa'
-];
+import { NIGERIAN_STATES, getCitiesForState } from '@/lib/data/nigeriaLocations';
 
 export default function MobileCheckoutView() {
   const router = useRouter();
@@ -29,15 +24,27 @@ export default function MobileCheckoutView() {
     userAuth,
   } = useStore();
 
+  const initialDeliveryState = bodyProfile.state || 'Lagos';
+  const initialCities = getCitiesForState(initialDeliveryState);
+
   const [formData, setFormData] = useState({
     name: bodyProfile.name || userAuth.name || '',
     phone: bodyProfile.phone || userAuth.phone || '',
     email: bodyProfile.email || userAuth.email || '',
     address: bodyProfile.deliveryAddress || '',
-    city: bodyProfile.city || '',
-    state: bodyProfile.state || 'Lagos',
+    state: initialDeliveryState,
+    city: bodyProfile.city || initialCities[0] || 'Ikeja',
     notes: '',
   });
+
+  const handleStateChange = (newState: string) => {
+    const cities = getCitiesForState(newState);
+    setFormData(prev => ({
+      ...prev,
+      state: newState,
+      city: cities[0] || ''
+    }));
+  };
 
   const [packageMethods, setPackageMethods] = useState<Record<string, 'doorstep' | 'park_pickup'>>({});
   const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'bank_transfer'>('paystack');
@@ -192,12 +199,64 @@ export default function MobileCheckoutView() {
     setShowPaymentModal(true);
   };
 
-  const handleCompletePayment = async () => {
+  const loadPaystackScript = () => {
+    return new Promise<boolean>((resolve) => {
+      if ((window as any).PaystackPop) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayWithPaystack = async () => {
+    setIsProcessing(true);
+    const paymentRef = `vy_escrow_${Date.now()}`;
+    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY || 'pk_test_e3ea86fb5d808e0018ff9f2fc278a2eecdf04523';
+
+    try {
+      const loaded = await loadPaystackScript();
+      if (loaded && (window as any).PaystackPop) {
+        const handler = (window as any).PaystackPop.setup({
+          key: paystackKey,
+          email: formData.email || userAuth?.email || 'buyer@veyra.ng',
+          amount: Math.round(grandTotal * 100),
+          currency: 'NGN',
+          ref: paymentRef,
+          metadata: {
+            custom_fields: [
+              { display_name: 'Customer Name', variable_name: 'customer_name', value: formData.name },
+              { display_name: 'Phone Number', variable_name: 'phone_number', value: formData.phone }
+            ]
+          },
+          callback: (response: any) => {
+            handleCompletePayment(response.reference || paymentRef);
+          },
+          onClose: () => {
+            setIsProcessing(false);
+          }
+        });
+        handler.openIframe();
+      } else {
+        await handleCompletePayment(paymentRef);
+      }
+    } catch (e) {
+      console.warn('Paystack popup fallback:', e);
+      await handleCompletePayment(paymentRef);
+    }
+  };
+
+  const handleCompletePayment = async (resolvedPaymentRef?: string) => {
     setIsProcessing(true);
 
     try {
       const orderNum = `#VY-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
-      const paymentRef = `vy_escrow_${Date.now()}`;
+      const paymentRef = resolvedPaymentRef || `vy_escrow_${Date.now()}`;
 
       const orderPayload: any = {
         orderNumber: orderNum,
@@ -388,14 +447,14 @@ export default function MobileCheckoutView() {
 
               <div>
                 <label className="block uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                  State
+                  Delivery State
                 </label>
                 <select
                   value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
+                  onChange={(e) => handleStateChange(e.target.value)}
+                  className="w-full px-3 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
                 >
-                  {NIGERIAN_STATES.map((st) => (
+                  {NIGERIAN_STATES.map((st: string) => (
                     <option key={st} value={st}>{st}</option>
                   ))}
                 </select>
@@ -404,16 +463,17 @@ export default function MobileCheckoutView() {
 
             <div>
               <label className="block uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                City / Town / Area
+                City / Town / District
               </label>
-              <input
-                type="text"
-                required
+              <select
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="e.g. Victoria Island, Ikeja, Ijebu-Ode, Ibadan"
-                className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
-              />
+                className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer"
+              >
+                {getCitiesForState(formData.state).map((ct) => (
+                  <option key={ct} value={ct}>{ct}</option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -425,7 +485,7 @@ export default function MobileCheckoutView() {
                 required
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="e.g. Plot 14B, Adeola Odeku Street"
+                placeholder="e.g. Plot 14, Commercial Avenue, near Central Market"
                 className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
               />
             </div>
@@ -579,32 +639,41 @@ export default function MobileCheckoutView() {
               Your money is locked safely in Veyra Escrow and only released to each designer after you confirm your clothes are delivered.
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="space-y-2 pt-2">
               <button
                 type="button"
-                onClick={() => setShowPaymentModal(false)}
-                className="py-3.5 rounded-2xl surface-card border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono-luxury uppercase text-xs font-bold cursor-pointer"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCompletePayment}
+                onClick={paymentMethod === 'paystack' ? handlePayWithPaystack : () => handleCompletePayment()}
                 disabled={isProcessing}
-                className="py-3.5 rounded-2xl bg-[var(--gold-accent)] text-black font-mono-luxury uppercase text-xs font-bold hover:bg-[#d8b357] transition-all shadow-xl flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 rounded-2xl bg-[var(--gold-accent)] text-black font-mono-luxury uppercase text-xs font-bold hover:bg-[#d8b357] transition-all shadow-xl flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isProcessing ? (
                   <>
                     <Sparkles className="h-4 w-4 animate-spin text-black" />
-                    <span>Securing...</span>
+                    <span>Processing Escrow...</span>
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4 stroke-[3] text-black" />
-                    <span>Confirm ₦{grandTotal.toLocaleString()}</span>
+                    <span>Pay ₦{grandTotal.toLocaleString()} {paymentMethod === 'paystack' ? '(Paystack Test)' : ''}</span>
                   </>
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleCompletePayment()}
+                disabled={isProcessing}
+                className="w-full py-2.5 rounded-xl border border-[var(--border-subtle)] text-center text-xs font-mono-luxury uppercase text-[var(--gold-accent)] hover:border-[var(--gold-accent)] transition-colors cursor-pointer"
+              >
+                Instant Test Checkout (Skip Gateway)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full py-2 text-center text-xs font-mono-luxury text-[var(--text-muted)] cursor-pointer"
+              >
+                Cancel & Return
               </button>
             </div>
 

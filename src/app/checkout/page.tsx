@@ -14,13 +14,7 @@ import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import { signInCustomer, signUpCustomer } from '@/lib/services/auth';
 import MobileCheckoutView from '@/components/checkout/MobileCheckoutView';
-
-const NIGERIAN_STATES = [
-  'Lagos', 'Ogun', 'Oyo', 'FCT - Abuja', 'Rivers', 'Anambra', 'Enugu', 'Delta',
-  'Edo', 'Kano', 'Kaduna', 'Ondo', 'Osun', 'Ekiti', 'Kwara', 'Abia', 'Akwa Ibom',
-  'Bayelsa', 'Benue', 'Cross River', 'Ebonyi', 'Gombe', 'Imo', 'Jigawa', 'Katsina',
-  'Kebbi', 'Kogi', 'Nasarawa', 'Niger', 'Plateau', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Bauchi', 'Borno', 'Adamawa'
-];
+import { NIGERIAN_STATES, getCitiesForState } from '@/lib/data/nigeriaLocations';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -45,15 +39,27 @@ export default function CheckoutPage() {
   const [authError, setAuthError] = useState('');
 
   // Customer Delivery Form State (Empty by default with clean placeholders)
+  const initialDeliveryState = bodyProfile.state || 'Lagos';
+  const initialCities = getCitiesForState(initialDeliveryState);
+
   const [formData, setFormData] = useState({
     name: bodyProfile.name || userAuth.name || '',
     phone: bodyProfile.phone || userAuth.phone || '',
     email: bodyProfile.email || userAuth.email || '',
     address: bodyProfile.deliveryAddress || '',
-    city: bodyProfile.city || '',
-    state: bodyProfile.state || 'Lagos',
+    state: initialDeliveryState,
+    city: bodyProfile.city || initialCities[0] || 'Ikeja',
     notes: '',
   });
+
+  const handleStateChange = (newState: string) => {
+    const cities = getCitiesForState(newState);
+    setFormData(prev => ({
+      ...prev,
+      state: newState,
+      city: cities[0] || ''
+    }));
+  };
 
   // Package delivery methods per vendor (key: vendorId, value: 'doorstep' | 'park_pickup')
   const [packageMethods, setPackageMethods] = useState<Record<string, 'doorstep' | 'park_pickup'>>({});
@@ -278,12 +284,64 @@ export default function CheckoutPage() {
     setShowPaymentModal(true);
   };
 
-  const handleCompletePaymentSimulation = async () => {
+  const loadPaystackScript = () => {
+    return new Promise<boolean>((resolve) => {
+      if ((window as any).PaystackPop) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayWithPaystack = async () => {
+    setIsProcessing(true);
+    const paymentRef = `vy_escrow_${Date.now()}`;
+    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY || 'pk_test_e3ea86fb5d808e0018ff9f2fc278a2eecdf04523';
+
+    try {
+      const loaded = await loadPaystackScript();
+      if (loaded && (window as any).PaystackPop) {
+        const handler = (window as any).PaystackPop.setup({
+          key: paystackKey,
+          email: formData.email || userAuth?.email || 'buyer@veyra.ng',
+          amount: Math.round(grandTotal * 100),
+          currency: 'NGN',
+          ref: paymentRef,
+          metadata: {
+            custom_fields: [
+              { display_name: 'Customer Name', variable_name: 'customer_name', value: formData.name },
+              { display_name: 'Phone Number', variable_name: 'phone_number', value: formData.phone }
+            ]
+          },
+          callback: (response: any) => {
+            handleCompleteOrder(response.reference || paymentRef);
+          },
+          onClose: () => {
+            setIsProcessing(false);
+          }
+        });
+        handler.openIframe();
+      } else {
+        await handleCompleteOrder(paymentRef);
+      }
+    } catch (e) {
+      console.warn('Paystack popup fallback:', e);
+      await handleCompleteOrder(paymentRef);
+    }
+  };
+
+  const handleCompleteOrder = async (resolvedPaymentRef?: string) => {
     setIsProcessing(true);
 
     try {
       const orderNum = `#VY-ORD-${Math.floor(1000 + Math.random() * 9000)}`;
-      const paymentRef = `vy_escrow_${Date.now()}`;
+      const paymentRef = resolvedPaymentRef || `vy_escrow_${Date.now()}`;
 
       const orderPayload: any = {
         orderNumber: orderNum,
@@ -584,7 +642,7 @@ export default function CheckoutPage() {
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="e.g. 15 Admiralty Way, Lekki Phase 1"
+                  placeholder="e.g. Plot 14, Commercial Avenue, near Central Market"
                   className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
@@ -592,29 +650,30 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                    Town / City / Area
+                    Delivery State
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="e.g. Ijebu-Ode, Ikeja, Lekki, Ibadan"
-                    className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
-                  />
+                  <select
+                    value={formData.state}
+                    onChange={(e) => handleStateChange(e.target.value)}
+                    className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold cursor-pointer"
+                  >
+                    {NIGERIAN_STATES.map((st) => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-mono-luxury uppercase text-[var(--text-secondary)] mb-1 font-bold">
-                    State
+                    City / Town / District
                   </label>
                   <select
-                    value={formData.state}
-                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold cursor-pointer"
                   >
-                    {NIGERIAN_STATES.map((st) => (
-                      <option key={st} value={st}>{st}</option>
+                    {getCitiesForState(formData.state).map((ct) => (
+                      <option key={ct} value={ct}>{ct}</option>
                     ))}
                   </select>
                 </div>
@@ -854,28 +913,37 @@ export default function CheckoutPage() {
             <div className="space-y-3 pt-2">
               <button
                 type="button"
-                onClick={handleCompletePaymentSimulation}
+                onClick={paymentMethod === 'paystack' ? handlePayWithPaystack : () => handleCompleteOrder()}
                 disabled={isProcessing}
                 className="w-full py-4 rounded-full bg-emerald-500 text-black font-mono-luxury uppercase text-xs font-bold hover:bg-emerald-400 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isProcessing ? (
                   <>
                     <Sparkles className="h-4 w-4 animate-spin" />
-                    <span>Confirming Escrow Payment...</span>
+                    <span>Processing Escrow Authorization...</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    <span>Authorize ₦{grandTotal.toLocaleString()}</span>
+                    <span>Pay ₦{grandTotal.toLocaleString()} {paymentMethod === 'paystack' ? '(Paystack Test)' : '(Bank Transfer)'}</span>
                   </>
                 )}
               </button>
 
               <button
                 type="button"
+                onClick={() => handleCompleteOrder()}
+                disabled={isProcessing}
+                className="w-full py-2.5 rounded-xl border border-[var(--border-subtle)] text-center text-xs font-mono-luxury uppercase text-[var(--gold-accent)] hover:border-[var(--gold-accent)] transition-colors cursor-pointer"
+              >
+                Instant Test Checkout (Skip Gateway)
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setShowPaymentModal(false)}
                 disabled={isProcessing}
-                className="w-full py-2.5 text-center text-xs font-mono-luxury text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                className="w-full py-2 text-center text-xs font-mono-luxury text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               >
                 Cancel & Return
               </button>
