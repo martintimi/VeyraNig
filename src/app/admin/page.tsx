@@ -95,6 +95,15 @@ export default function SuperAdminPage() {
   const [financeFilter, setFinanceFilter] = useState<'all' | 'locked' | 'settled'>('all');
   const [financeSearch, setFinanceSearch] = useState('');
 
+  // Shopper Directory State
+  const [shopperSearch, setShopperSearch] = useState('');
+  const [selectedShopperModal, setSelectedShopperModal] = useState<any | null>(null);
+
+  // Vendor Payouts & Settlement Modal State
+  const [selectedVendorPayoutModal, setSelectedVendorPayoutModal] = useState<any | null>(null);
+  const [vendorPayoutFilter, setVendorPayoutFilter] = useState<'all' | 'pending' | 'settled'>('all');
+  const [vendorPayoutSearch, setVendorPayoutSearch] = useState('');
+
   // Action states
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState('');
@@ -386,7 +395,7 @@ export default function SuperAdminPage() {
     };
   }, [orders]);
 
-  // Derived Vendor Escrow Balances Breakdown
+  // Derived Vendor Escrow Balances Breakdown with Itemized Orders
   const vendorEscrowBreakdown = useMemo(() => {
     const map = new Map<string, {
       vendorId: string;
@@ -398,38 +407,73 @@ export default function SuperAdminPage() {
       bankName: string;
       accountNumber: string;
       accountName: string;
+      itemsSold: Array<{
+        orderId: string;
+        orderNumber: string;
+        date: string;
+        customerName: string;
+        customerCity: string;
+        productName: string;
+        size: string;
+        price: number;
+        quantity: number;
+        payoutAmount: number;
+        platformFee: number;
+        isDelivered: boolean;
+        status: string;
+      }>;
     }>();
 
     orders.forEach((ord) => {
+      const isDelivered = ord.status === 'delivered' || ord.trackingStage >= 4;
       (ord.items || []).forEach((item: any) => {
         const vId = (item.vendorId || item.vendor_id || 'vendor').toLowerCase();
         const vName = item.vendorName || vId.toUpperCase();
         const itemTotal = Number(item.price || 0) * Number(item.quantity || 1);
-        const isDelivered = ord.status === 'delivered' || ord.trackingStage >= 4;
+        const payoutAmount = itemTotal * 0.9;
+        const platformFee = itemTotal * 0.1;
 
         const matchedVendor = vendors.find(v => v.id === vId || (v.name && v.name.toLowerCase() === vName.toLowerCase()));
+
+        const itemRecord = {
+          orderId: ord.id,
+          orderNumber: ord.orderNumber,
+          date: ord.date || ord.createdAt,
+          customerName: ord.customerName,
+          customerCity: ord.deliveryCity || 'Lagos',
+          productName: item.productName || 'Garment',
+          size: item.size || 'M',
+          price: itemTotal,
+          quantity: Number(item.quantity || 1),
+          payoutAmount,
+          platformFee,
+          isDelivered,
+          status: ord.status,
+        };
 
         if (!map.has(vId)) {
           map.set(vId, {
             vendorId: vId,
             vendorName: vName,
             totalSales: itemTotal,
-            pendingEscrow: isDelivered ? 0 : itemTotal * 0.9,
-            settledPayouts: isDelivered ? itemTotal * 0.9 : 0,
+            pendingEscrow: isDelivered ? 0 : payoutAmount,
+            settledPayouts: isDelivered ? payoutAmount : 0,
             ordersCount: 1,
             bankName: matchedVendor?.bankName || 'Verified Bank',
             accountNumber: matchedVendor?.accountNumber || '0123456789',
             accountName: matchedVendor?.accountName || vName,
+            itemsSold: [itemRecord],
           });
         } else {
           const rec = map.get(vId)!;
           rec.totalSales += itemTotal;
           if (isDelivered) {
-            rec.settledPayouts += itemTotal * 0.9;
+            rec.settledPayouts += payoutAmount;
           } else {
-            rec.pendingEscrow += itemTotal * 0.9;
+            rec.pendingEscrow += payoutAmount;
           }
           rec.ordersCount += 1;
+          rec.itemsSold.push(itemRecord);
         }
       });
     });
@@ -437,7 +481,7 @@ export default function SuperAdminPage() {
     return Array.from(map.values()).sort((a, b) => b.totalSales - a.totalSales);
   }, [orders, vendors]);
 
-  // Derived Unique Customers Directory from real database orders
+  // Derived Unique Customers Directory from real database orders with full order history
   const customersList = useMemo(() => {
     const customerMap = new Map<string, {
       name: string;
@@ -448,6 +492,7 @@ export default function SuperAdminPage() {
       ordersCount: number;
       totalSpend: number;
       lastOrderDate: string;
+      orders: any[];
     }>();
 
     orders.forEach((ord) => {
@@ -464,16 +509,47 @@ export default function SuperAdminPage() {
           ordersCount: 1,
           totalSpend: spend,
           lastOrderDate: ord.date || ord.createdAt || 'Recent',
+          orders: [ord],
         });
       } else {
         const existing = customerMap.get(emailKey)!;
         existing.ordersCount += 1;
         existing.totalSpend += spend;
+        existing.orders.push(ord);
       }
     });
 
     return Array.from(customerMap.values()).sort((a, b) => b.totalSpend - a.totalSpend);
   }, [orders]);
+
+  // Filtered Shoppers
+  const filteredShoppers = useMemo(() => {
+    return customersList.filter(c => {
+      const q = shopperSearch.toLowerCase().trim();
+      return !q ||
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        c.phone.includes(q) ||
+        c.city.toLowerCase().includes(q);
+    });
+  }, [customersList, shopperSearch]);
+
+  // Filtered Vendor Payouts
+  const filteredVendorsPayout = useMemo(() => {
+    return vendorEscrowBreakdown.filter(v => {
+      const q = vendorPayoutSearch.toLowerCase().trim();
+      const matchesSearch = !q ||
+        v.vendorName.toLowerCase().includes(q) ||
+        v.bankName.toLowerCase().includes(q) ||
+        v.accountNumber.includes(q);
+
+      let matchesFilter = true;
+      if (vendorPayoutFilter === 'pending') matchesFilter = v.pendingEscrow > 0;
+      if (vendorPayoutFilter === 'settled') matchesFilter = v.settledPayouts > 0;
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [vendorEscrowBreakdown, vendorPayoutSearch, vendorPayoutFilter]);
 
   // Filtered Orders
   const filteredOrders = useMemo(() => {
@@ -1745,22 +1821,70 @@ export default function SuperAdminPage() {
                 </div>
               </div>
 
-              {/* Vendor Escrow Balances Table */}
+              {/* Vendor Escrow Balances Table - Filterable & Searchable */}
               <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                      Vendor Escrow Balances & Payout Accounts
+                      Vendor Payout Balances & Settlement Accounts
                     </h3>
                     <span className="text-xs font-mono-luxury text-[var(--text-secondary)]">
-                      Pending escrow vs settled payouts mapped to verified Nigerian bank accounts
+                      Pending escrow vs settled payouts mapped to verified Nigerian bank accounts • Click any brand to view payout statement
                     </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative min-w-[200px]">
+                      <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
+                      <input
+                        type="text"
+                        value={vendorPayoutSearch}
+                        onChange={(e) => setVendorPayoutSearch(e.target.value)}
+                        placeholder="Search brand, bank..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setVendorPayoutFilter('all')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                          vendorPayoutFilter === 'all'
+                            ? 'bg-[var(--text-primary)] text-[var(--bg-primary)]'
+                            : 'surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        All ({vendorEscrowBreakdown.length})
+                      </button>
+
+                      <button
+                        onClick={() => setVendorPayoutFilter('pending')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                          vendorPayoutFilter === 'pending'
+                            ? 'bg-amber-500 text-black'
+                            : 'surface-card border border-amber-500/30 text-amber-400 hover:border-amber-500'
+                        }`}
+                      >
+                        Pending Money ({vendorEscrowBreakdown.filter(v => v.pendingEscrow > 0).length})
+                      </button>
+
+                      <button
+                        onClick={() => setVendorPayoutFilter('settled')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-mono-luxury uppercase font-bold transition-all cursor-pointer ${
+                          vendorPayoutFilter === 'settled'
+                            ? 'bg-emerald-600 text-white'
+                            : 'surface-card border border-emerald-500/30 text-emerald-400 hover:border-emerald-500'
+                        }`}
+                      >
+                        Paid / Settled ({vendorEscrowBreakdown.filter(v => v.settledPayouts > 0).length})
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {vendorEscrowBreakdown.length === 0 ? (
+                {filteredVendorsPayout.length === 0 ? (
                   <div className="py-6 text-center text-xs font-mono-luxury text-[var(--text-muted)]">
-                    No vendor balances recorded yet.
+                    No vendor payout records matching your filter.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -1769,24 +1893,59 @@ export default function SuperAdminPage() {
                         <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] uppercase text-[10px]">
                           <th className="pb-3 font-bold">Brand / Designer</th>
                           <th className="pb-3 font-bold">Total Sales</th>
-                          <th className="pb-3 font-bold">Locked in Escrow</th>
-                          <th className="pb-3 font-bold">Settled Payouts</th>
-                          <th className="pb-3 font-bold">Bank Details</th>
+                          <th className="pb-3 font-bold">Pending Escrow</th>
+                          <th className="pb-3 font-bold">Paid / Settled</th>
+                          <th className="pb-3 font-bold">Settlement Bank Account</th>
+                          <th className="pb-3 font-bold text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border-subtle)]">
-                        {vendorEscrowBreakdown.map((v) => (
-                          <tr key={v.vendorId} className="hover:bg-[var(--bg-surface)] transition-colors">
+                        {filteredVendorsPayout.map((v) => (
+                          <tr
+                            key={v.vendorId}
+                            onClick={() => setSelectedVendorPayoutModal(v)}
+                            className="hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
+                          >
                             <td className="py-3 font-bold text-[var(--text-primary)]">
-                              {v.vendorName}
-                              <span className="text-[10px] text-[var(--text-muted)] block">{v.ordersCount} orders</span>
+                              <div className="flex items-center gap-2">
+                                <Eye className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                                <span>{v.vendorName}</span>
+                              </div>
+                              <span className="text-[10px] text-[var(--text-muted)] block pl-5.5">{v.ordersCount} orders placed</span>
                             </td>
                             <td className="py-3 text-[var(--text-primary)] font-bold">₦{v.totalSales.toLocaleString()}</td>
-                            <td className="py-3 text-amber-400 font-bold">₦{v.pendingEscrow.toLocaleString()}</td>
-                            <td className="py-3 text-emerald-400 font-bold">₦{v.settledPayouts.toLocaleString()}</td>
+                            <td className="py-3 font-bold">
+                              {v.pendingEscrow > 0 ? (
+                                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[11px]">
+                                  ₦{v.pendingEscrow.toLocaleString()}
+                                </span>
+                              ) : (
+                                <span className="text-[var(--text-muted)]">₦0</span>
+                              )}
+                            </td>
+                            <td className="py-3 font-bold">
+                              {v.settledPayouts > 0 ? (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px]">
+                                  ₦{v.settledPayouts.toLocaleString()}
+                                </span>
+                              ) : (
+                                <span className="text-[var(--text-muted)]">₦0</span>
+                              )}
+                            </td>
                             <td className="py-3 text-[var(--text-secondary)]">
                               <div>{v.accountNumber} • {v.bankName}</div>
                               <span className="text-[10px] text-[var(--text-muted)]">{v.accountName}</span>
+                            </td>
+                            <td className="py-3 text-right">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedVendorPayoutModal(v);
+                                }}
+                                className="px-3 py-1 rounded-full surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury uppercase font-bold hover:border-[var(--gold-accent)] text-[var(--gold-accent)] transition-all cursor-pointer"
+                              >
+                                View Payouts
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -1894,27 +2053,40 @@ export default function SuperAdminPage() {
           {activeTab === 'customers' && (
             <div className="space-y-6 animate-fadeIn">
               
-              <div>
-                <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-                  Verified Shoppers Directory
-                </h1>
-                <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
-                  Directory of registered customers and buyers across Nigeria.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+                    Verified Shoppers Directory
+                  </h1>
+                  <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
+                    Directory of buyers across Nigeria • Click on any shopper to see their complete purchase history and spent totals.
+                  </p>
+                </div>
+
+                <div className="relative min-w-[260px]">
+                  <Search className="absolute left-3.5 top-3 h-4 w-4 text-[var(--text-muted)]" />
+                  <input
+                    type="text"
+                    value={shopperSearch}
+                    onChange={(e) => setShopperSearch(e.target.value)}
+                    placeholder="Search shopper name, email, phone..."
+                    className="w-full pl-10 pr-4 py-2 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
+                  />
+                </div>
               </div>
 
-              {customersList.length === 0 ? (
+              {filteredShoppers.length === 0 ? (
                 <div className="p-12 text-center surface-card rounded-3xl border border-[var(--border-subtle)] space-y-3">
                   <Users className="h-10 w-10 text-[var(--text-muted)] mx-auto opacity-40" />
                   <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
-                    No customers recorded yet
+                    No customers found
                   </h3>
                   <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">
-                    Customer records will automatically populate as orders are placed.
+                    Try adjusting your search query.
                   </p>
                 </div>
               ) : (
-                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
+                <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs font-mono-luxury">
                       <thead>
@@ -1925,19 +2097,32 @@ export default function SuperAdminPage() {
                           <th className="pb-3 font-bold">Location</th>
                           <th className="pb-3 font-bold">Orders</th>
                           <th className="pb-3 font-bold">Lifetime Spend</th>
+                          <th className="pb-3 font-bold text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border-subtle)]">
-                        {customersList.map((c, idx) => (
-                          <tr key={idx} className="hover:bg-[var(--bg-surface)] transition-colors">
-                            <td className="py-3 font-bold text-[var(--text-primary)]">{c.name}</td>
-                            <td className="py-3 text-[var(--text-secondary)]">{c.email}</td>
-                            <td className="py-3 text-[var(--text-secondary)]">{c.phone}</td>
-                            <td className="py-3 text-[var(--text-secondary)]">
+                        {filteredShoppers.map((c, idx) => (
+                          <tr
+                            key={idx}
+                            onClick={() => setSelectedShopperModal(c)}
+                            className="hover:bg-[var(--bg-surface)] transition-colors cursor-pointer"
+                          >
+                            <td className="py-3.5 font-bold text-[var(--text-primary)] flex items-center gap-2">
+                              <Eye className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                              <span>{c.name}</span>
+                            </td>
+                            <td className="py-3.5 text-[var(--text-secondary)]">{c.email}</td>
+                            <td className="py-3.5 text-[var(--text-secondary)]">{c.phone}</td>
+                            <td className="py-3.5 text-[var(--text-secondary)]">
                               {c.city}{c.state ? `, ${c.state}` : ''}
                             </td>
-                            <td className="py-3 text-[var(--gold-accent)] font-bold">{c.ordersCount}</td>
-                            <td className="py-3 font-bold text-emerald-400">₦{c.totalSpend.toLocaleString()}</td>
+                            <td className="py-3.5 text-[var(--gold-accent)] font-bold">{c.ordersCount}</td>
+                            <td className="py-3.5 font-bold text-emerald-400">₦{c.totalSpend.toLocaleString()}</td>
+                            <td className="py-3.5 text-right">
+                              <span className="px-3 py-1 rounded-full surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury uppercase font-bold text-[var(--gold-accent)]">
+                                View Profile
+                              </span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -2202,6 +2387,298 @@ export default function SuperAdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* SHOPPER DOSSIER & COMPLETE ORDERS MODAL */}
+      {selectedShopperModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-3xl surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+              <div>
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold block">
+                  Customer Profile & Purchasing Dossier
+                </span>
+                <h3 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                  {selectedShopperModal.name}
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setSelectedShopperModal(null)}
+                className="p-2 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* KPI Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">Lifetime Platform Spend</span>
+                <strong className="font-editorial text-2xl font-bold text-emerald-400">
+                  ₦{Number(selectedShopperModal.totalSpend || 0).toLocaleString()}
+                </strong>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">Orders Placed</span>
+                <strong className="font-editorial text-2xl font-bold text-[var(--gold-accent)]">
+                  {selectedShopperModal.ordersCount} {selectedShopperModal.ordersCount === 1 ? 'Order' : 'Orders'}
+                </strong>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">Average Order Value (AOV)</span>
+                <strong className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                  ₦{Math.round((selectedShopperModal.totalSpend || 0) / (selectedShopperModal.ordersCount || 1)).toLocaleString()}
+                </strong>
+              </div>
+            </div>
+
+            {/* Shopper Contact Details */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono-luxury text-[var(--text-secondary)]">
+              <div>
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">Email Address</span>
+                <span className="text-[var(--text-primary)]">{selectedShopperModal.email}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">Phone Number</span>
+                <span className="text-[var(--text-primary)]">{selectedShopperModal.phone}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-[var(--text-muted)] uppercase block font-bold">Delivery Destination</span>
+                <span className="text-[var(--gold-accent)] font-bold">
+                  {selectedShopperModal.city}{selectedShopperModal.state ? `, ${selectedShopperModal.state}` : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Itemized Order History */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-editorial text-lg font-bold text-[var(--text-primary)]">
+                  Complete Order History ({selectedShopperModal.orders?.length || 0})
+                </h4>
+                <span className="text-[11px] font-mono-luxury text-[var(--text-muted)]">
+                  Sorted newest to oldest
+                </span>
+              </div>
+
+              <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                {(selectedShopperModal.orders || []).map((ord: any) => (
+                  <div
+                    key={ord.id}
+                    className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/40 transition-all space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="font-editorial text-base font-bold text-[var(--text-primary)]">
+                          {ord.orderNumber}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono-luxury uppercase font-bold ${
+                          ord.status === 'delivered' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          {ord.status || 'Escrow Secured'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs font-mono-luxury">
+                        <span className="text-[var(--text-muted)]">{ord.date || ord.createdAt}</span>
+                        <span className="text-[var(--gold-accent)] font-bold text-sm">
+                          ₦{Number(ord.totalAmount || 0).toLocaleString()}
+                        </span>
+                        <button
+                          onClick={() => setSelectedOrderModal(ord)}
+                          className="px-3 py-1 rounded-full surface-card border border-[var(--border-subtle)] text-[10px] font-mono-luxury uppercase font-bold hover:border-[var(--gold-accent)] text-[var(--text-primary)] transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3 text-[var(--gold-accent)]" />
+                          <span>Receipt</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Items Preview */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                      {(ord.items || []).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2 p-1.5 rounded-xl surface-card border border-[var(--border-subtle)] shrink-0">
+                          <div className="relative h-9 w-9 rounded-lg overflow-hidden bg-black shrink-0">
+                            <Image src={item.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'} alt="" fill unoptimized className="object-cover" />
+                          </div>
+                          <div className="text-[10px] font-mono-luxury pr-2">
+                            <div className="font-bold text-[var(--text-primary)] truncate max-w-[110px]">{item.productName}</div>
+                            <div className="text-[var(--text-muted)]">Qty: {item.quantity || 1} • Size: {item.size}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-[var(--border-subtle)]">
+              <button
+                onClick={() => setSelectedShopperModal(null)}
+                className="px-5 py-2.5 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold hover:bg-[var(--bg-surface)] cursor-pointer"
+              >
+                Close Shopper Dossier
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* VENDOR PAYOUT & SETTLEMENT DOSSIER MODAL */}
+      {selectedVendorPayoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-3xl surface-card p-6 sm:p-8 rounded-3xl border border-[var(--border-subtle)] space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+              <div>
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold block">
+                  Vendor Payout Statement & Settlement Dossier
+                </span>
+                <h3 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                  {selectedVendorPayoutModal.vendorName}
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setSelectedVendorPayoutModal(null)}
+                className="p-2 rounded-full surface-card border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Payout Metric Tiles */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-1">
+                <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">Gross Garment Sales</span>
+                <strong className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+                  ₦{Number(selectedVendorPayoutModal.totalSales || 0).toLocaleString()}
+                </strong>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1">
+                <span className="text-[10px] font-mono-luxury uppercase text-amber-400 font-bold block">Pending Escrow (Held)</span>
+                <strong className="font-editorial text-2xl font-bold text-amber-400">
+                  ₦{Number(selectedVendorPayoutModal.pendingEscrow || 0).toLocaleString()}
+                </strong>
+                <span className="text-[10px] font-mono-luxury text-zinc-400 block">Pending customer delivery</span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
+                <span className="text-[10px] font-mono-luxury uppercase text-emerald-400 font-bold block">Paid Out / Settled</span>
+                <strong className="font-editorial text-2xl font-bold text-emerald-400">
+                  ₦{Number(selectedVendorPayoutModal.settledPayouts || 0).toLocaleString()}
+                </strong>
+                <span className="text-[10px] font-mono-luxury text-zinc-400 block">Funds released to bank</span>
+              </div>
+            </div>
+
+            {/* Nigerian Settlement Bank Account Card */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
+              <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block flex items-center gap-1.5">
+                <Building className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                Verified Nigerian Settlement Bank Account
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono-luxury">
+                <div>
+                  <span className="text-[10px] text-[var(--text-muted)] block">Bank Name</span>
+                  <strong className="text-[var(--text-primary)]">{selectedVendorPayoutModal.bankName}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[var(--text-muted)] block">NUBAN Account Number</span>
+                  <strong className="text-[var(--gold-accent)] font-mono text-sm">{selectedVendorPayoutModal.accountNumber}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[var(--text-muted)] block">Beneficiary Name</span>
+                  <strong className="text-[var(--text-primary)]">{selectedVendorPayoutModal.accountName}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Itemized Garment Sales Ledger */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-editorial text-lg font-bold text-[var(--text-primary)]">
+                  Itemized Garments Sold ({selectedVendorPayoutModal.itemsSold?.length || 0})
+                </h4>
+                <span className="text-[11px] font-mono-luxury text-[var(--text-muted)]">
+                  90% Vendor Payout • 10% Platform Fee
+                </span>
+              </div>
+
+              <div className="overflow-x-auto max-h-[300px]">
+                <table className="w-full text-left text-xs font-mono-luxury">
+                  <thead>
+                    <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] uppercase text-[10px]">
+                      <th className="pb-2.5 font-bold">Order Ref</th>
+                      <th className="pb-2.5 font-bold">Garment</th>
+                      <th className="pb-2.5 font-bold">Customer</th>
+                      <th className="pb-2.5 font-bold">Sale Price</th>
+                      <th className="pb-2.5 font-bold text-emerald-400">90% Payout</th>
+                      <th className="pb-2.5 font-bold">Status</th>
+                      <th className="pb-2.5 font-bold text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                    {(selectedVendorPayoutModal.itemsSold || []).map((item: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-[var(--bg-surface)] transition-colors">
+                        <td className="py-2.5 font-bold text-[var(--text-primary)]">{item.orderNumber}</td>
+                        <td className="py-2.5 text-[var(--text-primary)]">
+                          <div>{item.productName}</div>
+                          <span className="text-[10px] text-[var(--text-muted)]">Size: {item.size} • Qty: {item.quantity}</span>
+                        </td>
+                        <td className="py-2.5 text-[var(--text-secondary)]">
+                          <div>{item.customerName}</div>
+                          <span className="text-[10px] text-[var(--text-muted)]">{item.customerCity}</span>
+                        </td>
+                        <td className="py-2.5 text-[var(--text-primary)]">₦{Number(item.price).toLocaleString()}</td>
+                        <td className="py-2.5 font-bold text-emerald-400">₦{Number(item.payoutAmount).toLocaleString()}</td>
+                        <td className="py-2.5">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                            item.isDelivered ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                          }`}>
+                            {item.isDelivered ? 'Paid / Settled' : 'Pending Escrow'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right">
+                          {!item.isDelivered ? (
+                            <button
+                              onClick={() => {
+                                handleReleaseEscrow(item.orderId);
+                                setSelectedVendorPayoutModal(null);
+                              }}
+                              className="px-2.5 py-1 rounded-full bg-emerald-500 text-black text-[10px] font-bold uppercase hover:bg-emerald-400 transition-all cursor-pointer"
+                            >
+                              Release
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-emerald-400 font-bold">Settled</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-[var(--border-subtle)]">
+              <button
+                onClick={() => setSelectedVendorPayoutModal(null)}
+                className="px-5 py-2.5 rounded-full surface-card border border-[var(--border-subtle)] text-xs font-mono-luxury uppercase font-bold hover:bg-[var(--bg-surface)] cursor-pointer"
+              >
+                Close Statement
+              </button>
+            </div>
+
           </div>
         </div>
       )}
