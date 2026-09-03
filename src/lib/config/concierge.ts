@@ -9,7 +9,7 @@ const DEFAULT_CONCIERGE_CONFIG: ConciergeConfig = {
   whatsappNumber: process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP || '2348000000000',
   isEnabled: true,
   businessHours: '8:00 AM – 10:00 PM WAT (7 Days)',
-  advisorName: 'Veyra Concierge & Vendor Desk'
+  advisorName: 'Veyra Customer Support'
 };
 
 const STORAGE_KEY = 'veyra_concierge_config_v1';
@@ -35,8 +35,15 @@ export function saveConciergeConfig(config: Partial<ConciergeConfig>): Concierge
     const current = getConciergeConfig();
     const updated = { ...current, ...config };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    // Dispatch storage event for live multi-tab updates
     window.dispatchEvent(new Event('storage'));
+
+    // Also sync to server API in background
+    fetch('/api/concierge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    }).catch((err) => console.warn('Failed to sync concierge to server:', err));
+
     return updated;
   } catch (e) {
     console.warn('Failed to save concierge config:', e);

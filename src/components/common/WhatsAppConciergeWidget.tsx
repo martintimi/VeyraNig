@@ -25,10 +25,21 @@ export default function WhatsAppConciergeWidget() {
   const isVendorLoggedIn = !!vendorProfile?.email || !!vendorProfile?.brandName;
   const isAuthorized = isVendorMode ? (isVendorLoggedIn || isCustomerLoggedIn) : isCustomerLoggedIn;
 
-  // Reload config when changed in Super Admin
+  // Reload config when changed in Super Admin or storage, and fetch live from server API
   useEffect(() => {
     const handleStorage = () => setConfig(getConciergeConfig());
     window.addEventListener('storage', handleStorage);
+
+    // Fetch live server config
+    fetch('/api/concierge')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.config?.whatsappNumber) {
+          setConfig((prev) => ({ ...prev, ...data.config }));
+        }
+      })
+      .catch(() => {});
+
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
@@ -174,24 +185,24 @@ export default function WhatsAppConciergeWidget() {
       {/* 2. THEME-AWARE MODAL (PERFECT IN LIGHT & DARK MODE) */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.97 }}
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 30, scale: 0.97 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="w-full max-w-md bg-white dark:bg-[#121216] text-zinc-900 dark:text-zinc-100 rounded-t-3xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden text-left"
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="w-full max-w-md max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white dark:bg-[#121216] text-zinc-900 dark:text-zinc-100 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden text-left my-auto"
             >
               {/* Clean Top Header (Easy, simple English) */}
-              <div className="p-5 bg-gradient-to-r from-[#075E54] to-[#128C7E] text-white flex items-center justify-between">
+              <div className="shrink-0 p-4 sm:p-5 bg-gradient-to-r from-[#075E54] to-[#128C7E] text-white flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
-                    <h3 className="font-editorial text-xl font-bold tracking-wide">
+                    <h3 className="font-editorial text-lg sm:text-xl font-bold tracking-wide">
                       {isVendorMode ? 'Vendor Help Desk' : 'Veyra Customer Support'}
                     </h3>
                   </div>
-                  <p className="text-xs font-mono-luxury text-emerald-100">
+                  <p className="text-[11px] sm:text-xs font-mono-luxury text-emerald-100">
                     Chat with us on WhatsApp · We typically reply in minutes
                   </p>
                 </div>
@@ -199,14 +210,14 @@ export default function WhatsAppConciergeWidget() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              {/* Body */}
-              <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Body (Smoothly scrollable, content and button never get cut off) */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 overscroll-contain">
                 
                 {/* Select topic */}
                 <div className="space-y-2">

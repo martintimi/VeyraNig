@@ -81,6 +81,22 @@ export default function SuperAdminPage() {
   const [conciergeEnabled, setConciergeEnabled] = useState(conciergeConfig.isEnabled);
   const [copiedTemplateIdx, setCopiedTemplateIdx] = useState<number | null>(null);
 
+  // Fetch live concierge settings from server API
+  useEffect(() => {
+    fetch('/api/concierge')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.config) {
+          setConciergeConfig(data.config);
+          setConciergePhoneInput(data.config.whatsappNumber);
+          setConciergeHoursInput(data.config.businessHours);
+          setConciergeNameInput(data.config.advisorName);
+          setConciergeEnabled(data.config.isEnabled);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Live Orders Data from DB
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
