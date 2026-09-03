@@ -26,9 +26,9 @@ const editorialSlides = [
     tag: "Women's Couture & Silks"
   },
   {
-    image: '/images/products/BlackTrapStarHoodie.jpg',
-    title: 'Urban Streetwear & Heavyweight Drops',
-    subtitle: 'Heavyweight 480GSM fleece hoodies, graphic co-ord sets, and statement street drops.',
+    image: '/images/products/WhiteNdBrownHoodie.jpg',
+    title: 'Cream & Mocha Streetwear Hoodie',
+    subtitle: 'Heavyweight 480GSM fleece with puff graphics, dropped shoulders, and relaxed streetwear fit.',
     tag: 'Streetwear & Hoodies'
   },
   {
@@ -38,22 +38,22 @@ const editorialSlides = [
     tag: "Women's Ready-to-Wear"
   },
   {
+    image: '/images/products/LVhoodie.jpg',
+    title: 'Luxury Monogram Fleece Hoodie',
+    subtitle: 'High-density cotton knit with designer monogram embroidery and double-lined hood.',
+    tag: 'Designer Streetwear'
+  },
+  {
     image: '/images/products/UnisexSlides.jpg',
     title: 'Handcrafted Leather Slides & Palms',
     subtitle: 'Authentic cowhide leather slides, ergonomic palms, and cushioned slip-ons made in Nigeria.',
     tag: 'Footwear & Slides'
   },
   {
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop',
-    title: 'Fine Jewelry & Luxury Watches',
-    subtitle: 'Solid gold Cuban links, iced pendants, custom signet rings, layered chains, and luxury timepieces.',
-    tag: 'Jewelry & Watches'
-  },
-  {
-    image: '/images/products/BaggyJean.jpg',
-    title: 'Raw Selvedge Denim & Cargo Pants',
-    subtitle: 'Heavyweight 14oz wide-leg baggy denim, tailored multi-pocket cargo pants, and relaxed trousers.',
-    tag: 'Pants & Denim'
+    image: '/images/products/CarmoCap.jpg',
+    title: 'Tactical Camo Streetwear Cap',
+    subtitle: 'Structured 6-panel camouflage dad hat with heavy-duty metal clasp and curved brim.',
+    tag: 'Caps & Headwear'
   },
   {
     image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=1200&auto=format&fit=crop',
@@ -62,10 +62,22 @@ const editorialSlides = [
     tag: "Women's Heels & Mules"
   },
   {
-    image: '/images/products/BlackSmartShoes.jpg',
-    title: 'Smart Shoes & Luxury Footwear',
-    subtitle: 'Hand-burnished leather loafers, Italian-cut dress shoes, and contemporary footwear.',
-    tag: 'Shoes & Footwear'
+    image: '/images/products/Cap1.png',
+    title: 'Royal Embroidered Fila Cap',
+    subtitle: 'Hand-tailored royal cotton velvet Fila with traditional geometric embroidery.',
+    tag: 'Native Headwear'
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop',
+    title: 'Fine Jewelry & Luxury Watches',
+    subtitle: 'Solid gold Cuban links, iced pendants, custom signet rings, layered chains, and luxury timepieces.',
+    tag: 'Jewelry & Watches'
+  },
+  {
+    image: '/images/products/BlackTrapStarHoodie.jpg',
+    title: 'Trapstar Heavyweight Cyber Hoodie',
+    subtitle: 'Heavyweight brushed cotton fleece with gothic street typography and kangaroo pocket.',
+    tag: 'Urban Drops'
   },
   {
     image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=1200&auto=format&fit=crop',
@@ -74,10 +86,16 @@ const editorialSlides = [
     tag: 'Backpacks & Bags'
   },
   {
-    image: '/images/products/PoloCap.jpg',
-    title: 'Designer Caps, Fila & Headwear',
-    subtitle: 'Handwoven Aso-Oke Fila caps, structured luxury dad hats, and designer embroidered headwear.',
-    tag: 'Caps & Headwear'
+    image: '/images/products/BlackSmartShoes.jpg',
+    title: 'Smart Shoes & Luxury Footwear',
+    subtitle: 'Hand-burnished leather loafers, Italian-cut dress shoes, and contemporary footwear.',
+    tag: 'Shoes & Footwear'
+  },
+  {
+    image: '/images/products/BaggyJean.jpg',
+    title: 'Raw Selvedge Denim & Cargo Pants',
+    subtitle: 'Heavyweight 14oz wide-leg baggy denim, tailored multi-pocket cargo pants, and relaxed trousers.',
+    tag: 'Pants & Denim'
   }
 ];
 
