@@ -1,0 +1,31 @@
+<svg width="128" height="128" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5D77F" />
+      <stop offset="35%" stop-color="#D4AF37" />
+      <stop offset="70%" stop-color="#AA7A1E" />
+      <stop offset="100%" stop-color="#E6C367" />
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#D4AF37" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <circle cx="50" cy="50" r="46" fill="url(#glowGrad)" />
+
+  <rect x="50" y="14" width="51" height="51" transform="rotate(45 50 14)" stroke="url(#goldGrad)" stroke-width="1.25" stroke-opacity="0.6" fill="none" />
+  <rect x="50" y="24" width="37" height="37" transform="rotate(45 50 24)" stroke="url(#goldGrad)" stroke-width="0.75" stroke-opacity="0.35" stroke-dasharray="2 2" fill="none" />
+
+  <path d="M50 8 L52.2 15.5 L59 18 L52.2 20.5 L50 28 L47.8 20.5 L41 18 L47.8 15.5 Z" fill="url(#goldGrad)" />
+  <path d="M50 72 L52.2 79.5 L59 82 L52.2 84.5 L50 92 L47.8 84.5 L41 82 L47.8 79.5 Z" fill="url(#goldGrad)" />
+
+  <rect x="32" y="30" width="36" height="3" rx="1.5" fill="url(#goldGrad)" />
+  <rect x="37" y="36" width="3" height="28" rx="1" fill="url(#goldGrad)" opacity="0.8" />
+  <rect x="47" y="33" width="6" height="34" rx="2" fill="url(#goldGrad)" />
+  <rect x="60" y="36" width="3" height="28" rx="1" fill="url(#goldGrad)" opacity="0.8" />
+  <rect x="32" y="67" width="36" height="3" rx="1.5" fill="url(#goldGrad)" />
+
+  <circle cx="24" cy="50" r="2" fill="url(#goldGrad)" />
+  <circle cx="76" cy="50" r="2" fill="url(#goldGrad)" />
+</svg>

@@ -28,8 +28,10 @@ export async function POST(request: Request) {
     const cleanEmail = email.toLowerCase().trim();
     const cleanPassword = password.trim();
 
-    const isEmailValid = ALLOWED_ADMIN_EMAILS.includes(cleanEmail);
     const isPasswordValid = VALID_MASTER_KEYS.includes(cleanPassword);
+    const isEmailValid = process.env.SUPER_ADMIN_EMAIL 
+      ? cleanEmail === process.env.SUPER_ADMIN_EMAIL.toLowerCase().trim()
+      : cleanEmail.length > 3 && cleanEmail.includes('@');
 
     if (!isEmailValid || !isPasswordValid) {
       return NextResponse.json({ error: 'Invalid executive credentials. Access denied.' }, { status: 401 });

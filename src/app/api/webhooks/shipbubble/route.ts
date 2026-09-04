@@ -88,27 +88,21 @@ export async function POST(request: Request) {
 
       // Send emails
       if (isDelivered) {
-        sendDeliverySettledEmail('merchant@irisi.ng', {
-          orderNumber: matchingOrder.order_number,
-          customerName: matchingOrder.customer_name,
-          customerEmail: matchingOrder.customer_email || 'buyer@irisi.ng',
-          deliveryAddress: matchingOrder.delivery_address || 'Nigeria',
-          items: customerMeasurements.items || [],
-          totalAmount: matchingOrder.total_amount || 0,
-          shippingFee: matchingOrder.shipping_fee || 0
-        }).catch(e => console.error('Delivery settled email error:', e));
-      } else if (isDispatched) {
+        if (matchingOrder.customer_email) {
+          console.log(`[SHIPBUBBLE] Order ${matchingOrder.order_number} marked delivered.`);
+        }
+      } else if (isDispatched && matchingOrder.customer_email) {
         sendDispatchNotificationEmail({
           orderNumber: matchingOrder.order_number,
           customerName: matchingOrder.customer_name,
-          customerEmail: matchingOrder.customer_email || 'buyer@irisi.ng',
+          customerEmail: matchingOrder.customer_email,
           waybillNumber: trackingNumber,
-          driverPhone: shipmentData.driver_phone || shipmentData.courier_name || 'GIG Logistics Rider',
+          driverPhone: shipmentData.driver_phone || shipmentData.courier_name || 'Assigned Courier',
           deliveryAddress: matchingOrder.delivery_address || 'Nigeria',
           items: customerMeasurements.items || [],
           totalAmount: matchingOrder.total_amount || 0,
           shippingFee: matchingOrder.shipping_fee || 0
-        }).catch(e => console.error('Dispatch email error:', e));
+        }).catch(e => console.error('Dispatch notification email error:', e));
       }
     }
 

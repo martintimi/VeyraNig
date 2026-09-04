@@ -7,15 +7,15 @@ export const BRAND_CONFIG = {
   name: 'Ìrísí',
   nameAscii: 'Irisi',
   legalName: 'Ìrísí Technologies Ltd.',
-  tagline: 'The Complete Nigerian Drip. Escrow Secured.',
+  tagline: 'Nigerian Luxury Marketplace. Escrow Secured.',
   subTagline: 'Appearance & Presence · Modern Nigerian Luxury',
   country: 'Nigeria',
   currency: '₦',
-  domain: 'irisi.ng',
-  supportEmail: 'concierge@irisi.ng',
+  domain: process.env.NEXT_PUBLIC_SITE_DOMAIN || '',
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || '',
   culturalMeaning: 'Appearance, Outward Presence, Stature & Aura',
   meta: {
     title: 'ÌRÍSÍ Nigeria | Multi-Brand Virtual Dressing Room & Luxury Marketplace',
-    description: 'Style bespoke Senator suits, contemporary streetwear hoodies, artisanal Kano leather slides, luxury bags, and fine jewelry from top Nigerian fashion designers on your digital body twin.',
+    description: 'Style bespoke Senator suits, contemporary streetwear hoodies, artisanal leather slides, luxury bags, and fine jewelry from top Nigerian fashion designers on your digital body twin.',
   }
 };

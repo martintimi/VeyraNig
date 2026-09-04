@@ -57,7 +57,7 @@ export default function AuthModal() {
         setUserAuth({
           isLoggedIn: true,
           name: userName,
-          email: email || 'user@irisi.ng',
+          email: email || '',
           gender,
           userType: 'shopper',
         });

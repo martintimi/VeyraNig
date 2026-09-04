@@ -15,6 +15,7 @@ import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import ProductQuickLookModal from '@/components/shop/ProductQuickLookModal';
 import MobileBrandView from '@/components/brand/MobileBrandView';
+import LuxuryLoader from '@/components/common/LuxuryLoader';
 import { isBoutiqueVendor } from '@/types';
 
 // Vector App Logos
@@ -109,33 +110,11 @@ export default function BrandStorefrontPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center p-6 space-y-5 animate-fadeIn">
-        <div className="relative flex flex-col items-center space-y-4 animate-pulse">
-          <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/30 shadow-2xl p-3">
-            <Image
-              src="/images/logo/irisi-emblem.png"
-              alt="Ìrísí"
-              width={64}
-              height={64}
-              className="h-14 w-auto object-contain"
-            />
-            <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
-          </div>
-
-          <div className="text-center space-y-1">
-            <div className="font-editorial text-2xl font-bold tracking-[0.3em] text-[var(--text-primary)]">
-              Ì R Í S Í
-            </div>
-            <div className="text-[10px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--gold-accent)] font-bold">
-              Loading Boutique Storefront...
-            </div>
-          </div>
-
-          <div className="w-36 h-[2px] bg-[var(--border-subtle)] rounded-full overflow-hidden mt-2">
-            <div className="h-full bg-gradient-to-r from-[var(--gold-accent)] to-emerald-400 animate-shimmer" style={{ width: '100%' }} />
-          </div>
-        </div>
-      </div>
+      <LuxuryLoader
+        fullScreen={false}
+        label="Ì R Í S Í"
+        sublabel="Loading Designer Collection..."
+      />
     );
   }
 

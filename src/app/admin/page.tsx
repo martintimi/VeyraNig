@@ -16,6 +16,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import LuxuryLoader from '@/components/common/LuxuryLoader';
 import { getConciergeConfig, saveConciergeConfig, generateWhatsAppUrl, ConciergeConfig } from '@/lib/config/concierge';
 
 const adminEditorialSlides = [
@@ -829,7 +830,7 @@ export default function SuperAdminPage() {
                     required
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
-                    placeholder="admin@irisi.ng"
+                    placeholder="admin@yourstore.com"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-mono-luxury"
                   />
                 </div>
@@ -1272,10 +1273,11 @@ export default function SuperAdminPage() {
 
               {/* Orders Table */}
               {isLoadingOrders ? (
-                <div className="py-20 text-center space-y-3">
-                  <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin mx-auto" />
-                  <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading live orders from PostgreSQL database...</p>
-                </div>
+                <LuxuryLoader
+                  fullScreen={false}
+                  label="Ì R Í S Í"
+                  sublabel="Loading Live Orders from Database..."
+                />
               ) : filteredOrders.length === 0 ? (
                 <div className="p-12 text-center surface-card rounded-3xl border border-[var(--border-subtle)] space-y-3">
                   <ShoppingCart className="h-10 w-10 text-[var(--text-muted)] mx-auto opacity-40" />
@@ -1481,10 +1483,11 @@ export default function SuperAdminPage() {
 
               {/* Products Grid */}
               {isLoadingProducts ? (
-                <div className="py-20 text-center space-y-3">
-                  <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin mx-auto" />
-                  <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading catalog products from database...</p>
-                </div>
+                <LuxuryLoader
+                  fullScreen={false}
+                  label="Ì R Í S Í"
+                  sublabel="Loading Catalog Products from Database..."
+                />
               ) : filteredProducts.length === 0 ? (
                 <div className="p-12 text-center surface-card rounded-3xl border border-[var(--border-subtle)] space-y-3">
                   <ShoppingBag className="h-10 w-10 text-[var(--text-muted)] mx-auto opacity-40" />
@@ -1667,10 +1670,11 @@ export default function SuperAdminPage() {
 
               {/* Vendors List Cards */}
               {isLoadingVendors ? (
-                <div className="py-20 text-center space-y-3">
-                  <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin mx-auto" />
-                  <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading brand submissions from database...</p>
-                </div>
+                <LuxuryLoader
+                  fullScreen={false}
+                  label="Ì R Í S Í"
+                  sublabel="Loading Brand Submissions from Database..."
+                />
               ) : filteredVendors.length === 0 ? (
                 <div className="p-12 text-center surface-card rounded-3xl border border-[var(--border-subtle)] space-y-3">
                   <Store className="h-10 w-10 text-[var(--text-muted)] mx-auto opacity-40" />

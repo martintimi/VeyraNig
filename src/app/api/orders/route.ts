@@ -267,28 +267,32 @@ export async function POST(request: Request) {
 
     // Dispatch automated background email alerts
     try {
-      sendOrderConfirmationEmail({
-        orderNumber,
-        customerName: body.customerName,
-        customerEmail: body.customerEmail || 'buyer@irisi.ng',
-        deliveryAddress: body.deliveryAddress,
-        items: body.items || [],
-        totalAmount: Number(body.totalAmount || 0),
-        shippingFee: Number(body.shippingFee || 0)
-      }).catch(e => console.error('Email error:', e));
-
-      // Notify each unique vendor
-      const uniqueVendorIds = Array.from(new Set((body.items || []).map((i: any) => (i.vendorId || i.vendor_id || 'vendor').toLowerCase().trim())));
-      uniqueVendorIds.forEach(vId => {
-        sendVendorNewOrderEmail(`${vId}@merchants.irisi.ng`, {
+      if (body.customerEmail) {
+        sendOrderConfirmationEmail({
           orderNumber,
           customerName: body.customerName,
-          customerEmail: body.customerEmail || 'buyer@irisi.ng',
+          customerEmail: body.customerEmail,
           deliveryAddress: body.deliveryAddress,
-          items: (body.items || []).filter((i: any) => (i.vendorId || i.vendor_id || 'vendor').toLowerCase().trim() === vId),
+          items: body.items || [],
           totalAmount: Number(body.totalAmount || 0),
           shippingFee: Number(body.shippingFee || 0)
-        }).catch(e => console.error('Vendor email error:', e));
+        }).catch(e => console.error('Email error:', e));
+      }
+
+      // Notify each unique vendor if an email is provided
+      const uniqueVendorIds: string[] = Array.from(new Set<string>((body.items || []).map((i: any) => String(i.vendorId || i.vendor_id || '').toLowerCase().trim())));
+      uniqueVendorIds.forEach((vId: string) => {
+        if (vId && typeof vId === 'string' && vId.includes('@')) {
+          sendVendorNewOrderEmail(vId, {
+            orderNumber,
+            customerName: body.customerName,
+            customerEmail: body.customerEmail || '',
+            deliveryAddress: body.deliveryAddress,
+            items: (body.items || []).filter((i: any) => (i.vendorId || i.vendor_id || '').toLowerCase().trim() === vId),
+            totalAmount: Number(body.totalAmount || 0),
+            shippingFee: Number(body.shippingFee || 0)
+          }).catch(e => console.error('Vendor email error:', e));
+        }
       });
     } catch (e) {
       console.error('Email dispatch wrapper error:', e);
@@ -475,11 +479,11 @@ export async function PATCH(request: Request) {
 
     // Dispatch automated dispatch or settlement email alerts
     try {
-      if (status === 'dispatched') {
+      if (status === 'dispatched' && existingOrder.customer_email) {
         sendDispatchNotificationEmail({
           orderNumber: existingOrder.order_number,
           customerName: existingOrder.customer_name,
-          customerEmail: existingOrder.customer_email || 'buyer@irisi.ng',
+          customerEmail: existingOrder.customer_email,
           deliveryAddress: existingOrder.delivery_address,
           items: existingOrder.order_items || [],
           totalAmount: Number(existingOrder.total_amount || 0),
@@ -489,16 +493,19 @@ export async function PATCH(request: Request) {
           vendorName: targetVendorId || 'Store Merchant'
         }).catch(e => console.error('Dispatch email error:', e));
       } else if (status === 'delivered') {
-        sendDeliverySettledEmail(`${targetVendorId || 'merchant'}@merchants.irisi.ng`, {
-          orderNumber: existingOrder.order_number,
-          customerName: existingOrder.customer_name,
-          customerEmail: existingOrder.customer_email || 'buyer@irisi.ng',
-          deliveryAddress: existingOrder.delivery_address,
-          items: existingOrder.order_items || [],
-          totalAmount: Number(existingOrder.total_amount || 0),
-          shippingFee: Number(existingOrder.shipping_fee || 0),
-          vendorName: targetVendorId || 'Store Merchant'
-        }).catch(e => console.error('Settled email error:', e));
+        const recipient = targetVendorId && targetVendorId.includes('@') ? targetVendorId : '';
+        if (recipient) {
+          sendDeliverySettledEmail(recipient, {
+            orderNumber: existingOrder.order_number,
+            customerName: existingOrder.customer_name,
+            customerEmail: existingOrder.customer_email || '',
+            deliveryAddress: existingOrder.delivery_address,
+            items: existingOrder.order_items || [],
+            totalAmount: Number(existingOrder.total_amount || 0),
+            shippingFee: Number(existingOrder.shipping_fee || 0),
+            vendorName: targetVendorId || 'Store Merchant'
+          }).catch(e => console.error('Settled email error:', e));
+        }
       }
     } catch (e) {
       console.error('Patch email dispatch error:', e);

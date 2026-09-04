@@ -7,6 +7,7 @@ import { useStore } from '@/lib/store/useStore';
 import Link from 'next/link';
 import MobileVendorReviews from '@/components/vendor/MobileVendorReviews';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
+import LuxuryLoader from '@/components/common/LuxuryLoader';
 
 export default function VendorReviewsPage() {
   const { vendorProfile } = useStore();
@@ -171,10 +172,11 @@ export default function VendorReviewsPage() {
         </div>
 
         {isLoading ? (
-          <div className="p-16 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
-            <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin mx-auto" />
-            <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading customer reviews...</p>
-          </div>
+          <LuxuryLoader
+            fullScreen={false}
+            label="Ì R Í S Í"
+            sublabel="Loading Customer Reviews..."
+          />
         ) : reviewsData.reviews.length === 0 ? (
           <div className="p-16 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
             <MessageSquare className="h-10 w-10 text-[var(--gold-accent)] mx-auto opacity-60" />

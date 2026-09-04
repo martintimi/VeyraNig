@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import MobileTwinDrawer from '@/components/studio/MobileTwinDrawer';
 import MobileQuickBuyDrawer from '@/components/mobile/MobileQuickBuyDrawer';
+import LuxuryLoader from '@/components/common/LuxuryLoader';
 
 export default function MobileProfileView() {
   const router = useRouter();
@@ -430,10 +431,11 @@ export default function MobileProfileView() {
         {activeTab === 'orders' && (
           <div className="space-y-4">
             {isLoadingOrders && effectiveOrders.length === 0 ? (
-              <div className="p-10 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
-                <Loader2 className="h-7 w-7 mx-auto text-[var(--gold-accent)] animate-spin" />
-                <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">Loading your live orders...</p>
-              </div>
+              <LuxuryLoader
+                fullScreen={false}
+                label="Ì R Í S Í"
+                sublabel="Loading Your Live Orders..."
+              />
             ) : effectiveOrders.length === 0 ? (
               <div className="p-10 rounded-3xl surface-card text-center space-y-3 border border-[var(--border-subtle)]">
                 <Package className="h-8 w-8 mx-auto text-[var(--gold-accent)] opacity-60" />

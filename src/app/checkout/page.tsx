@@ -319,7 +319,7 @@ export default function CheckoutPage() {
       if (loaded && (window as any).PaystackPop) {
         const handler = (window as any).PaystackPop.setup({
           key: paystackKey,
-          email: formData.email || userAuth?.email || 'buyer@irisi.ng',
+          email: formData.email || userAuth?.email || '',
           amount: Math.round(grandTotal * 100),
           currency: 'NGN',
           ref: paymentRef,

@@ -12,6 +12,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import MobileProductDetailView from '@/components/shop/MobileProductDetailView';
+import LuxuryLoader from '@/components/common/LuxuryLoader';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -84,27 +85,11 @@ export default function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center p-6 space-y-5 animate-fadeIn">
-        <div className="relative flex flex-col items-center space-y-4 animate-pulse">
-          <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/30 shadow-2xl p-3">
-            <Image
-              src="/images/logo/irisi-emblem.png"
-              alt="Ìrísí"
-              width={64}
-              height={64}
-              className="h-14 w-auto object-contain"
-            />
-          </div>
-          <div className="text-center space-y-1">
-            <div className="font-editorial text-2xl font-bold tracking-[0.3em] text-[var(--text-primary)]">
-              Ì R Í S Í
-            </div>
-            <div className="text-[10px] font-mono-luxury uppercase tracking-[0.3em] text-[var(--gold-accent)] font-bold">
-              Loading Product Details...
-            </div>
-          </div>
-        </div>
-      </div>
+      <LuxuryLoader
+        fullScreen={false}
+        label="Ì R Í S Í"
+        sublabel="Loading Garment Architecture..."
+      />
     );
   }
 
