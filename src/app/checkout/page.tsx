@@ -290,7 +290,7 @@ export default function CheckoutPage() {
       alert('Please fill in your name, phone number, address, and city for delivery.');
       return;
     }
-    setShowPaymentModal(true);
+    handlePayWithPaystack();
   };
 
   const loadPaystackScript = () => {
@@ -309,25 +309,16 @@ export default function CheckoutPage() {
   };
 
   const handlePayWithPaystack = async () => {
-    const rawKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY;
-    const isRealKey = rawKey && !rawKey.includes('e3ea86fb5d808e0018ff9f2fc278a2eecdf04523') && (rawKey.startsWith('pk_test_') || rawKey.startsWith('pk_live_'));
-
-    if (!isRealKey) {
-      setShowPaymentModal(false);
-      setShowPaystackSimModal(true);
-      return;
-    }
-
     setIsProcessing(true);
     const paymentRef = `vy_escrow_${Date.now()}`;
-    const paystackKey = rawKey;
+    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY || 'pk_test_747039dcebc800028fafa806d62e38f2ed02ab95';
 
     try {
       const loaded = await loadPaystackScript();
       if (loaded && (window as any).PaystackPop) {
         const handler = (window as any).PaystackPop.setup({
           key: paystackKey,
-          email: formData.email || userAuth?.email || '',
+          email: formData.email || userAuth?.email || 'customer@irisi.ng',
           amount: Math.round(grandTotal * 100),
           currency: 'NGN',
           ref: paymentRef,
@@ -338,6 +329,7 @@ export default function CheckoutPage() {
             ]
           },
           callback: (response: any) => {
+            setShowPaymentModal(false);
             handleCompleteOrder(response.reference || paymentRef);
           },
           onClose: () => {
@@ -346,11 +338,12 @@ export default function CheckoutPage() {
         });
         handler.openIframe();
       } else {
-        await handleCompleteOrder(paymentRef);
+        alert('Could not load Paystack gateway. Please check your internet connection.');
+        setIsProcessing(false);
       }
     } catch (e) {
-      console.warn('Paystack popup fallback:', e);
-      await handleCompleteOrder(paymentRef);
+      console.error('Paystack popup error:', e);
+      setIsProcessing(false);
     }
   };
 

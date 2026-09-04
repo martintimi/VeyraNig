@@ -205,7 +205,7 @@ export default function MobileCheckoutView() {
       alert('Please fill in your recipient name, phone, address, and city.');
       return;
     }
-    setShowPaymentModal(true);
+    handlePayWithPaystack();
   };
 
   const loadPaystackScript = () => {
@@ -224,19 +224,9 @@ export default function MobileCheckoutView() {
   };
 
   const handlePayWithPaystack = async () => {
-    const rawKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY;
-    const isRealKey = rawKey && !rawKey.includes('e3ea86fb5d808e0018ff9f2fc278a2eecdf04523') && (rawKey.startsWith('pk_test_') || rawKey.startsWith('pk_live_'));
-
-    if (!isRealKey) {
-      // User hasn't registered paystack key yet: open high-fidelity Paystack Sandbox Simulator!
-      setShowPaymentModal(false);
-      setShowPaystackSimModal(true);
-      return;
-    }
-
     setIsProcessing(true);
     const paymentRef = `vy_escrow_${Date.now()}`;
-    const paystackKey = rawKey;
+    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_KEY || 'pk_test_747039dcebc800028fafa806d62e38f2ed02ab95';
 
     try {
       const loaded = await loadPaystackScript();
@@ -254,6 +244,7 @@ export default function MobileCheckoutView() {
             ]
           },
           callback: (response: any) => {
+            setShowPaymentModal(false);
             handleCompletePayment(response.reference || paymentRef);
           },
           onClose: () => {
@@ -262,11 +253,12 @@ export default function MobileCheckoutView() {
         });
         handler.openIframe();
       } else {
-        await handleCompletePayment(paymentRef);
+        alert('Could not load Paystack gateway. Please check your internet connection.');
+        setIsProcessing(false);
       }
     } catch (e) {
-      console.warn('Paystack popup fallback:', e);
-      await handleCompletePayment(paymentRef);
+      console.error('Paystack popup error:', e);
+      setIsProcessing(false);
     }
   };
 
