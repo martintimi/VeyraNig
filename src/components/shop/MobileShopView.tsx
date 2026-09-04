@@ -262,9 +262,9 @@ export default function MobileShopView() {
                           {product.name}
                         </h3>
                       </Link>
-                      {/* Prominent High-Legibility Price */}
+                      {/* Prominent High-Legibility Gold Price */}
                       <div className="pt-1.5 flex items-baseline justify-between">
-                        <span className="font-mono-luxury text-base sm:text-lg font-black text-stone-900 dark:text-[var(--gold-accent)] tracking-tight">
+                        <span className="font-mono-luxury text-base sm:text-lg font-black text-[var(--gold-accent)] tracking-tight">
                           ₦{Number(product.price || 0).toLocaleString()}
                         </span>
                       </div>
