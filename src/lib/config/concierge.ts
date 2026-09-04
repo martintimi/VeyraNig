@@ -6,13 +6,13 @@ export interface ConciergeConfig {
 }
 
 const DEFAULT_CONCIERGE_CONFIG: ConciergeConfig = {
-  whatsappNumber: process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP || '2348000000000',
+  whatsappNumber: process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP || '2349070332145',
   isEnabled: true,
-  businessHours: '8:00 AM – 10:00 PM WAT (7 Days)',
+  businessHours: '9:00 AM – 10:00 PM WAT (7 Days)',
   advisorName: 'Ìrísí Customer Support'
 };
 
-const STORAGE_KEY = 'veyra_concierge_config_v1';
+const STORAGE_KEY = 'irisi_concierge_config_v2';
 
 export function getConciergeConfig(): ConciergeConfig {
   if (typeof window === 'undefined') {

@@ -1,24 +1,51 @@
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase/client';
 
-// Server-level persistent in-memory cache for live serverless instances
-let globalConciergeConfig = {
-  whatsappNumber: process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP || '2348000000000',
+const DEFAULT_WHATSAPP_NUMBER = '2349070332145';
+
+const DEFAULT_CONFIG = {
+  whatsappNumber: process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP || DEFAULT_WHATSAPP_NUMBER,
   isEnabled: true,
-  businessHours: '8:00 AM – 10:00 PM WAT (7 Days)',
+  businessHours: '9:00 AM – 10:00 PM WAT (7 Days)',
   advisorName: 'Ìrísí Customer Support'
 };
 
 export async function GET() {
   try {
+    // 1. Fetch live config from Supabase database
+    const { data, error } = await supabase
+      .from('vendors')
+      .select('id, phone, bio')
+      .eq('id', 'admin-concierge-settings')
+      .single();
+
+    if (!error && data && data.bio) {
+      try {
+        const parsed = JSON.parse(data.bio);
+        return NextResponse.json({
+          success: true,
+          config: {
+            ...DEFAULT_CONFIG,
+            ...parsed,
+            whatsappNumber: parsed.whatsappNumber || data.phone || DEFAULT_CONFIG.whatsappNumber
+          }
+        }, {
+          headers: { 'Cache-Control': 'no-store, max-age=0' }
+        });
+      } catch (e) {}
+    }
+
     return NextResponse.json({
       success: true,
-      config: globalConciergeConfig
+      config: DEFAULT_CONFIG
+    }, {
+      headers: { 'Cache-Control': 'no-store, max-age=0' }
     });
   } catch (error) {
     return NextResponse.json({
-      success: false,
-      config: globalConciergeConfig
-    }, { status: 500 });
+      success: true,
+      config: DEFAULT_CONFIG
+    });
   }
 }
 
@@ -29,30 +56,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid config payload' }, { status: 400 });
     }
 
-    if (body.whatsappNumber) {
-      // Clean phone number (strip spaces, dashes, leading plus)
-      const cleanPhone = String(body.whatsappNumber).replace(/[^0-9]/g, '');
-      if (cleanPhone) {
-        globalConciergeConfig.whatsappNumber = cleanPhone;
-      }
-    }
+    const cleanPhone = body.whatsappNumber
+      ? String(body.whatsappNumber).replace(/[^0-9]/g, '')
+      : DEFAULT_WHATSAPP_NUMBER;
 
-    if (typeof body.isEnabled === 'boolean') {
-      globalConciergeConfig.isEnabled = body.isEnabled;
-    }
+    const newConfig = {
+      whatsappNumber: cleanPhone || DEFAULT_WHATSAPP_NUMBER,
+      isEnabled: typeof body.isEnabled === 'boolean' ? body.isEnabled : true,
+      businessHours: body.businessHours ? String(body.businessHours) : '9:00 AM – 10:00 PM WAT (7 Days)',
+      advisorName: body.advisorName ? String(body.advisorName) : 'Ìrísí Customer Support'
+    };
 
-    if (body.businessHours) {
-      globalConciergeConfig.businessHours = String(body.businessHours);
-    }
+    // 2. Persist to Supabase database so all serverless instances and users worldwide get it
+    const { error: dbError } = await supabase
+      .from('vendors')
+      .upsert({
+        id: 'admin-concierge-settings',
+        brand_name: newConfig.advisorName,
+        phone: newConfig.whatsappNumber,
+        bio: JSON.stringify(newConfig)
+      });
 
-    if (body.advisorName) {
-      globalConciergeConfig.advisorName = String(body.advisorName);
+    if (dbError) {
+      console.error('Failed to persist concierge to Supabase:', dbError);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Concierge configuration updated across live platform.',
-      config: globalConciergeConfig
+      message: 'Concierge configuration saved to database.',
+      config: newConfig
     });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || 'Failed to update concierge config' }, { status: 500 });

@@ -25,13 +25,28 @@ export default function WhatsAppConciergeWidget() {
   const isVendorLoggedIn = !!vendorProfile?.email || !!vendorProfile?.brandName;
   const isAuthorized = isVendorMode ? (isVendorLoggedIn || isCustomerLoggedIn) : isCustomerLoggedIn;
 
-  // Reload config when changed in Super Admin or storage, and fetch live from server API
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
+      };
+    }
+  }, [isOpen]);
+
+  // Reload config when changed in Super Admin or storage, and fetch live from server API / Supabase
   useEffect(() => {
     const handleStorage = () => setConfig(getConciergeConfig());
     window.addEventListener('storage', handleStorage);
 
-    // Fetch live server config
-    fetch('/api/concierge')
+    // Fetch live config from server API (reads directly from Supabase database)
+    fetch('/api/concierge', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data?.success && data?.config?.whatsappNumber) {
@@ -42,8 +57,6 @@ export default function WhatsAppConciergeWidget() {
 
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
-
-  const cartSubtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   // 1. Simple, Everyday English Customer Issues
   const customerTopics = [
@@ -182,19 +195,25 @@ export default function WhatsAppConciergeWidget() {
         </motion.button>
       </div>
 
-      {/* 2. THEME-AWARE MODAL (PERFECT IN LIGHT & DARK MODE) */}
+      {/* 2. THEME-AWARE MODAL (PERFECT IN LIGHT & DARK MODE, NON-LEAKING SCROLL) */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+          <div 
+            data-lenis-prevent="true"
+            data-lenis-prevent-wheel="true"
+            data-lenis-prevent-touch="true"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+          >
             <motion.div
               initial={{ opacity: 0, y: 20, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.97 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="w-full max-w-md max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white dark:bg-[#121216] text-zinc-900 dark:text-zinc-100 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden text-left my-auto"
+              data-lenis-prevent="true"
+              className="w-full max-w-md max-h-[92vh] flex flex-col bg-white dark:bg-[#121216] text-zinc-900 dark:text-zinc-100 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden text-left my-auto"
             >
-              {/* Clean Top Header (Easy, simple English) */}
-              <div className="shrink-0 p-4 sm:p-5 bg-gradient-to-r from-[#075E54] to-[#128C7E] text-white flex items-center justify-between">
+              {/* 1. Clean Fixed Top Header */}
+              <div className="shrink-0 p-4 sm:p-5 bg-gradient-to-r from-[#075E54] to-[#128C7E] text-white flex items-center justify-between shadow-sm">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
@@ -216,9 +235,14 @@ export default function WhatsAppConciergeWidget() {
                 </button>
               </div>
 
-              {/* Body (Smoothly scrollable, content and button never get cut off) */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 overscroll-contain">
-                
+              {/* 2. Scrollable Middle Body (Smoothly scrollable, Lenis-isolated, never scrolls background) */}
+              <div 
+                data-lenis-prevent="true"
+                onWheel={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
                 {/* Select topic */}
                 <div className="space-y-2">
                   <label className="text-xs font-mono-luxury font-bold uppercase text-zinc-500 dark:text-zinc-400 tracking-wider block">
@@ -273,24 +297,24 @@ export default function WhatsAppConciergeWidget() {
                     You can edit or add more details directly in WhatsApp before sending.
                   </p>
                 </div>
-
-                {/* Action button */}
-                <div className="space-y-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleOpenWhatsApp}
-                    className="w-full py-3.5 rounded-2xl bg-[#128C7E] hover:bg-[#075E54] text-white font-mono-luxury uppercase text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Send className="h-4 w-4" />
-                    <span>Open WhatsApp Chat</span>
-                  </button>
-
-                  <div className="text-center text-[11px] text-zinc-400">
-                    Support Line: +{config.whatsappNumber}
-                  </div>
-                </div>
-
               </div>
+
+              {/* 3. Fixed Bottom Action Footer (ALWAYS 100% VISIBLE, NEVER CUT OFF!) */}
+              <div className="shrink-0 p-4 sm:p-5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#121216] space-y-2">
+                <button
+                  type="button"
+                  onClick={handleOpenWhatsApp}
+                  className="w-full py-3.5 rounded-2xl bg-[#128C7E] hover:bg-[#075E54] text-white font-mono-luxury uppercase text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                >
+                  <Send className="h-4 w-4" />
+                  <span>Open WhatsApp Chat</span>
+                </button>
+
+                <div className="text-center text-[11px] text-zinc-500 dark:text-zinc-400 font-mono-luxury">
+                  Support Line: +{config.whatsappNumber}
+                </div>
+              </div>
+
             </motion.div>
           </div>
         )}
