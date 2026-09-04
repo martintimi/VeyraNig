@@ -15,6 +15,7 @@ import confetti from 'canvas-confetti';
 import { signInCustomer, signUpCustomer } from '@/lib/services/auth';
 import MobileCheckoutView from '@/components/checkout/MobileCheckoutView';
 import { NIGERIAN_STATES, getCitiesForState } from '@/lib/data/nigeriaLocations';
+import { estimateItemWeightKg } from '@/lib/services/logistics';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -112,15 +113,22 @@ export default function CheckoutPage() {
   // Fetch real-time live carrier quotes from /api/logistics/rates
   useEffect(() => {
     async function fetchLiveRates() {
-      const packageRequests = Object.values(groupedItems).map(pkg => ({
-        vendorId: pkg.vendorId,
-        vendorName: pkg.vendorName,
-        originState: pkg.vendorState || 'Lagos',
-        originCity: pkg.vendorCity || 'Lagos',
-        destinationState: formData.state || 'Lagos',
-        destinationCity: formData.city || 'Lagos',
-        itemCount: pkg.items.length
-      }));
+      const packageRequests = Object.values(groupedItems).map(pkg => {
+        const pkgWeight = pkg.items.reduce((sum, item) => {
+          return sum + estimateItemWeightKg(item.product) * item.quantity;
+        }, 0);
+
+        return {
+          vendorId: pkg.vendorId,
+          vendorName: pkg.vendorName,
+          originState: pkg.vendorState || 'Lagos',
+          originCity: pkg.vendorCity || 'Lagos',
+          destinationState: formData.state || 'Lagos',
+          destinationCity: formData.city || 'Lagos',
+          itemCount: pkg.items.length,
+          totalWeightKg: Math.max(0.5, Number(pkgWeight.toFixed(2)))
+        };
+      });
 
       if (packageRequests.length === 0) return;
 

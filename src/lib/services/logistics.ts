@@ -106,6 +106,44 @@ function normalizeState(stateName: string): string {
   return match || 'Lagos';
 }
 
+export const WAYBILL_SAFETY_BUFFER = 300; // Flat ₦300 safety margin added to courier waybill
+
+/**
+ * Intelligent Weight Estimation by Garment Category & Material (in kg)
+ */
+export function estimateItemWeightKg(item: { name?: string; category?: string; garmentOriginType?: string }): number {
+  if (!item) return 0.8;
+  const n = (item.name || '').toLowerCase();
+  const c = (item.category || '').toLowerCase();
+
+  // Heavy Agbada / Boubou / Ceremonial 3-piece
+  if (n.includes('agbada') || c.includes('agbada') || c.includes('boubou') || n.includes('ceremonial')) {
+    return 1.6;
+  }
+  // Senator / Kaftan 2-piece sets
+  if (n.includes('senator') || c.includes('senator') || n.includes('kaftan') || c.includes('kaftan')) {
+    return 1.1;
+  }
+  // Footwear / Shoes / Slides / Boots + Box
+  if (c.includes('footwear') || c.includes('shoe') || n.includes('shoe') || n.includes('slide') || n.includes('loafer') || n.includes('boot')) {
+    return 1.3;
+  }
+  // Heavyweight Hoodies / Jackets / Fleece
+  if (n.includes('hoodie') || n.includes('jacket') || c.includes('outerwear') || n.includes('tracksuit')) {
+    return 1.0;
+  }
+  // Jeans / Denim / Cargo Trousers
+  if (n.includes('jean') || n.includes('cargo') || c.includes('bottoms') || c.includes('denim') || n.includes('trouser')) {
+    return 0.8;
+  }
+  // Caps / Jewelry / Small Accessories
+  if (c.includes('accessories') || c.includes('jewelry') || n.includes('cap') || n.includes('hat') || n.includes('beanie')) {
+    return 0.3;
+  }
+  // Standard tops / shirts / dresses
+  return 0.5;
+}
+
 /**
  * Fetch live rates from Shipbubble / Terminal Africa or Intelligent Matrix
  */
@@ -114,6 +152,7 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
   const originCity = (pkg.originCity || 'Lagos').trim();
   const destState = normalizeState(pkg.destinationState || 'Lagos');
   const destCity = (pkg.destinationCity || 'Lagos').trim();
+  const packageWeight = Math.max(0.5, pkg.totalWeightKg || 1);
 
   const isSameCity = !!(
     originCity.toLowerCase() === destCity.toLowerCase() ||
@@ -128,6 +167,9 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
   const destRegion = REGIONS[destState] || 'SouthWest';
   const isSameRegion = originRegion === destRegion;
 
+  // Extra weight surcharge for packages exceeding standard 2kg tier (₦600 per extra kg)
+  const extraWeightSurcharge = packageWeight > 2 ? Math.ceil(packageWeight - 2) * 600 : 0;
+
   // 1. Try Shipbubble Live API if API Key is configured
   const shipbubbleKey = process.env.SHIPBUBBLE_API_KEY;
   if (shipbubbleKey && !isSameCity) {
@@ -141,7 +183,7 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
         body: JSON.stringify({
           sender: { state: originState, city: originCity },
           receiver: { state: destState, city: destCity },
-          package: { weight: pkg.totalWeightKg || 1 }
+          package: { weight: packageWeight }
         }),
         signal: AbortSignal.timeout(2500),
         cache: 'no-store'
@@ -150,6 +192,7 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
       const data = await response.json();
       if (data.status === 'success' && Array.isArray(data.data?.couriers) && data.data.couriers.length > 0) {
         const cheapest = data.data.couriers[0];
+        const rawFee = Number(cheapest.total) || 4500;
         return {
           vendorId: pkg.vendorId,
           vendorName: pkg.vendorName,
@@ -159,7 +202,7 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
           doorstep: {
             courierName: cheapest.courier_name || 'GIG Logistics',
             serviceType: 'Doorstep Express',
-            fee: Number(cheapest.total) || 4500,
+            fee: rawFee + WAYBILL_SAFETY_BUFFER, // Includes +₦300 waybill buffer
             estimatedDeliveryDays: cheapest.delivery_eta || '1-3 business days',
             isSameCity: false,
           },
@@ -178,22 +221,22 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
     }
   }
 
-  // 2. High-Accuracy Nigerian Matrix Engine
-  let doorstepFee = 4500;
+  // 2. High-Accuracy Nigerian Matrix Engine (All include +₦300 Waybill Buffer)
+  let baseDoorstepFee = 4500;
   let deliveryEta = '2-4 business days';
   let courierName = 'GIG Logistics / Red Star Express';
 
   if (isSameCity) {
-    doorstepFee = 1500;
+    baseDoorstepFee = 1500;
     deliveryEta = 'Same-day / 24h Express';
     courierName = 'Local Direct Dispatch Rider';
   } else if (isSameState) {
-    doorstepFee = 2200;
+    baseDoorstepFee = 2200;
     deliveryEta = '1-2 business days';
     courierName = 'Intra-State Express Courier';
   } else if (isSameRegion) {
     // E.g. Lagos to Ibadan/Ogun/Osun
-    doorstepFee = 2800;
+    baseDoorstepFee = 2800;
     deliveryEta = '1-2 business days';
     courierName = 'GIG Logistics Regional Drop';
   } else if (
@@ -202,15 +245,17 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
     (originRegion === 'SouthWest' && destRegion === 'SouthSouth')
   ) {
     // E.g. Lagos to Abuja or Lagos to Port Harcourt/Benin
-    doorstepFee = 3800;
+    baseDoorstepFee = 3800;
     deliveryEta = '2-3 business days';
     courierName = 'GIG Logistics Interstate';
   } else {
     // Far North / North East / Far Interstate
-    doorstepFee = 4800;
+    baseDoorstepFee = 4800;
     deliveryEta = '3-5 business days';
     courierName = 'DHL / Fez Interstate Linehaul';
   }
+
+  const finalDoorstepFee = baseDoorstepFee + WAYBILL_SAFETY_BUFFER + extraWeightSurcharge;
 
   return {
     vendorId: pkg.vendorId,
@@ -221,7 +266,7 @@ export async function calculateLiveShippingRate(pkg: PackageShippingRequest): Pr
     doorstep: {
       courierName,
       serviceType: isSameCity ? 'Direct Rider' : 'Doorstep Courier',
-      fee: doorstepFee,
+      fee: finalDoorstepFee,
       estimatedDeliveryDays: deliveryEta,
       isSameCity,
     },
