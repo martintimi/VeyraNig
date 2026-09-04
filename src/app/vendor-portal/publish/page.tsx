@@ -137,6 +137,7 @@ export default function PublishGarmentPage() {
     MALE_CATEGORIES[0].generalCat
   );
   const [rawPrice, setRawPrice] = useState<string>('');
+  const [weightKg, setWeightKg] = useState<string>('');
   const [description, setDescription] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -456,6 +457,7 @@ export default function PublishGarmentPage() {
         sizes: enabledSizes,
         sizeStock,
         stockQuantity: totalStockCount,
+        weightKg: weightKg && !isNaN(parseFloat(weightKg)) ? parseFloat(weightKg) : undefined,
         vendorId: activeVendorId,
         vendorName: vendorProfile.brandName || 'Verified Partner',
         is_published: true,
@@ -491,6 +493,7 @@ export default function PublishGarmentPage() {
   const resetForm = () => {
     setName('');
     setRawPrice('');
+    setWeightKg('');
     setDescription('');
     setImageFile(null);
     setImagePreview(null);
@@ -841,7 +844,7 @@ export default function PublishGarmentPage() {
             </span>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-8">
+              <div className="md:col-span-6">
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                   Piece Title / Name <strong className="text-rose-400">*</strong>
                 </label>
@@ -850,12 +853,12 @@ export default function PublishGarmentPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Leather Crocodile Palms, Velvet Fila, Silk Boubou, Cuban Chain"
+                  placeholder="e.g. Cuban Chain, Leather Palms, Puffer Jacket, Silk Boubou"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
                 />
               </div>
 
-              <div className="md:col-span-4">
+              <div className="md:col-span-3">
                 <label className="block text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] mb-1.5 font-bold">
                   Retail Price (₦ NGN) <strong className="text-rose-400">*</strong>
                 </label>
@@ -874,7 +877,36 @@ export default function PublishGarmentPage() {
                   />
                 </div>
               </div>
+
+              <div className="md:col-span-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-secondary)] font-bold">
+                    Shipping Weight (kg)
+                  </label>
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono-luxury">
+                    Optional
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.05"
+                    min="0.05"
+                    max="30"
+                    value={weightKg}
+                    onChange={(e) => setWeightKg(e.target.value)}
+                    placeholder="e.g. 0.15 or 1.2"
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none"
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-mono-luxury text-[var(--text-muted)] font-bold">
+                    KG
+                  </span>
+                </div>
+              </div>
             </div>
+            <p className="text-[10px] text-[var(--text-muted)] font-mono-luxury -mt-3">
+              💡 <strong>Weight Note:</strong> Enter actual parcel weight (e.g. 0.15kg for 150g Cuban chain, 0.8kg for slides, 2.2kg for heavy jacket/backpack). Couriers bill by exact scale weight. If left blank, our system uses a safe category estimate.
+            </p>
 
             {/* Department Category Select */}
             <div>

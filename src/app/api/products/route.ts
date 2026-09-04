@@ -302,6 +302,7 @@ export async function GET(request: Request) {
         vendorCity: vendorInfo?.city || 'Lagos',
         vendorState: vendorInfo?.state || 'Lagos',
         vendorDispatchDays: vendorInfo?.dispatchDays || '1-2 business days',
+        weightKg: p.tailoring_specs?.weightKg ? Number(p.tailoring_specs.weightKg) : undefined,
         vendorShippingRates: vendorInfo?.shippingRates || {
           sameCity: 1000,
           closeHub: 2500,
@@ -491,6 +492,7 @@ export async function POST(request: Request) {
       description: description && description.trim().toLowerCase() !== name.trim().toLowerCase() ? description : '',
       tags: tagsList,
       colors: colorsList,
+      tailoring_specs: { ...(tailoringSpecs || {}), ...(body.weightKg ? { weightKg: Number(body.weightKg) } : {}) },
       vendor_id: vendorId,
       is_published: true,
     }).select().single();

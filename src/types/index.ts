@@ -101,6 +101,7 @@ export interface Product {
   isUserUploaded?: boolean;
   stockQuantity?: number;
   sizeStock?: Record<string, number>;
+  weightKg?: number;
 }
 
 export type VendorSpecialty = 'apparel' | 'footwear' | 'jewelry' | 'multi_department';

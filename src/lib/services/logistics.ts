@@ -112,8 +112,13 @@ export const WAYBILL_SAFETY_BUFFER = 300; // Flat ₦300 safety margin added to 
  * Intelligent Weight Estimation by Garment Category & Material (in kg)
  * Covers both Ready-to-Wear (RTW) Boutiques and Bespoke Designer Ateliers
  */
-export function estimateItemWeightKg(item: { name?: string; category?: string; garmentOriginType?: string }): number {
+export function estimateItemWeightKg(item: { name?: string; category?: string; garmentOriginType?: string; weightKg?: number }): number {
   if (!item) return 0.6;
+  // 1. If the vendor entered an exact weight on product upload, use their exact measurement!
+  if (typeof item.weightKg === 'number' && item.weightKg > 0) {
+    return item.weightKg;
+  }
+
   const n = (item.name || '').toLowerCase();
   const c = (item.category || '').toLowerCase();
 
