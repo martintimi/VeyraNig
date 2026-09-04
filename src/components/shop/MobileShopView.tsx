@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory } from '@/types';
 import { Heart, SlidersHorizontal, X, Search, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -11,6 +12,14 @@ import MobileStoriesRow from '@/components/mobile/MobileStoriesRow';
 
 const ITEMS_PER_PAGE = 8;
 
+const categoryMeta: Record<string, { label: string; desc: string }> = {
+  tops: { label: 'Native & Kaftans', desc: 'Senator sets, Agbadas, and bespoke kaftans' },
+  outerwear: { label: 'Streetwear Drops & Hoodies', desc: 'Heavyweight hoodies, jackets, and urban drops' },
+  footwear: { label: 'Footwear & Slides', desc: 'Handcrafted leather slides, mules, and sneakers' },
+  bottoms: { label: 'Trousers & Denim', desc: 'Baggy denim, cargo pants, and tailored trousers' },
+  accessories: { label: 'Jewelry, Caps & Bags', desc: 'Cuban links, rings, dad hats, and leather bags' },
+};
+
 export default function MobileShopView() {
   const {
     allProducts,
@@ -20,6 +29,9 @@ export default function MobileShopView() {
     fetchProductsFromDb,
     addToCart,
   } = useStore();
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
   const [selectedCategory, setSelectedCategory] = useState<GarmentCategory | 'all'>('all');
@@ -47,13 +59,28 @@ export default function MobileShopView() {
     fetchProductsFromDb();
   }, [fetchProductsFromDb]);
 
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat && ['tops', 'bottoms', 'outerwear', 'footwear', 'accessories'].includes(cat)) {
+      setSelectedCategory(cat as GarmentCategory);
+      setCurrentPage(1);
+    } else if (cat === 'all') {
+      setSelectedCategory('all');
+    }
+    const gen = searchParams.get('gender');
+    if (gen && ['male', 'female', 'all'].includes(gen)) {
+      setGenderFilter(gen as any);
+      setCurrentPage(1);
+    }
+  }, [searchParams]);
+
   const categories: { id: GarmentCategory | 'all'; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'tops', label: 'Tops & Kaftans' },
-    { id: 'outerwear', label: 'Boubou & Robes' },
-    { id: 'bottoms', label: 'Trousers' },
-    { id: 'footwear', label: 'Slides & Shoes' },
-    { id: 'accessories', label: 'Caps & Jewelry' },
+    { id: 'all', label: 'All Drops' },
+    { id: 'tops', label: 'Native & Kaftans' },
+    { id: 'outerwear', label: 'Streetwear Drops' },
+    { id: 'bottoms', label: 'Trousers & Denim' },
+    { id: 'footwear', label: 'Footwear & Slides' },
+    { id: 'accessories', label: 'Jewelry & Caps' },
   ];
 
   const filteredProducts = useMemo(() => {
@@ -85,6 +112,11 @@ export default function MobileShopView() {
   const handleCategoryChange = (catId: GarmentCategory | 'all') => {
     setSelectedCategory(catId);
     setCurrentPage(1);
+    if (catId === 'all') {
+      router.replace('/shop');
+    } else {
+      router.replace(`/shop?category=${catId}${genderFilter !== 'all' ? `&gender=${genderFilter}` : ''}`);
+    }
   };
 
   return (
@@ -96,18 +128,53 @@ export default function MobileShopView() {
       </div>
 
       {/* HEADER ROW: title + refine */}
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-        <h1 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
-          {genderFilter === 'male' ? "Men's" : genderFilter === 'female' ? "Women's" : 'All Drops'}
-        </h1>
-        <button
-          type="button"
-          onClick={() => setIsRefineOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs font-medium rounded-sm cursor-pointer hover:border-[var(--text-primary)] transition-colors"
-        >
-          <span>Refine</span>
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-        </button>
+      <div className="px-4 pt-4 pb-2">
+        {selectedCategory !== 'all' && (
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('all')}
+              className="inline-flex items-center gap-1 text-[11px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold hover:underline cursor-pointer"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>All Departments</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('all')}
+              className="text-[10px] font-mono-luxury uppercase text-[var(--text-secondary)] hover:text-rose-400 font-bold px-2 py-0.5 rounded-full border border-[var(--border-subtle)]"
+            >
+              ✕ Clear Filter
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-tight">
+              {selectedCategory !== 'all'
+                ? categoryMeta[selectedCategory]?.label || 'Category Drops'
+                : genderFilter === 'male'
+                ? "Men's Drops"
+                : genderFilter === 'female'
+                ? "Women's Drops"
+                : 'All Drops'}
+            </h1>
+            <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
+              {filteredProducts.length} {filteredProducts.length === 1 ? 'piece' : 'pieces'} {selectedCategory !== 'all' ? `in ${categoryMeta[selectedCategory]?.label || selectedCategory}` : 'curated across Nigeria'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsRefineOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs font-medium rounded-sm cursor-pointer hover:border-[var(--text-primary)] transition-colors shrink-0"
+          >
+            <span>Refine</span>
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* GENDER TABS */}

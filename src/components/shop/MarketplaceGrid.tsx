@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory, GarmentOriginType } from '@/types';
 import { calculateFitMatch } from '@/lib/utils/sizingEngine';
@@ -37,11 +38,29 @@ export default function MarketplaceGrid() {
     fetchProductsFromDb();
   }, [fetchProductsFromDb]);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<GarmentCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [quickLookProduct, setQuickLookProduct] = useState<any>(null);
+
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat && ['tops', 'bottoms', 'outerwear', 'footwear', 'accessories'].includes(cat)) {
+      setSelectedCategory(cat as GarmentCategory);
+      setCurrentPage(1);
+    } else if (cat === 'all') {
+      setSelectedCategory('all');
+    }
+    const gen = searchParams.get('gender');
+    if (gen && ['male', 'female', 'all'].includes(gen)) {
+      setSelectedGender(gen as any);
+      setCurrentPage(1);
+    }
+  }, [searchParams, setSelectedGender]);
 
   const categories: { id: GarmentCategory | 'all'; label: string }[] = [
     { id: 'all', label: 'All Items & Drops' },
