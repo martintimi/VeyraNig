@@ -36,17 +36,17 @@ function AnimatedCategoryCard({
   idx,
   currentImgIdx,
 }: {
-  dept: { title: string; sub: string; cat: string; images: string[] };
+  dept: { title: string; sub: string; slug: string; images: string[] };
   idx: number;
   currentImgIdx: number;
 }) {
   const activeImage = dept.images[currentImgIdx % dept.images.length];
 
   return (
-    <FadeUp delay={idx * 0.07}>
+    <FadeUp delay={idx * 0.05}>
       <Link
-        href={`/shop?category=${dept.cat}`}
-        className="relative h-48 rounded-2xl overflow-hidden border border-[var(--border-subtle)] shadow-sm group block bg-black"
+        href={`/category/${dept.slug}`}
+        className="relative h-48 rounded-2xl overflow-hidden border border-[var(--border-subtle)] shadow-sm group block bg-black active:scale-[0.98] transition-transform"
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -156,8 +156,33 @@ export default function MobileHomeView() {
 
   const departments = [
     {
+      title: 'Shirts & Tops',
+      sub: 'Casual & Button-Downs',
+      slug: 'shirts',
+      cat: 'tops',
+      images: [
+        '/images/editorial/male_shirt.jpg',
+        '/images/editorial/female_shirt.jpg',
+        '/images/products/CasualPoshMark.jpg',
+      ]
+    },
+    {
+      title: 'Streetwear Drops',
+      sub: 'Hoodies & Urban Sets',
+      slug: 'streetwear',
+      cat: 'outerwear',
+      images: [
+        '/images/products/BlackTrapStarHoodie.jpg',
+        '/images/products/BlueAndWhiteLosAngelisHoddie.jpg',
+        '/images/products/BrownHoodie.jpg',
+        '/images/products/LVhoodie.jpg',
+        '/images/products/WhiteNdBrownHoodie.jpg',
+      ]
+    },
+    {
       title: 'Native & Agbada',
       sub: 'Senator Sets & Agbada',
+      slug: 'native',
       cat: 'tops',
       images: [
         '/images/products/BlackAgbada.jpg',
@@ -169,20 +194,9 @@ export default function MobileHomeView() {
       ]
     },
     {
-      title: 'Streetwear Drops',
-      sub: 'Hoodies & Urban Sets',
-      cat: 'outerwear',
-      images: [
-        '/images/products/BlackTrapStarHoodie.jpg',
-        '/images/products/BlueAndWhiteLosAngelisHoddie.jpg',
-        '/images/products/BrownHoodie.jpg',
-        '/images/products/LVhoodie.jpg',
-        '/images/products/WhiteNdBrownHoodie.jpg',
-      ]
-    },
-    {
       title: 'Handcrafted Footwear',
       sub: 'Leather Slides & Palms',
+      slug: 'footwear',
       cat: 'footwear',
       images: [
         '/images/products/UnisexSlides.jpg',
@@ -195,6 +209,7 @@ export default function MobileHomeView() {
     {
       title: 'Trousers & Sets',
       sub: 'Bespoke Pants & Denim',
+      slug: 'trousers',
       cat: 'bottoms',
       images: [
         '/images/products/BaggyJean.jpg',
@@ -202,13 +217,25 @@ export default function MobileHomeView() {
         '/images/products/MenCasualJoggers.jpg',
         '/images/products/MenVintageCasualJean.jpg',
         '/images/products/TeryWidePant.jpg',
-        '/images/products/CasualPoshMark.jpg',
+      ]
+    },
+    {
+      title: 'Caps & Accessories',
+      sub: 'Fila Caps & Streetwear',
+      slug: 'accessories',
+      cat: 'accessories',
+      images: [
+        '/images/products/Cap1.png',
+        '/images/products/GucciCap.jpg',
+        '/images/products/NYCap.jpg',
+        '/images/products/CarmoCap.jpg',
+        '/images/products/PoloCap.jpg',
       ]
     },
   ];
 
   // Synchronized sequential image rotation: 1 card changes at a time in sequence (0 -> 1 -> 2 -> 3 -> 0...)
-  const [cardImageIndices, setCardImageIndices] = useState([0, 0, 0, 0]);
+  const [cardImageIndices, setCardImageIndices] = useState([0, 0, 0, 0, 0, 0]);
 
   useEffect(() => {
     let step = 0;
