@@ -14,6 +14,7 @@ import {
   Gem, Footprints, Shirt
 } from 'lucide-react';
 import VendorNotificationBell from '@/components/vendor/VendorNotificationBell';
+import VendorTourGuide from '@/components/vendor/VendorTourGuide';
 import Image from 'next/image';
 
 import { isBoutiqueVendor, getVendorSpecialty } from '@/types';
@@ -42,6 +43,7 @@ export default function VendorPortalLayout({
   });
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     // Close mobile menu when route changes
@@ -191,6 +193,17 @@ export default function VendorPortalLayout({
         {/* Right: Actions */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           
+          {/* Quick Interactive Tour Button */}
+          <button
+            type="button"
+            onClick={() => setShowTour(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--gold-subtle)] hover:bg-[var(--gold-accent)]/20 border border-[var(--gold-accent)]/40 text-xs font-mono-luxury uppercase font-bold text-[var(--gold-accent)] transition-all cursor-pointer shadow-sm"
+            title="Take interactive tour"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Tour Guide</span>
+          </button>
+
           {/* In-App Live Notification Bell */}
           <VendorNotificationBell />
 
@@ -369,6 +382,12 @@ export default function VendorPortalLayout({
         </main>
 
       </div>
+
+      {/* Interactive Vendor Tour Guide with Nigerian Onboarding Banter */}
+      <VendorTourGuide
+        isOpen={showTour ? true : undefined}
+        onClose={() => setShowTour(false)}
+      />
 
     </div>
   );
