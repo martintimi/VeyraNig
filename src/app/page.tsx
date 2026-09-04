@@ -1,6 +1,6 @@
 import HeroSection from '@/components/landing/HeroSection';
 import KineticMarquee from '@/components/landing/KineticMarquee';
-import CuratedDepartments from '@/components/landing/CuratedDepartments';
+import VirtualStudioSpotlight from '@/components/landing/VirtualStudioSpotlight';
 import CuratedAteliers from '@/components/landing/CuratedAteliers';
 import ProblemSolution from '@/components/landing/ProblemSolution';
 import BrandShowcase from '@/components/landing/BrandShowcase';
@@ -22,8 +22,8 @@ export default function Home() {
         {/* Dual-Row Velocity Kinetic Marquee */}
         <KineticMarquee />
 
-        {/* Curated Nigerian Fashion Departments & Studio Spotlight */}
-        <CuratedDepartments />
+        {/* Interactive 3D Virtual Dressing Studio Experience */}
+        <VirtualStudioSpotlight />
 
         {/* The Ìrísí Standards Luxury Pillars (The Complete Nigerian Drip) */}
         <ProblemSolution />
