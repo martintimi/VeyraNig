@@ -7,10 +7,11 @@ import {
   PackageCheck, Clock, CheckCircle2, ShieldCheck,
   Phone, MapPin, User, Truck, ShoppingBag, Scissors, Layers,
   Ruler, Sparkles, ChevronRight, Check, AlertCircle, Package,
-  Send, Loader2, X, Navigation, RefreshCw, Star
+  Send, Loader2, X, Navigation, RefreshCw, Star, Printer
 } from 'lucide-react';
 import MobileVendorOrders from '@/components/vendor/MobileVendorOrders';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
+import ShippingWaybillModal from '@/components/vendor/ShippingWaybillModal';
 import confetti from 'canvas-confetti';
 
 import { isBoutiqueVendor } from '@/types';
@@ -22,7 +23,8 @@ export default function VendorOrdersPage() {
   const [dbOrders, setDbOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Dispatch Modal State
+  // Waybill Slip & Dispatch Modal State
+  const [selectedWaybillOrder, setSelectedWaybillOrder] = useState<any | null>(null);
   const [dispatchModalOrder, setDispatchModalOrder] = useState<any | null>(null);
   const [waybillInput, setWaybillInput] = useState('');
   const [driverPhoneInput, setDriverPhoneInput] = useState('');
@@ -255,6 +257,7 @@ export default function VendorOrdersPage() {
           onRefresh={loadVendorDbOrders}
           onPackReady={handlePackReady}
           onConfirmDispatch={handleMobileConfirmDispatch}
+          onOpenWaybill={(ord) => setSelectedWaybillOrder(ord)}
           isUpdatingStatus={isUpdatingStatus}
         />
       </div>
@@ -357,10 +360,10 @@ export default function VendorOrdersPage() {
                 </div>
               </div>
 
-              {/* Garments/Clothes bought strictly from THIS vendor */}
+              {/* Items bought strictly from THIS vendor */}
               <div className="space-y-3">
                 <span className="text-[11px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">
-                  {isBoutique ? 'Your Clothes in this Package' : 'Your Garments in this Package'} ({ord.items.length}):
+                  Items in this Package ({ord.items.length}):
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {ord.items.map((item: any, idx: number) => (
@@ -454,6 +457,15 @@ export default function VendorOrdersPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedWaybillOrder(ord)}
+                    className="px-4 py-2.5 rounded-full surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-primary)] font-mono-luxury uppercase text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer hover:bg-[var(--gold-subtle)]"
+                  >
+                    <Printer className="h-4 w-4 text-[var(--gold-accent)]" />
+                    <span>Print Waybill</span>
+                  </button>
+
                   {ord.trackingStage === 1 && (
                     <button
                       type="button"
@@ -576,6 +588,15 @@ export default function VendorOrdersPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 4. PRINTABLE COURIER SHIPPING WAYBILL MODAL */}
+      {selectedWaybillOrder && (
+        <ShippingWaybillModal
+          order={selectedWaybillOrder}
+          vendorProfile={vendorProfile}
+          onClose={() => setSelectedWaybillOrder(null)}
+        />
       )}
 
       </div>

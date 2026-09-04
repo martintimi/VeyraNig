@@ -5,7 +5,7 @@ import Image from 'next/image';
 import {
   PackageCheck, Truck, CheckCircle2, ShieldCheck,
   Phone, User, Package, RefreshCw, Send, Loader2,
-  X, Check, Star, AlertCircle, ChevronRight, Sparkles
+  X, Check, Star, AlertCircle, ChevronRight, Sparkles, Printer
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import VendorLuxuryLoader from './VendorLuxuryLoader';
@@ -16,6 +16,7 @@ interface MobileVendorOrdersProps {
   onRefresh: () => void;
   onPackReady: (ord: any) => Promise<void>;
   onConfirmDispatch: (order: any, waybill: string, driverPhone: string) => Promise<void>;
+  onOpenWaybill?: (order: any) => void;
   isUpdatingStatus: boolean;
 }
 
@@ -25,6 +26,7 @@ export default function MobileVendorOrders({
   onRefresh,
   onPackReady,
   onConfirmDispatch,
+  onOpenWaybill,
   isUpdatingStatus
 }: MobileVendorOrdersProps) {
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'dispatched' | 'delivered'>('all');
@@ -172,10 +174,10 @@ export default function MobileVendorOrders({
                 )}
               </div>
 
-              {/* Garments in package */}
+              {/* Items in package */}
               <div className="space-y-2">
                 <span className="text-[10px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold block">
-                  Garments in Package ({ord.items.length}):
+                  Items in Package ({ord.items.length}):
                 </span>
 
                 {ord.items.map((item: any, idx: number) => (
@@ -255,7 +257,18 @@ export default function MobileVendorOrders({
               )}
 
               {/* Action Fulfillment Buttons */}
-              <div className="pt-1">
+              <div className="pt-1 space-y-2">
+                {onOpenWaybill && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenWaybill(ord)}
+                    className="w-full py-2.5 rounded-full surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-primary)] font-mono-luxury uppercase text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-transform cursor-pointer"
+                  >
+                    <Printer className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+                    <span>Print Shipping Waybill</span>
+                  </button>
+                )}
+
                 {ord.trackingStage === 1 && (
                   <button
                     type="button"
