@@ -129,7 +129,7 @@ export default function HeroSection() {
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
-              Discover Nigeria&apos;s premier multi-brand fashion marketplace. Try on bespoke native wear, streetwear drops, handcrafted footwear, and fine jewelry on your 3D digital body twin. Each verified brand dispatches directly to your doorstep with total escrow payment protection.
+              Discover Nigeria&apos;s premier multi-brand fashion marketplace. Shop bespoke native wear, streetwear drops, handcrafted footwear, and fine jewelry from verified independent designers. Each brand dispatches directly to your doorstep with 100% escrow payment protection.
             </p>
 
             {/* Action Buttons */}
