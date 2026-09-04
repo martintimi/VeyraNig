@@ -81,7 +81,7 @@ export default function ProblemSolution() {
   return (
     <section 
       ref={sectionRef} 
-      className="relative pt-8 sm:pt-10 lg:pt-12 pb-24 sm:pb-28 border-b border-[var(--border-subtle)] bg-[#FAF9F5] dark:bg-[var(--bg-primary)] overflow-hidden transition-colors"
+      className="relative pt-8 sm:pt-10 lg:pt-12 pb-24 sm:pb-28 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] overflow-hidden transition-colors"
     >
       {/* ======================================================== */}
       {/* 1. LEFT FLANK: MALE MODEL SLOW DISSOLVE OUTFIT CHANGER   */}
@@ -202,12 +202,12 @@ export default function ProblemSolution() {
             <span>HEAD-TO-TOE NIGERIAN LUXURY · CULTURE & DRIP</span>
           </div>
 
-          <h2 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-normal text-zinc-950 dark:text-[var(--text-primary)] tracking-tight leading-[1.15]">
+          <h2 className="font-editorial text-3xl sm:text-5xl lg:text-6xl font-normal text-[var(--text-primary)] tracking-tight leading-[1.15]">
             The Complete Nigerian Drip. <span className="italic font-light text-[var(--gold-accent)]">Escrow Secured.</span>
           </h2>
 
-          <p className="text-sm sm:text-base text-zinc-600 dark:text-[var(--text-secondary)] font-light leading-relaxed max-w-2xl mx-auto">
-            From bespoke Senator cuts and streetwear drops to handcrafted leather shoes, luxury bags, and fine jewelry — assemble your entire fit from Nigeria&apos;s finest independent fashion houses in one checkout.
+          <p className="text-sm sm:text-base text-[var(--text-secondary)] font-light leading-relaxed max-w-2xl mx-auto">
+            From bespoke Senator cuts and streetwear drops to handcrafted leather shoes, luxury bags, and fine jewelry — assemble your entire fit from Nigeria&apos;s finest independent fashion houses.
           </p>
         </div>
 
@@ -218,7 +218,7 @@ export default function ProblemSolution() {
             return (
               <div
                 key={idx}
-                className="relative p-7 sm:p-8 rounded-3xl bg-white/95 dark:bg-[#111114]/95 backdrop-blur-xl border border-black/8 dark:border-white/10 hover:border-[var(--gold-accent)]/80 flex flex-col justify-between space-y-7 shadow-[0_12px_35px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_55px_rgba(216,179,87,0.22)] hover:-translate-y-2.5 transition-all duration-500 group cursor-default"
+                className="relative p-7 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/80 flex flex-col justify-between space-y-7 shadow-xl hover:-translate-y-2.5 transition-all duration-500 group cursor-default"
               >
                 {/* Top Subtle Gold Accent Bar on Hover */}
                 <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-[var(--gold-accent)]/0 group-hover:via-[var(--gold-accent)]/90 to-transparent transition-all duration-500" />
@@ -230,7 +230,7 @@ export default function ProblemSolution() {
                       <Icon className="h-6 w-6 stroke-[1.8]" />
                     </div>
 
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-[var(--bg-secondary)] border border-black/5 dark:border-[var(--border-subtle)] group-hover:border-[var(--gold-accent)]/40 transition-colors">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] group-hover:border-[var(--gold-accent)]/40 transition-colors">
                       <span className="text-[10px] font-mono-luxury font-bold tracking-widest text-[var(--gold-accent)]">
                         {item.num}
                       </span>
@@ -242,26 +242,26 @@ export default function ProblemSolution() {
                     <span className="text-[9px] font-mono-luxury uppercase tracking-wider text-[var(--gold-accent)] font-bold block">
                       {item.sub}
                     </span>
-                    <h3 className="font-editorial text-2xl font-bold text-zinc-950 dark:text-[var(--text-primary)] group-hover:text-[var(--gold-accent)] transition-colors duration-300 leading-snug">
+                    <h3 className="font-editorial text-2xl font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-accent)] transition-colors duration-300 leading-snug">
                       {item.title}
                     </h3>
                     <div className="h-0.5 w-8 bg-[var(--gold-accent)]/30 group-hover:w-14 group-hover:bg-[var(--gold-accent)] transition-all duration-500 rounded-full" />
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs text-zinc-600 dark:text-[var(--text-secondary)] font-light leading-relaxed">
+                  <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
 
                 {/* Footer Meta Badge */}
-                <div className="pt-4 border-t border-black/5 dark:border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono-luxury">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono-luxury">
+                  <span className="text-emerald-500 font-bold flex items-center gap-1.5">
                     <Check className="h-3.5 w-3.5 stroke-[3]" />
                     <span>{item.tag}</span>
                   </span>
 
-                  <span className="text-[9px] uppercase tracking-wider text-zinc-400 dark:text-[var(--text-muted)] group-hover:text-[var(--gold-accent)] transition-colors flex items-center gap-0.5">
+                  <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)] group-hover:text-[var(--gold-accent)] transition-colors flex items-center gap-0.5">
                     <span>Protocol</span>
                     <ArrowUpRight className="h-3 w-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </span>
@@ -273,7 +273,7 @@ export default function ProblemSolution() {
 
         {/* Bottom Luxury Guarantee Banner */}
         <div className="mt-14 text-center">
-          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white dark:bg-[var(--bg-surface)]/70 border border-black/8 dark:border-[var(--border-subtle)] text-xs font-mono-luxury text-zinc-600 dark:text-[var(--text-secondary)] shadow-sm">
+          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury text-[var(--text-secondary)] shadow-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Escrow Fit Guarantee: Order native wear, shoes, bags & jewelry with 100% money-back security across Nigeria</span>
           </div>

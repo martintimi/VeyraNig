@@ -16,15 +16,27 @@ export default function LuxuryLoader({
   sublabel = 'Appearance & Presence · Nigerian Luxury',
   autoHideMs
 }: LuxuryLoaderProps) {
+  // If fullScreen (app splash screen), default to auto-hiding after 850ms
+  const effectiveAutoHide = autoHideMs !== undefined ? autoHideMs : (fullScreen ? 850 : undefined);
   const [visible, setVisible] = useState(true);
+  const [fadingOut, setFadingOut] = useState(false);
 
   useEffect(() => {
-    if (!autoHideMs) return;
-    const timer = setTimeout(() => {
+    if (!effectiveAutoHide) return;
+
+    const fadeTimer = setTimeout(() => {
+      setFadingOut(true);
+    }, Math.max(100, effectiveAutoHide - 250));
+
+    const removeTimer = setTimeout(() => {
       setVisible(false);
-    }, autoHideMs);
-    return () => clearTimeout(timer);
-  }, [autoHideMs]);
+    }, effectiveAutoHide);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [effectiveAutoHide]);
 
   if (!visible) return null;
 
@@ -59,14 +71,14 @@ export default function LuxuryLoader({
 
   if (!fullScreen) {
     return (
-      <div className="w-full min-h-[50vh] flex flex-col items-center justify-center p-8 transition-opacity duration-500">
+      <div className="w-full min-h-[50vh] flex flex-col items-center justify-center p-8 transition-opacity duration-300">
         {content}
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--bg-primary)] transition-opacity duration-700 pointer-events-none">
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--bg-primary)] transition-opacity duration-300 pointer-events-none ${fadingOut ? 'opacity-0' : 'opacity-100'}`}>
       {content}
     </div>
   );
