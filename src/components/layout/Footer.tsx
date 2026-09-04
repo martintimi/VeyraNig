@@ -9,7 +9,7 @@ import BrandWordmark from '@/components/common/BrandWordmark';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors">
+    <footer className="hidden md:block border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors">
       
       {/* 3 Pillars for Nigerian Shoppers */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 border-b border-[var(--border-subtle)]">
