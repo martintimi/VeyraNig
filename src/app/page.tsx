@@ -21,13 +21,13 @@ export default function Home() {
         {/* Dual-Row Velocity Kinetic Marquee */}
         <KineticMarquee />
 
-        {/* The Ìrísí Standards Luxury Pillars (The Complete Nigerian Drip) */}
-        <ProblemSolution />
-
         {/* Curated Nigerian Designers (Featured Designers) */}
         <CuratedAteliers />
 
-        {/* Partner Brands & Fast Lagos Delivery Matrix */}
+        {/* The Ìrísí Standards Luxury Pillars (The Complete Nigerian Drip) */}
+        <ProblemSolution />
+
+        {/* Partner Brands & Fast Delivery Matrix */}
         <BrandShowcase />
       </div>
     </>

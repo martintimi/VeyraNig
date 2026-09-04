@@ -65,8 +65,8 @@ export default function AppLayoutWrapper({ children }: { children: React.ReactNo
       {/* Floating Glassmorphic Mobile Bottom Dock (Strictly Mobile) */}
       <MobileBottomNav />
 
-      {/* Ambient Netflix-Style Idle Lookbook Screensaver */}
-      <AmbientScreenSaver />
+      {/* Ambient Netflix-Style Idle Lookbook Screensaver (Commented out temporarily - will add back later) */}
+      {/* <AmbientScreenSaver /> */}
     </SmoothScrollProvider>
   );
 }
