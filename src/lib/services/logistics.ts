@@ -125,9 +125,12 @@ export function estimateItemWeightKg(item: { name?: string; category?: string; g
   if (n.includes('senator') || c.includes('senator') || n.includes('kaftan') || c.includes('kaftan')) {
     return 1.1;
   }
-  // 3. Footwear (heels, sneakers, loafers, slides, boots + box packaging)
-  if (c.includes('footwear') || c.includes('shoe') || n.includes('shoe') || n.includes('slide') || n.includes('loafer') || n.includes('boot') || n.includes('sneaker') || n.includes('heel') || n.includes('mule')) {
-    return 1.3;
+  // 3. Footwear & Slides
+  if (n.includes('slide') || n.includes('sandal') || n.includes('slippers') || c === 'slides') {
+    return 0.8; // ~0.8kg for slides / mules in dust bag
+  }
+  if (c.includes('footwear') || c.includes('shoe') || n.includes('shoe') || n.includes('loafer') || n.includes('boot') || n.includes('sneaker') || n.includes('heel') || n.includes('mule')) {
+    return 1.3; // ~1.3kg for shoes / boots + shoebox
   }
   // 4. Heavyweight Hoodies, Jackets, Puffers, Fleece, Tracksuits
   if (n.includes('hoodie') || n.includes('jacket') || c.includes('outerwear') || n.includes('tracksuit') || n.includes('puffer') || n.includes('varsity') || n.includes('sweatshirt')) {
@@ -153,8 +156,12 @@ export function estimateItemWeightKg(item: { name?: string; category?: string; g
   if (n.includes('corset') || n.includes('crop') || n.includes('bodysuit') || n.includes('skirt') || n.includes('short')) {
     return 0.3;
   }
-  // 10. Caps, Hats, Jewelry, Sunglasses, Accessories
-  if (c.includes('accessories') || c.includes('jewelry') || n.includes('cap') || n.includes('hat') || n.includes('beanie') || n.includes('chain') || n.includes('ring') || n.includes('sunglass') || n.includes('shades')) {
+  // 10. Fine Jewelry & Chains (Cuban chains, rings, bracelets, pendants, earrings in pouch)
+  if (c.includes('jewelry') || n.includes('chain') || n.includes('ring') || n.includes('necklace') || n.includes('bracelet') || n.includes('pendant') || n.includes('earring') || n.includes('grillz')) {
+    return 0.2;
+  }
+  // 11. Caps, Hats, Sunglasses, Belts, Accessories
+  if (c.includes('accessories') || n.includes('cap') || n.includes('hat') || n.includes('beanie') || n.includes('sunglass') || n.includes('shades') || n.includes('belt')) {
     return 0.25;
   }
   // Default standard garment

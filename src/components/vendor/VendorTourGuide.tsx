@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, ArrowRight, ArrowLeft, X, CheckCircle2,
   UploadCloud, PackageCheck, ShieldCheck, MessageSquare,
-  BarChart3, Building, LayoutDashboard, ShoppingBag
+  BarChart3, Building, LayoutDashboard
 } from 'lucide-react';
 import IrisiIcon from '@/components/common/IrisiIcon';
 import { useStore } from '@/lib/store/useStore';
+import { getVendorSpecialty, isBoutiqueVendor, VendorSpecialty } from '@/types';
 
 interface TourStep {
   targetId: string;
@@ -23,7 +24,228 @@ interface TourStep {
   preferredPlacement: 'right' | 'bottom';
 }
 
-function getTourSteps(isBoutique: boolean): TourStep[] {
+function getTourSteps(specialty: VendorSpecialty, isBoutique: boolean): TourStep[] {
+  // 1. Specialized Jewelry Studio Tour
+  if (specialty === 'jewelry') {
+    return [
+      {
+        targetId: 'tour-nav-overview',
+        stepNumber: 1,
+        totalSteps: 8,
+        title: 'Overview (Your Jewelry Studio at a Glance)',
+        category: 'Jewelry Command',
+        description:
+          'Your jewelry command tower. Track daily chain, ring, and bracelet orders, active escrow payouts, and live inventory across metal finishes (18K PVD Gold, 925 Silver, Stainless Steel).',
+        keyAction: 'Check this page daily to monitor ring size stock and pending order shipments.',
+        icon: Sparkles,
+        accentColor: 'text-[var(--gold-accent)]',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-publish',
+        stepNumber: 2,
+        totalSteps: 8,
+        title: 'Add Jewelry Drop (Chains, Rings & Pendants)',
+        category: 'Drop Launch',
+        description:
+          'Upload macro photos of your Cuban chains, tennis bracelets, signet rings, or pendants. Specify chain lengths (18"-24"), ring sizes (US 6-12), and metal purity, set your Naira price, and publish.',
+        keyAction: 'Clearly state metal type (e.g. 316L Stainless Steel, Water-Resistant) to build buyer trust.',
+        icon: UploadCloud,
+        accentColor: 'text-amber-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-stories',
+        stepNumber: 3,
+        totalSteps: 8,
+        title: 'Drop Stories (Macro Shine & Stacking Clips)',
+        category: 'Social Selling',
+        description:
+          'Post 15-second high-clarity video clips showing jewelry shine under daylight, water-resistance tests, or wrist/neck stacking combinations. Jewelry videos convert rapidly.',
+        keyAction: 'Post daily jewelry stacking videos to sell out limited pieces quickly.',
+        icon: Sparkles,
+        accentColor: 'text-[var(--gold-accent)]',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-orders',
+        stepNumber: 4,
+        totalSteps: 8,
+        title: 'Jewelry Orders to Pack & Dispatch',
+        category: 'Secure Packaging',
+        description:
+          'When an order drops, confirm the customer’s chain length or ring size. Place the piece inside its velvet pouch or jewelry box, pack into a padded courier bubble mailer, attach the waybill, and hand it to the rider.',
+        keyAction: 'Always pack in padded bubble packaging to protect chains and stone prongs during transit.',
+        icon: PackageCheck,
+        accentColor: 'text-sky-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-settlements',
+        stepNumber: 5,
+        totalSteps: 8,
+        title: 'Settlements & Bank Payouts',
+        category: 'Guaranteed Payouts',
+        description:
+          'Customer funds are locked in 100% Escrow upfront before you pack the order. Once the courier delivers to the customer, your payout settles directly into your Nigerian bank account.',
+        keyAction: 'Add your 10-digit NUBAN bank account number here so jewelry payouts land automatically.',
+        icon: ShieldCheck,
+        accentColor: 'text-emerald-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-direct-sales',
+        stepNumber: 6,
+        totalSteps: 8,
+        title: 'Direct Sales & WhatsApp Jewelry POS',
+        category: 'Close Customers Anywhere',
+        description:
+          'Have clients bargaining in your WhatsApp/Instagram DMs or requesting custom jewelry pieces? Generate an instant 1-click escrow payment link or QR code so they pay via transfer or card on the spot.',
+        keyAction: 'Use direct payment links for custom commissions and DM inquiries.',
+        icon: MessageSquare,
+        accentColor: 'text-purple-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-reports',
+        stepNumber: 7,
+        totalSteps: 8,
+        title: 'Jewelry Analytics & Best-Selling Pieces',
+        category: 'Business Growth',
+        description:
+          'See your most popular chain designs, most requested ring sizes, and monthly revenue so you know exactly which jewelry pieces to restock.',
+        keyAction: 'Restock your fastest-moving chain lengths and ring sizes before they sell out.',
+        icon: BarChart3,
+        accentColor: 'text-indigo-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-atelier',
+        stepNumber: 8,
+        totalSteps: 8,
+        title: 'Jewelry Brand Profile & Studio Address',
+        category: 'Storefront Setup',
+        description:
+          'Set your brand name, logo, jewelry aesthetic bio, and the studio pickup address where courier riders will collect parcels.',
+        keyAction: 'Make sure your studio pickup address and phone number are always correct.',
+        icon: Building,
+        accentColor: 'text-rose-500',
+        preferredPlacement: 'right'
+      }
+    ];
+  }
+
+  // 2. Specialized Footwear & Slides Tour
+  if (specialty === 'footwear') {
+    return [
+      {
+        targetId: 'tour-nav-overview',
+        stepNumber: 1,
+        totalSteps: 8,
+        title: 'Overview (Your Footwear & Slides Hub)',
+        category: 'Footwear Command',
+        description:
+          'Your footwear command center. Monitor daily slide, mule, sneaker, and loafer orders, active escrow payouts, and live stock count across all EU shoe sizes (38–46).',
+        keyAction: 'Check this page daily to manage incoming shoe orders and stock availability.',
+        icon: LayoutDashboard,
+        accentColor: 'text-amber-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-publish',
+        stepNumber: 2,
+        totalSteps: 8,
+        title: 'Add Footwear / Slide Drop (List New Pairs)',
+        category: 'Drop Launch',
+        description:
+          'Upload angle shots and on-foot pictures of your leather slides, mules, loafers, or sneakers. Set EU shoe sizes (38 to 46), colorways, and sole materials, set your price in Naira, and publish.',
+        keyAction: 'State if sizing is true-to-size or wide-fit to eliminate shoe sizing returns.',
+        icon: UploadCloud,
+        accentColor: 'text-amber-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-stories',
+        stepNumber: 3,
+        totalSteps: 8,
+        title: 'Footwear Stories (On-Foot Styling & Flex Videos)',
+        category: 'Social Selling',
+        description:
+          'Post 15-second clips of on-foot styling, sole comfort flexing, or leather craftsmanship. Shoppers buy slides and shoes much faster when they see how they look on-foot with socks or trousers.',
+        keyAction: 'Post on-foot styling videos to showcase comfort and drive fast orders.',
+        icon: Sparkles,
+        accentColor: 'text-[var(--gold-accent)]',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-orders',
+        stepNumber: 4,
+        totalSteps: 8,
+        title: 'Footwear Orders to Pack & Dispatch',
+        category: 'Shoe Fulfillment',
+        description:
+          'When an order drops, confirm the customer’s EU shoe size, place the shoes in their dust bag and branded shoebox, print the automated courier waybill, and hand it to the rider.',
+        keyAction: 'Pack securely in dust bags and shoeboxes to prevent scuffs during transit.',
+        icon: PackageCheck,
+        accentColor: 'text-sky-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-settlements',
+        stepNumber: 5,
+        totalSteps: 8,
+        title: 'Settlements & Bank Payouts',
+        category: 'Guaranteed Payouts',
+        description:
+          'Customer funds are locked in 100% Escrow upfront before you dispatch. Once the courier delivers to the customer, your payout settles directly into your Nigerian bank account.',
+        keyAction: 'Add your 10-digit NUBAN account number here so footwear payouts land automatically.',
+        icon: ShieldCheck,
+        accentColor: 'text-emerald-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-direct-sales',
+        stepNumber: 6,
+        totalSteps: 8,
+        title: 'Direct Sales & WhatsApp Shoe POS',
+        category: 'Instant Selling',
+        description:
+          'Have walk-in customers trying on shoes in your physical store or clients chatting on WhatsApp? Generate an instant 1-click escrow payment link or QR code so they pay via transfer or card on the spot.',
+        keyAction: 'Close in-person and DM shoe buyers with 1-click escrow payment links.',
+        icon: MessageSquare,
+        accentColor: 'text-purple-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-reports',
+        stepNumber: 7,
+        totalSteps: 8,
+        title: 'Footwear Sales & Top Size Analytics',
+        category: 'Stock Trends',
+        description:
+          'See which EU sizes (e.g. 42, 43, 44) and which slide colorways sell out quickest so you can restock high-demand sizes proactively.',
+        keyAction: 'Keep your top-selling shoe sizes (EU 41–44) constantly restocked.',
+        icon: BarChart3,
+        accentColor: 'text-indigo-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-atelier',
+        stepNumber: 8,
+        totalSteps: 8,
+        title: 'Footwear Brand Profile & Workshop',
+        category: 'Brand Setup',
+        description:
+          'Set your brand name, logo, craft bio, and the workshop or store pickup address where courier riders will collect shoeboxes.',
+        keyAction: 'Keep your pickup address and phone number accurate for dispatch riders.',
+        icon: Building,
+        accentColor: 'text-rose-500',
+        preferredPlacement: 'right'
+      }
+    ];
+  }
+
+  // 3. Ready-to-Wear (RTW) Boutique Seller Tour
   if (isBoutique) {
     return [
       {
@@ -133,7 +355,7 @@ function getTourSteps(isBoutique: boolean): TourStep[] {
     ];
   }
 
-  // Bespoke Atelier & Designer Version
+  // 4. Bespoke Fashion Designer & Atelier Tour
   return [
     {
       targetId: 'tour-nav-overview',
@@ -242,7 +464,7 @@ function getTourSteps(isBoutique: boolean): TourStep[] {
   ];
 }
 
-const STORAGE_KEY = 'irisi_vendor_tour_completed_v6';
+const STORAGE_KEY = 'irisi_vendor_tour_completed_v7';
 
 interface VendorTourGuideProps {
   isOpen?: boolean;
@@ -251,8 +473,10 @@ interface VendorTourGuideProps {
 
 export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: controlledOnClose }: VendorTourGuideProps = {}) {
   const { vendorProfile } = useStore();
-  const isBoutique = vendorProfile?.vendorType === 'boutique_merchant';
-  const tourSteps = useMemo(() => getTourSteps(isBoutique), [isBoutique]);
+  const isBoutique = isBoutiqueVendor(vendorProfile);
+  const specialty = getVendorSpecialty(vendorProfile);
+
+  const tourSteps = useMemo(() => getTourSteps(specialty, isBoutique), [specialty, isBoutique]);
 
   const [tourActive, setTourActive] = useState(false);
   const [showInviteToast, setShowInviteToast] = useState(false);
@@ -447,6 +671,11 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
     }
   }
 
+  const portalDescriptor = 
+    specialty === 'jewelry' ? 'Jewelry Studio' :
+    specialty === 'footwear' ? 'Footwear Hub' :
+    isBoutique ? 'Boutique' : 'Atelier';
+
   return (
     <>
       {/* ── 1. THEME-AWARE FLOATING INVITE TOAST (Matches Light & Dark Mode) ── */}
@@ -464,7 +693,7 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
               </div>
               <div className="min-w-0">
                 <span className="text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold block">
-                  New to Ìrísí {isBoutique ? 'Boutique' : 'Atelier'}?
+                  New to Ìrísí {portalDescriptor}?
                 </span>
                 <p className="text-xs font-bold text-[var(--text-primary)] truncate">
                   Take a 1-minute guided tour?
