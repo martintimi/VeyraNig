@@ -262,10 +262,12 @@ export default function MobileShopView() {
                           {product.name}
                         </h3>
                       </Link>
-                      {/* Gold Price Matching Desktop */}
-                      <p className="font-editorial text-sm font-normal text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm pt-0.5">
-                        ₦{Number(product.price || 0).toLocaleString()}
-                      </p>
+                      {/* Prominent High-Legibility Price */}
+                      <div className="flex items-baseline gap-1.5 pt-1">
+                        <span className="font-editorial text-base sm:text-lg font-bold text-amber-600 dark:text-[var(--gold-accent)] drop-shadow-sm">
+                          ₦{Number(product.price || 0).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
 

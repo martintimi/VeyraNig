@@ -205,15 +205,12 @@ export default function DirectSalesAssistantPage() {
         if (logoImg.width > 0) {
           ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
           ctx.beginPath();
-          ctx.roundRect(740, 48, 290, 72, 36);
+          ctx.roundRect(760, 48, 270, 72, 36);
           ctx.fill();
           ctx.strokeStyle = 'rgba(230, 195, 103, 0.6)';
           ctx.lineWidth = 2.5;
           ctx.stroke();
-          ctx.drawImage(logoImg, 765, 56, 170, 54);
-          ctx.fillStyle = '#e6c367';
-          ctx.font = 'bold 16px sans-serif';
-          ctx.fillText('3D', 960, 90);
+          ctx.drawImage(logoImg, 810, 56, 170, 54);
         }
       } catch (e) {
         console.error('Logo render error', e);
@@ -232,11 +229,11 @@ export default function DirectSalesAssistantPage() {
 
         ctx.fillStyle = '#10b981';
         ctx.font = 'bold 24px sans-serif';
-        ctx.fillText('● 3D Virtual Fit & Doorstep Nationwide Dispatch · irisi.ng', 50, 1265);
+        ctx.fillText('● Secure Escrow & Doorstep Nationwide Dispatch · irisi.ng', 50, 1265);
       } else {
         ctx.fillStyle = '#10b981';
         ctx.font = 'bold 26px sans-serif';
-        ctx.fillText('● 3D Custom Fit on Ìrísí · Tap Link in Bio to Order', 50, 1245);
+        ctx.fillText('● Verified Brand on Ìrísí · Tap Link in Bio to Order', 50, 1245);
       }
 
       const dataUrl = canvas.toDataURL('image/png');
