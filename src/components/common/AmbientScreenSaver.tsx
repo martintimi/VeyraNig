@@ -48,7 +48,7 @@ const DEFAULT_EDITORIAL_SLIDES: EditorialSlide[] = [
     title: 'Artisanal Silk Boubous & Gowns',
     categoryName: "Women's Couture & Silks",
     designerName: 'Arike Brand',
-    imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1400&auto=format&fit=crop',
+    imageUrl: '/images/editorial/female_dress.jpg',
     description: 'Flowing rich-auntie silk Bubu dresses with vibrant African motifs and fluid silhouette.',
     linkUrl: '/shop'
   },
@@ -102,8 +102,8 @@ const DEFAULT_EDITORIAL_SLIDES: EditorialSlide[] = [
     title: 'Contemporary Dresses & Co-ord Sets',
     categoryName: "Women's Ready-to-Wear",
     designerName: 'Arike Brand',
-    imageUrl: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=1400&auto=format&fit=crop',
-    description: 'Tailored two-piece co-ord sets, evening dresses, pleated skirts, and chic ready-to-wear silhouettes.',
+    imageUrl: '/images/editorial/female_shirt.jpg',
+    description: 'Tailored two-piece co-ord sets, silk trousers, evening dresses, and chic ready-to-wear silhouettes.',
     linkUrl: '/shop'
   },
   {

@@ -20,7 +20,7 @@ const editorialSlides = [
     tag: 'Men & Unisex Native'
   },
   {
-    image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=1200&auto=format&fit=crop',
+    image: '/images/editorial/female_dress.jpg',
     title: 'Artisanal Silk Boubous & Gowns',
     subtitle: 'Flowing silk Bubu dresses, artisanal Adire robes, and vibrant African heritage maxis.',
     tag: "Women's Couture & Silks"
@@ -32,9 +32,9 @@ const editorialSlides = [
     tag: 'Streetwear & Hoodies'
   },
   {
-    image: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=1200&auto=format&fit=crop',
+    image: '/images/editorial/female_shirt.jpg',
     title: 'Contemporary Dresses & Co-ord Sets',
-    subtitle: 'Tailored two-piece co-ord sets, evening dresses, pleated skirts, and chic ready-to-wear silhouettes.',
+    subtitle: 'Tailored two-piece co-ord sets, silk trousers, evening dresses, and chic ready-to-wear silhouettes.',
     tag: "Women's Ready-to-Wear"
   },
   {
