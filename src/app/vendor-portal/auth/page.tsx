@@ -431,9 +431,9 @@ export default function VendorAuthPage() {
         
         {/* Top Header */}
         <div className="flex items-center justify-between mb-8">
-          <Link href="/" className="lg:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-2">
             <BrandWordmark size="sm" withSubtitle={false} />
-          </Link>
+          </div>
           
           <div className="flex items-center gap-3 ml-auto">
             <button

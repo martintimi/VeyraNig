@@ -381,7 +381,7 @@ export default function VendorOverviewPage() {
             </div>
           </div>
 
-          <div className="p-6 rounded-3xl surface-card space-y-2 border border-[var(--border-subtle)]">
+          <div id="tour-stats-escrow" className="p-6 rounded-3xl surface-card space-y-2 border border-[var(--border-subtle)]">
             <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase tracking-wider">Active Escrow Balance</span>
             <div className="font-editorial text-3xl font-bold text-[var(--gold-accent)]">
               ₦{totalEscrowLocked.toLocaleString()}

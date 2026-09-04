@@ -96,48 +96,56 @@ export default function VendorPortalLayout({
 
   const navItems = [
     {
+      id: 'tour-nav-overview',
       label: 'Overview',
       href: '/vendor-portal',
       icon: LayoutDashboard,
       active: pathname === '/vendor-portal'
     },
     {
+      id: 'tour-nav-publish',
       label: specialty === 'jewelry' ? 'Add Jewelry Drop' : specialty === 'footwear' ? 'Add Footwear Drop' : isBoutique ? 'Add RTW Product' : 'Publish Bespoke Garment',
       href: '/vendor-portal/publish',
       icon: UploadCloud,
       active: pathname === '/vendor-portal/publish'
     },
     {
+      id: 'tour-nav-stories',
       label: 'Post Drop Story',
       href: '/vendor-portal/stories',
       icon: Sparkles,
       active: pathname === '/vendor-portal/stories'
     },
     {
+      id: 'tour-nav-orders',
       label: specialty === 'jewelry' ? 'Jewelry Orders to Pack' : specialty === 'footwear' ? 'Footwear Orders to Pack' : isBoutique ? 'Orders to Pack & Dispatch' : 'Tailoring Orders to Cut',
       href: '/vendor-portal/orders',
       icon: PackageCheck,
       active: pathname === '/vendor-portal/orders'
     },
     {
+      id: 'tour-nav-reports',
       label: 'Reports & Sales',
       href: '/vendor-portal/reports',
       icon: BarChart3,
       active: pathname === '/vendor-portal/reports'
     },
     {
+      id: 'tour-nav-atelier',
       label: specialty === 'jewelry' ? 'Jewelry Store Profile' : specialty === 'footwear' ? 'Footwear Store Profile' : isBoutique ? 'Boutique Store Profile' : 'Atelier Store Profile',
       href: '/vendor-portal/atelier',
       icon: Building,
       active: pathname === '/vendor-portal/atelier'
     },
     {
+      id: 'tour-nav-direct-sales',
       label: 'Direct Sales Assistant',
       href: '/vendor-portal/direct-sales',
       icon: MessageSquare,
       active: pathname === '/vendor-portal/direct-sales'
     },
     {
+      id: 'tour-nav-settlements',
       label: 'Settlements & Banking',
       href: '/vendor-portal/settlements',
       icon: DollarSign,
@@ -331,6 +339,7 @@ export default function VendorPortalLayout({
                 return (
                   <Link
                     key={item.href}
+                    id={item.id}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all font-bold ${
