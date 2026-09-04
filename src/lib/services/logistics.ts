@@ -110,37 +110,54 @@ export const WAYBILL_SAFETY_BUFFER = 300; // Flat ₦300 safety margin added to 
 
 /**
  * Intelligent Weight Estimation by Garment Category & Material (in kg)
+ * Covers both Ready-to-Wear (RTW) Boutiques and Bespoke Designer Ateliers
  */
 export function estimateItemWeightKg(item: { name?: string; category?: string; garmentOriginType?: string }): number {
-  if (!item) return 0.8;
+  if (!item) return 0.6;
   const n = (item.name || '').toLowerCase();
   const c = (item.category || '').toLowerCase();
 
-  // Heavy Agbada / Boubou / Ceremonial 3-piece
+  // 1. Traditional Ceremonial Wear (heavy damask / embroidery / aso-oke)
   if (n.includes('agbada') || c.includes('agbada') || c.includes('boubou') || n.includes('ceremonial')) {
     return 1.6;
   }
-  // Senator / Kaftan 2-piece sets
+  // 2. Senator / Kaftan 2-piece sets
   if (n.includes('senator') || c.includes('senator') || n.includes('kaftan') || c.includes('kaftan')) {
     return 1.1;
   }
-  // Footwear / Shoes / Slides / Boots + Box
-  if (c.includes('footwear') || c.includes('shoe') || n.includes('shoe') || n.includes('slide') || n.includes('loafer') || n.includes('boot')) {
+  // 3. Footwear (heels, sneakers, loafers, slides, boots + box packaging)
+  if (c.includes('footwear') || c.includes('shoe') || n.includes('shoe') || n.includes('slide') || n.includes('loafer') || n.includes('boot') || n.includes('sneaker') || n.includes('heel') || n.includes('mule')) {
     return 1.3;
   }
-  // Heavyweight Hoodies / Jackets / Fleece
-  if (n.includes('hoodie') || n.includes('jacket') || c.includes('outerwear') || n.includes('tracksuit')) {
+  // 4. Heavyweight Hoodies, Jackets, Puffers, Fleece, Tracksuits
+  if (n.includes('hoodie') || n.includes('jacket') || c.includes('outerwear') || n.includes('tracksuit') || n.includes('puffer') || n.includes('varsity') || n.includes('sweatshirt')) {
     return 1.0;
   }
-  // Jeans / Denim / Cargo Trousers
-  if (n.includes('jean') || n.includes('cargo') || c.includes('bottoms') || c.includes('denim') || n.includes('trouser')) {
+  // 5. Tailored Blazers & Suits
+  if (n.includes('blazer') || n.includes('suit') || c.includes('blazers')) {
+    return 0.9;
+  }
+  // 6. Jeans, Denim, Cargo Trousers, Parachute Pants
+  if (n.includes('jean') || n.includes('cargo') || c.includes('bottoms') || c.includes('denim') || n.includes('trouser') || n.includes('pant')) {
     return 0.8;
   }
-  // Caps / Jewelry / Small Accessories
-  if (c.includes('accessories') || c.includes('jewelry') || n.includes('cap') || n.includes('hat') || n.includes('beanie')) {
+  // 7. Ready-to-Wear Boutique Dresses & Co-ord Sets (silk, satin, crepe, knitwear)
+  if (n.includes('dress') || c.includes('dresses') || n.includes('co-ord') || n.includes('set') || n.includes('jumpsuit') || n.includes('gown')) {
+    return 0.6;
+  }
+  // 8. T-shirts, Graphic Boxy Tees, Polo Shirts
+  if (n.includes('tee') || n.includes('shirt') || n.includes('polo') || c.includes('tops')) {
+    return 0.35;
+  }
+  // 9. Boutique Crop Tops, Corsets, Bodysuits, Skirts, Shorts
+  if (n.includes('corset') || n.includes('crop') || n.includes('bodysuit') || n.includes('skirt') || n.includes('short')) {
     return 0.3;
   }
-  // Standard tops / shirts / dresses
+  // 10. Caps, Hats, Jewelry, Sunglasses, Accessories
+  if (c.includes('accessories') || c.includes('jewelry') || n.includes('cap') || n.includes('hat') || n.includes('beanie') || n.includes('chain') || n.includes('ring') || n.includes('sunglass') || n.includes('shades')) {
+    return 0.25;
+  }
+  // Default standard garment
   return 0.5;
 }
 

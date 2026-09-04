@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, ArrowRight, ArrowLeft, X, CheckCircle2,
   UploadCloud, PackageCheck, ShieldCheck, MessageSquare,
-  BarChart3, Building, LayoutDashboard
+  BarChart3, Building, LayoutDashboard, ShoppingBag
 } from 'lucide-react';
 import IrisiIcon from '@/components/common/IrisiIcon';
+import { useStore } from '@/lib/store/useStore';
 
 interface TourStep {
   targetId: string;
@@ -22,114 +23,226 @@ interface TourStep {
   preferredPlacement: 'right' | 'bottom';
 }
 
-const TOUR_STEPS: TourStep[] = [
-  {
-    targetId: 'tour-nav-overview',
-    stepNumber: 1,
-    totalSteps: 8,
-    title: 'Overview (Your Store at a Glance)',
-    category: 'Home Base',
-    description:
-      'This is your main dashboard. Every time you log in, you will see how many orders are waiting for you to pack, how much money is currently in your escrow balance, and how many of your products are live.',
-    keyAction: 'Check this page daily to see your incoming sales and pending tasks.',
-    icon: LayoutDashboard,
-    accentColor: 'text-amber-500',
-    preferredPlacement: 'right'
-  },
-  {
-    targetId: 'tour-nav-publish',
-    stepNumber: 2,
-    totalSteps: 8,
-    title: 'Add Product (Upload Your Items)',
-    category: 'Product Uploads',
-    description:
-      'Click here whenever you have new clothes, shoes, or accessories to sell. Upload bright, clear photos, write your price in Naira, pick available sizes, and click Publish. Immediately, buyers across all 36 states can see and order your items.',
-    keyAction: 'Upload clear photos and accurate measurements so buyers order the right size.',
-    icon: UploadCloud,
-    accentColor: 'text-amber-500',
-    preferredPlacement: 'right'
-  },
-  {
-    targetId: 'tour-nav-stories',
-    stepNumber: 3,
-    totalSteps: 8,
-    title: 'Drop Stories (Like WhatsApp Status)',
-    category: 'Customer Engagement',
-    description:
-      'Just like WhatsApp or Instagram status! Post short behind-the-scenes clips of your tailors sewing, new fabric arriving, or finished clothes on a mannequin. Shoppers love seeing your craftsmanship, and stories bring in fast orders.',
-    keyAction: 'Post a 15-second video whenever you finish a new design to get buyers excited.',
-    icon: Sparkles,
-    accentColor: 'text-[var(--gold-accent)]',
-    preferredPlacement: 'right'
-  },
-  {
-    targetId: 'tour-nav-orders',
-    stepNumber: 4,
-    totalSteps: 8,
-    title: 'Orders to Pack & Send',
-    category: 'Fulfillment & Dispatch',
-    description:
-      'When a customer buys your piece, the order appears right here. You will see what they ordered and their delivery details. Ìrísí automatically generates the courier waybill. Just print it, paste it on the parcel, and hand it to the dispatch rider when they arrive.',
-    keyAction: 'Pack and dispatch within 24 to 48 hours to maintain a high store rating.',
-    icon: PackageCheck,
-    accentColor: 'text-sky-500',
-    preferredPlacement: 'right'
-  },
-  {
-    targetId: 'tour-nav-settlements',
-    stepNumber: 5,
-    totalSteps: 8,
-    title: 'Settlements & Bank Payouts',
-    category: 'Getting Your Money',
-    description:
-      'This is where your money lands! When a customer places an order, their money is safely held in 100% Escrow. Once the rider delivers the parcel to the customer, your money is released straight into your Nigerian bank account. No fake transfer alerts, no stories.',
-    keyAction: 'Add your 10-digit NUBAN bank account number here so payouts land automatically.',
-    icon: ShieldCheck,
-    accentColor: 'text-emerald-500',
-    preferredPlacement: 'right'
-  },
-  {
-    targetId: 'tour-nav-direct-sales',
-    stepNumber: 6,
-    totalSteps: 8,
-    title: 'Direct Sales Assistant (WhatsApp & In-Store POS)',
-    category: 'Close Customers Anywhere',
-    description:
-      'Do you have customers bargaining with you in your WhatsApp DMs or walking into your physical boutique? Use this tool to create an instant payment link or QR code. Send the link to the customer, they pay with their card or bank transfer, and the sale is recorded instantly.',
-    keyAction: 'Use this for walk-in buyers and Instagram DMs so you never lose a sale.',
-    icon: MessageSquare,
-    accentColor: 'text-purple-500',
-    preferredPlacement: 'right'
-  },
-  {
-    targetId: 'tour-nav-reports',
-    stepNumber: 7,
-    totalSteps: 8,
-    title: 'Reports & Sales Analytics',
-    category: 'Business Growth',
-    description:
-      'Want to know how much profit you made this week or month? This page shows your total sales, your best-selling designs, and which styles customers are buying the most.',
-    keyAction: 'Use reports to know which clothes to make more of and restock.',
-    icon: BarChart3,
-    accentColor: 'text-indigo-500',
-    preferredPlacement: 'right'
-  },
-  {
-    targetId: 'tour-nav-atelier',
-    stepNumber: 8,
-    totalSteps: 8,
-    title: 'Store Profile & Workshop Address',
-    category: 'Your Public Brand Window',
-    description:
-      'This is your official store setup. Set your brand name, logo, shop bio, and your workshop address where delivery couriers will come to pick up parcels. You can also view how your store looks to shoppers on Ìrísí.',
-    keyAction: 'Make sure your workshop address and phone number are always correct.',
-    icon: Building,
-    accentColor: 'text-rose-500',
-    preferredPlacement: 'right'
+function getTourSteps(isBoutique: boolean): TourStep[] {
+  if (isBoutique) {
+    return [
+      {
+        targetId: 'tour-nav-overview',
+        stepNumber: 1,
+        totalSteps: 8,
+        title: 'Overview (Your Boutique at a Glance)',
+        category: 'Boutique Hub',
+        description:
+          'Your central command tower. See your daily sales, orders waiting to be packed from your shelves, active escrow payouts, and live stock count across all sizes.',
+        keyAction: 'Check this page daily to track your incoming orders and live stock levels.',
+        icon: LayoutDashboard,
+        accentColor: 'text-amber-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-publish',
+        stepNumber: 2,
+        totalSteps: 8,
+        title: 'Add RTW Product (Upload Ready-Made Inventory)',
+        category: 'Stock Management',
+        description:
+          'Upload your streetwear drops, party dresses, co-ords, blazers, cargo pants, or footwear. Select sizes (XS, S, M, L, XL), assign quantities per colorway, set your Naira price, and launch to shoppers nationwide.',
+        keyAction: 'Set accurate quantities per size so you never oversell out-of-stock pieces.',
+        icon: UploadCloud,
+        accentColor: 'text-amber-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-stories',
+        stepNumber: 3,
+        totalSteps: 8,
+        title: 'Drop Stories (Promote New Arrivals & Restocks)',
+        category: 'Customer Engagement',
+        description:
+          'Just like Instagram or WhatsApp status! Post short 15-second videos of new boutique arrivals, styling videos on models, or announcing a restock of sold-out sizes. Stories drive fast sales.',
+        keyAction: 'Post new arrivals to create excitement and sell out limited sizes fast.',
+        icon: Sparkles,
+        accentColor: 'text-[var(--gold-accent)]',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-orders',
+        stepNumber: 4,
+        totalSteps: 8,
+        title: 'Orders to Pack & Dispatch',
+        category: 'Fulfillment & Courier',
+        description:
+          'When a shopper buys your item, it lands here with their chosen size and colorway. Pick the piece from your shelf, fold it clean into a courier flyer bag, print the automated courier waybill, and hand it to the rider.',
+        keyAction: 'Same-day or 24h dispatch earns your boutique a Top Merchant badge.',
+        icon: PackageCheck,
+        accentColor: 'text-sky-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-settlements',
+        stepNumber: 5,
+        totalSteps: 8,
+        title: 'Settlements & Bank Payouts',
+        category: 'Getting Your Money',
+        description:
+          'Customer payment is locked in 100% Escrow upfront before you even pack the box. Once the courier delivers the parcel, your payout settles directly into your Nigerian bank account.',
+        keyAction: 'Add your 10-digit NUBAN bank account number here so payouts land automatically.',
+        icon: ShieldCheck,
+        accentColor: 'text-emerald-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-direct-sales',
+        stepNumber: 6,
+        totalSteps: 8,
+        title: 'Direct Sales & In-Store POS',
+        category: 'Sell Anywhere',
+        description:
+          'Selling to walk-in customers inside your physical boutique or chatting with buyers in your Instagram DMs? Generate a quick 1-click escrow payment link or QR code so they pay via transfer, card, or USSD on the spot.',
+        keyAction: 'Use this for in-store shoppers and Instagram DMs to close sales immediately.',
+        icon: MessageSquare,
+        accentColor: 'text-purple-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-reports',
+        stepNumber: 7,
+        totalSteps: 8,
+        title: 'Sales Reports & Best Sellers',
+        category: 'Store Analytics',
+        description:
+          'Track which sizes (S, M, L, XL) and styles (dresses, tees, cargo pants) sell out fastest. See your daily revenue so you know exactly what inventory to restock.',
+        keyAction: 'Restock your best-selling sizes and styles before they sell out.',
+        icon: BarChart3,
+        accentColor: 'text-indigo-500',
+        preferredPlacement: 'right'
+      },
+      {
+        targetId: 'tour-nav-atelier',
+        stepNumber: 8,
+        totalSteps: 8,
+        title: 'Boutique Profile & Storefront',
+        category: 'Your Public Brand Window',
+        description:
+          'Set your boutique name, brand logo, shop bio, and your physical store or warehouse address where courier riders will pick up parcels.',
+        keyAction: 'Make sure your store address and phone number are always correct.',
+        icon: Building,
+        accentColor: 'text-rose-500',
+        preferredPlacement: 'right'
+      }
+    ];
   }
-];
 
-const STORAGE_KEY = 'irisi_vendor_tour_completed_v5';
+  // Bespoke Atelier & Designer Version
+  return [
+    {
+      targetId: 'tour-nav-overview',
+      stepNumber: 1,
+      totalSteps: 8,
+      title: 'Overview (Your Atelier at a Glance)',
+      category: 'Command Tower',
+      description:
+        'Your central atelier dashboard. See your active cutting queue, orders waiting to be sewn and packaged, active escrow balance, and live bespoke pieces.',
+      keyAction: 'Check this page daily to manage incoming commissions and delivery deadlines.',
+      icon: LayoutDashboard,
+      accentColor: 'text-amber-500',
+      preferredPlacement: 'right'
+    },
+    {
+      targetId: 'tour-nav-publish',
+      stepNumber: 2,
+      totalSteps: 8,
+      title: 'Publish Piece (Drop Your Designs)',
+      category: 'Collection Launch',
+      description:
+        'Upload your native sets, bespoke cuts, streetwear drops, or handcrafted footwear. Set your price in Naira, configure sizing and lead times, and publish to clients nationwide.',
+      keyAction: 'Upload high-resolution editorial photos to showcase your tailoring details.',
+      icon: UploadCloud,
+      accentColor: 'text-amber-500',
+      preferredPlacement: 'right'
+    },
+    {
+      targetId: 'tour-nav-stories',
+      stepNumber: 3,
+      totalSteps: 8,
+      title: 'Drop Stories (Showcase Your Craft)',
+      category: 'Customer Engagement',
+      description:
+        'Post behind-the-scenes video clips of your workshop, fabric cutting, embroidery details, or garments on a mannequin. Craftsmanship stories attract high-ticket clients.',
+      keyAction: 'Post a 15-second clip whenever you finish a new garment to build brand prestige.',
+      icon: Sparkles,
+      accentColor: 'text-[var(--gold-accent)]',
+      preferredPlacement: 'right'
+    },
+    {
+      targetId: 'tour-nav-orders',
+      stepNumber: 4,
+      totalSteps: 8,
+      title: 'Orders to Pack & Dispatch',
+      category: 'Fulfillment & Dispatch',
+      description:
+        'When a client orders, their piece appears here. Ìrísí automatically generates the courier waybill. Pack the garment neatly, attach the waybill, and hand it to the dispatch rider.',
+      keyAction: 'Dispatch within your promised lead time to maintain a Top Atelier rating.',
+      icon: PackageCheck,
+      accentColor: 'text-sky-500',
+      preferredPlacement: 'right'
+    },
+    {
+      targetId: 'tour-nav-settlements',
+      stepNumber: 5,
+      totalSteps: 8,
+      title: 'Settlements & Bank Payouts',
+      category: 'Guaranteed Earnings',
+      description:
+        'Client funds are locked in 100% Escrow before you cut a single inch of fabric. Once the courier delivers to the client, your payout lands straight in your Nigerian bank account.',
+      keyAction: 'Add your 10-digit NUBAN bank account number here so payouts settle automatically.',
+      icon: ShieldCheck,
+      accentColor: 'text-emerald-500',
+      preferredPlacement: 'right'
+    },
+    {
+      targetId: 'tour-nav-direct-sales',
+      stepNumber: 6,
+      totalSteps: 8,
+      title: 'Direct Sales & Atelier POS',
+      category: 'Client Orders Anywhere',
+      description:
+        'Have clients consulting in your WhatsApp DMs or walking into your physical atelier? Create an instant escrow payment link or QR code so they pay via transfer, card, or USSD.',
+      keyAction: 'Use direct payment links for custom commissions and in-person consultations.',
+      icon: MessageSquare,
+      accentColor: 'text-purple-500',
+      preferredPlacement: 'right'
+    },
+    {
+      targetId: 'tour-nav-reports',
+      stepNumber: 7,
+      totalSteps: 8,
+      title: 'Atelier Reports & Revenue',
+      category: 'Business Growth',
+      description:
+        'Track your total commission revenue, your most popular styles, and monthly growth to expand your fashion brand.',
+      keyAction: 'Analyze your top revenue-generating styles to plan your next seasonal collection.',
+      icon: BarChart3,
+      accentColor: 'text-indigo-500',
+      preferredPlacement: 'right'
+    },
+    {
+      targetId: 'tour-nav-atelier',
+      stepNumber: 8,
+      totalSteps: 8,
+      title: 'Atelier Profile & Workshop Address',
+      category: 'Brand Identity',
+      description:
+        'Set your atelier brand name, logo, designer bio, and workshop pickup address for delivery riders.',
+      keyAction: 'Keep your workshop pickup address and phone number accurate for riders.',
+      icon: Building,
+      accentColor: 'text-rose-500',
+      preferredPlacement: 'right'
+    }
+  ];
+}
+
+const STORAGE_KEY = 'irisi_vendor_tour_completed_v6';
 
 interface VendorTourGuideProps {
   isOpen?: boolean;
@@ -137,6 +250,10 @@ interface VendorTourGuideProps {
 }
 
 export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: controlledOnClose }: VendorTourGuideProps = {}) {
+  const { vendorProfile } = useStore();
+  const isBoutique = vendorProfile?.vendorType === 'boutique_merchant';
+  const tourSteps = useMemo(() => getTourSteps(isBoutique), [isBoutique]);
+
   const [tourActive, setTourActive] = useState(false);
   const [showInviteToast, setShowInviteToast] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -180,7 +297,7 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
   // Track target element coordinates and smoothly scroll to it
   const updateTargetRect = useCallback(() => {
     if (!tourActive) return;
-    const step = TOUR_STEPS[currentStepIndex];
+    const step = tourSteps[currentStepIndex];
     if (!step) return;
 
     const el = document.getElementById(step.targetId);
@@ -195,12 +312,12 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
     } else {
       setTargetRect(null);
     }
-  }, [tourActive, currentStepIndex]);
+  }, [tourActive, currentStepIndex, tourSteps]);
 
   // When step changes, smoothly scroll element into center view
   useEffect(() => {
     if (!tourActive) return;
-    const step = TOUR_STEPS[currentStepIndex];
+    const step = tourSteps[currentStepIndex];
     if (!step) return;
 
     const el = document.getElementById(step.targetId);
@@ -211,7 +328,7 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
       }, 250);
       return () => clearTimeout(t);
     }
-  }, [tourActive, currentStepIndex, updateTargetRect]);
+  }, [tourActive, currentStepIndex, updateTargetRect, tourSteps]);
 
   // Keep target rect updated on window resize or scroll
   useEffect(() => {
@@ -252,7 +369,7 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
   }, [controlledOnClose]);
 
   const handleNext = () => {
-    if (currentStepIndex < TOUR_STEPS.length - 1) {
+    if (currentStepIndex < tourSteps.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
     } else {
       handleCloseTour();
@@ -277,9 +394,9 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
     return () => window.removeEventListener('keydown', handleKey);
   }, [tourActive, currentStepIndex, handleCloseTour]);
 
-  const step = TOUR_STEPS[currentStepIndex];
+  const step = tourSteps[currentStepIndex];
   const StepIcon = step?.icon || Sparkles;
-  const isLast = currentStepIndex === TOUR_STEPS.length - 1;
+  const isLast = currentStepIndex === tourSteps.length - 1;
 
   // Spotlight padding around the target
   const padding = 6;
@@ -347,7 +464,7 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
               </div>
               <div className="min-w-0">
                 <span className="text-[10px] font-mono-luxury uppercase tracking-widest text-[var(--gold-accent)] font-bold block">
-                  New to Ìrísí Atelier?
+                  New to Ìrísí {isBoutique ? 'Boutique' : 'Atelier'}?
                 </span>
                 <p className="text-xs font-bold text-[var(--text-primary)] truncate">
                   Take a 1-minute guided tour?
@@ -510,7 +627,7 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
                   
                   {/* Step Progress Dots */}
                   <div className="flex items-center gap-1.5">
-                    {TOUR_STEPS.map((_, i) => (
+                    {tourSteps.map((_, i) => (
                       <button
                         key={i}
                         type="button"
