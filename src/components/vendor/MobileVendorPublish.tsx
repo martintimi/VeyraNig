@@ -15,6 +15,7 @@ import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { vendorFetch } from '@/lib/services/apiClient';
 import { compressImage } from '@/lib/utils/imageUtils';
+import { detectGarmentColor, FASHION_COLOR_PALETTE } from '@/lib/utils/colorDetector';
 
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
@@ -159,8 +160,15 @@ export default function MobileVendorPublish({
         }
   );
 
-  // Photos (Multi-image support with colorway linking)
-  const [uploadedImages, setUploadedImages] = useState<Array<{ id: string; url: string; colorName?: string; isCover?: boolean }>>([]);
+  // Photos (Multi-image support with AI colorway linking)
+  const [uploadedImages, setUploadedImages] = useState<Array<{
+    id: string;
+    url: string;
+    colorName?: string;
+    colorHex?: string;
+    isCover?: boolean;
+    isDetectingColor?: boolean;
+  }>>([]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -280,17 +288,40 @@ export default function MobileVendorPublish({
     setIsProcessingImages(true);
     try {
       const fileList = Array.from(files);
-      const newItems: Array<{ id: string; url: string; colorName?: string; isCover?: boolean }> = [];
+      const newItems: Array<{
+        id: string;
+        url: string;
+        colorName?: string;
+        colorHex?: string;
+        isCover?: boolean;
+        isDetectingColor?: boolean;
+      }> = [];
 
       for (const file of fileList) {
         if (!file.type.startsWith('image/')) continue;
         const compressedDataUrl = await compressImage(file, 1400, 0.85);
+
+        // Run AI Computer Vision to detect garment color
+        const detected = await detectGarmentColor(compressedDataUrl);
+
         newItems.push({
           id: `img-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           url: compressedDataUrl,
-          colorName: '',
+          colorName: detected.name,
+          colorHex: detected.hex,
           isCover: false,
+          isDetectingColor: false,
         });
+
+        // Automatically register detected color in product's colorways palette
+        if (detected.name) {
+          setSelectedColors((prev) => {
+            if (prev.some((c) => c.name.toLowerCase() === detected.name.toLowerCase())) {
+              return prev;
+            }
+            return [...prev, { name: detected.name, hex: detected.hex }];
+          });
+        }
       }
 
       setUploadedImages((prev) => {
@@ -329,20 +360,64 @@ export default function MobileVendorPublish({
     });
   };
 
-  const handleAssignColor = (id: string, colorName: string) => {
+  const handleAssignColor = (id: string, colorName: string, customHex?: string) => {
+    const matched = FASHION_COLOR_PALETTE.find(
+      (c) => c.name.toLowerCase() === colorName.toLowerCase()
+    );
+    const resolvedHex = customHex || (matched ? matched.hex : '#111111');
+
     setUploadedImages((prev) =>
-      prev.map((img) => (img.id === id ? { ...img, colorName } : img))
+      prev.map((img) =>
+        img.id === id ? { ...img, colorName, colorHex: resolvedHex } : img
+      )
     );
 
-    if (colorName && colorName !== 'none') {
-      const found = STANDARD_COLORS.find(
-        (c) => c.name.toLowerCase() === colorName.toLowerCase()
-      );
-      const hex = found ? found.hex : '#111111';
+    if (colorName && colorName !== 'none' && colorName !== 'General / All Colors') {
       setSelectedColors((prev) => {
-        if (prev.some((c) => c.name.toLowerCase() === colorName.toLowerCase())) return prev;
-        return [...prev, { name: colorName, hex }];
+        if (prev.some((c) => c.name.toLowerCase() === colorName.toLowerCase())) {
+          return prev.map((c) =>
+            c.name.toLowerCase() === colorName.toLowerCase()
+              ? { ...c, hex: resolvedHex }
+              : c
+          );
+        }
+        return [...prev, { name: colorName, hex: resolvedHex }];
       });
+    }
+  };
+
+  const handleUpdateColorHex = (id: string, hex: string) => {
+    setUploadedImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, colorHex: hex } : img))
+    );
+
+    const img = uploadedImages.find((i) => i.id === id);
+    if (img && img.colorName) {
+      setSelectedColors((prev) =>
+        prev.map((c) =>
+          c.name.toLowerCase() === img.colorName?.toLowerCase() ? { ...c, hex } : c
+        )
+      );
+    }
+  };
+
+  const handleAiDetectForImage = async (id: string) => {
+    const img = uploadedImages.find((i) => i.id === id);
+    if (!img) return;
+
+    setUploadedImages((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, isDetectingColor: true } : item))
+    );
+
+    try {
+      const detected = await detectGarmentColor(img.url);
+      handleAssignColor(id, detected.name, detected.hex);
+    } catch (e) {
+      console.error('AI color detection error:', e);
+    } finally {
+      setUploadedImages((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, isDetectingColor: false } : item))
+      );
     }
   };
 
@@ -811,26 +886,71 @@ export default function MobileVendorPublish({
                     </button>
                   </div>
 
-                  {/* Color Assignment Selector */}
-                  <div className="p-2 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)]">
-                    <label className="block text-[9px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold mb-1">
-                      Link to Color:
-                    </label>
-                    <select
-                      value={img.colorName || ''}
-                      onChange={(e) => handleAssignColor(img.id, e.target.value)}
-                      className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] cursor-pointer"
-                    >
-                      <option value="">General / All Colors</option>
-                      {STANDARD_COLORS.map((sc) => (
-                        <option key={sc.name} value={sc.name}>
-                          {sc.name}
-                        </option>
-                      ))}
-                    </select>
+                  {/* AI Garment Color Detection & Swatch */}
+                  <div className="p-2.5 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold flex items-center gap-1">
+                        <Palette className="h-3 w-3 text-[var(--gold-accent)]" />
+                        <span>Colorway</span>
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAiDetectForImage(img.id)}
+                        disabled={img.isDetectingColor}
+                        className="text-[9px] font-mono-luxury font-bold text-[var(--gold-accent)] hover:text-amber-300 flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Re-run AI garment color detection"
+                      >
+                        {img.isDetectingColor ? (
+                          <>
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            <span>Detecting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-2.5 w-2.5" />
+                            <span>AI Detect</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {/* Interactive Color Picker Swatch */}
+                      <label 
+                        className="relative flex-shrink-0 h-7 w-7 rounded-lg border border-white/20 shadow-inner cursor-pointer overflow-hidden transition-transform active:scale-95" 
+                        style={{ backgroundColor: img.colorHex || '#111111' }}
+                        title="Click to adjust color shade"
+                      >
+                        <input
+                          type="color"
+                          value={img.colorHex || '#111111'}
+                          onChange={(e) => handleUpdateColorHex(img.id, e.target.value)}
+                          className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
+                        />
+                      </label>
+
+                      {/* Custom / Palette Name Input with Suggestions */}
+                      <div className="flex-1 min-w-0">
+                        <input
+                          type="text"
+                          list="fashion-colors-list"
+                          placeholder="e.g. Cream, Olive, Red"
+                          value={img.colorName || ''}
+                          onChange={(e) => handleAssignColor(img.id, e.target.value, img.colorHex)}
+                          className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] font-mono-luxury font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] placeholder:text-[var(--text-muted)]/50"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
+
+              <datalist id="fashion-colors-list">
+                {FASHION_COLOR_PALETTE.map((c) => (
+                  <option key={c.name} value={c.name} />
+                ))}
+              </datalist>
 
               {/* Add More Photos Card */}
               <div
