@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store/useStore';
 import {
@@ -22,17 +22,28 @@ export default function ProductDetailPage() {
   const {
     bodyProfile,
     addToCart,
-    fetchProductsFromDb,
+    allProducts,
     toggleVaultItem,
     isInVault,
   } = useStore();
 
-  const [product, setProduct] = useState<any | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const cachedProduct = useMemo(() => {
+    if (!productId || !allProducts || allProducts.length === 0) return null;
+    return allProducts.find((p) => String(p.id) === String(productId)) || null;
+  }, [productId, allProducts]);
+
+  const [product, setProduct] = useState<any | null>(() => cachedProduct);
+  const [isLoading, setIsLoading] = useState(!cachedProduct);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(null);
+  const [selectedSize, setSelectedSize] = useState(() => {
+    const pref = bodyProfile?.preferredSize || 'M';
+    if (cachedProduct?.sizes?.includes(pref)) return pref;
+    return cachedProduct?.sizes?.[0] || 'M';
+  });
+  const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(() => {
+    return cachedProduct?.colors?.[0] || { name: 'As Pictured', hex: '#111111' };
+  });
   const [addedToast, setAddedToast] = useState(false);
   const [reviewsData, setReviewsData] = useState<{ averageRating: number; fitAccuracyPercent: number; count: number; reviews: any[] }>({
     averageRating: 5.0,
@@ -42,11 +53,24 @@ export default function ProductDetailPage() {
   });
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
 
-  // Fetch exact single product from API by ID
+  // Sync with cachedProduct if it becomes available
+  useEffect(() => {
+    if (cachedProduct && !product) {
+      setProduct(cachedProduct);
+      setIsLoading(false);
+      const pref = bodyProfile?.preferredSize || 'M';
+      setSelectedSize(cachedProduct.sizes?.includes(pref) ? pref : (cachedProduct.sizes?.[0] || 'M'));
+      setSelectedColor(cachedProduct.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
+    }
+  }, [cachedProduct, product, bodyProfile]);
+
+  // Fetch exact single product from API by ID (SWR style: silent update if cachedProduct exists)
   useEffect(() => {
     async function loadSingleProduct() {
       if (!productId) return;
-      setIsLoading(true);
+      if (!cachedProduct) {
+        setIsLoading(true);
+      }
       setErrorMsg('');
 
       try {
@@ -58,8 +82,8 @@ export default function ProductDetailPage() {
           setProduct(p);
           const pref = bodyProfile?.preferredSize || 'M';
           const defaultSz = p.sizes?.includes(pref) ? pref : (p.sizes?.[0] || 'M');
-          setSelectedSize(defaultSz);
-          setSelectedColor(p.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
+          setSelectedSize((prev: string) => (p.sizes?.includes(prev) ? prev : defaultSz));
+          setSelectedColor((prev: any) => prev || p.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
 
           // Fetch reviews for this product
           try {
@@ -69,19 +93,20 @@ export default function ProductDetailPage() {
               setReviewsData(revJson);
             }
           } catch (e) {}
-        } else {
+        } else if (!cachedProduct) {
           setErrorMsg(data.error || 'Product not found');
         }
       } catch (err: any) {
-        setErrorMsg('Failed to load product details.');
+        if (!cachedProduct) {
+          setErrorMsg('Failed to load product details.');
+        }
       } finally {
         setIsLoading(false);
       }
     }
 
     loadSingleProduct();
-    fetchProductsFromDb();
-  }, [productId, fetchProductsFromDb]);
+  }, [productId, cachedProduct, bodyProfile]);
 
   if (isLoading) {
     return <LuxuryLoader fullScreen={false} />;

@@ -120,6 +120,9 @@ export const defaultVendorProfile: VendorProfile = {
   bio: '',
 };
 
+let fetchProductsPromise: Promise<void> | null = null;
+let lastProductsFetchTime = 0;
+
 const defaultProfile: BodyProfile = {
   name: '',
   email: '',
@@ -534,71 +537,95 @@ export const useStore = create<IrisiState>()(
       isProductsLoading: true,
       setAllProducts: (products) => set({ allProducts: products }),
       fetchProductsFromDb: async () => {
-        set({ isProductsLoading: true });
-        try {
-          const res = await fetch('/api/products', { cache: 'no-store' });
-          const data = await res.json();
-          if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-            const dbProducts: Product[] = data.products.map((p: any) => {
-              const rawGender = String(p.gender_target || p.genderTarget || 'unisex').toLowerCase();
-              let normalizedGender: 'male' | 'female' | 'unisex' = 'unisex';
-              if (rawGender === 'male' || rawGender === 'men' || rawGender === 'man') {
-                normalizedGender = 'male';
-              } else if (rawGender === 'female' || rawGender === 'women' || rawGender === 'woman') {
-                normalizedGender = 'female';
-              }
+        const state = get();
+        const now = Date.now();
 
-              const rawOrigin = String(p.garment_origin_type || p.garmentOriginType || 'ready_made_boutique').toLowerCase();
-              const normalizedOrigin: GarmentOriginType = (rawOrigin === 'bespoke_atelier' || rawOrigin === 'handmade_designer') 
-                ? 'handmade_designer' 
-                : 'ready_made_boutique';
-
-              return {
-                id: p.id,
-                vendorId: p.vendorId || p.vendor_id || 'boutique',
-                vendorName: p.vendorName || p.vendor_name || (p.vendor_id ? p.vendor_id.replace(/-/g, ' ') : 'Ìrísí Partner'),
-                vendorCity: p.vendorCity || p.vendor_city || '',
-                vendorState: p.vendorState || p.vendor_state || '',
-                vendorLocation: p.vendorLocation || p.vendor_location || '',
-                dispatchDays: p.vendorDispatchDays || p.dispatch_days || '1-2 business days',
-                shippingRates: p.vendorShippingRates || p.shipping_rates || {
-                  sameCity: 1000,
-                  closeHub: 2500,
-                  interstate: 4500,
-                  parkPickup: 1500,
-                  parkPickupEnabled: true,
-                },
-                name: p.name,
-                category: (p.category || 'tops').toLowerCase() as GarmentCategory,
-                genderTarget: normalizedGender,
-                garmentOriginType: normalizedOrigin,
-                price: Number(p.price) || 0,
-                description: p.description || '',
-                tags: Array.isArray(p.tags) ? p.tags : ['Ready-to-Wear'],
-                colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : [{ name: 'Default', hex: '#111111' }],
-                sizes: p.sizes || ['S', 'M', 'L', 'XL', 'XXL'],
-                sizeChart: {},
-                imageUrl: p.imageUrl || p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
-                videoUrl: p.videoUrl || p.video_url || undefined,
-                fabricComposition: 'Premium Nigerian Fabric',
-                fitNotes: 'Standard ready-to-wear sizing',
-                rating: 5.0,
-                reviewCount: 12,
-                layerZIndex: 2,
-                badge: normalizedOrigin === 'ready_made_boutique' ? 'Fast 24-48h Drop' : 'Bespoke Handmade'
-              };
-            });
-
-            // Set strictly to live PostgreSQL database products (no mock merging)
-            set({ allProducts: dbProducts });
-          } else if (data.success && Array.isArray(data.products) && data.products.length === 0) {
-            set({ allProducts: [] });
-          }
-        } catch (e) {
-          console.error('Error hydrating products from DB:', e);
-        } finally {
-          set({ isProductsLoading: false });
+        // 1. If products already fetched within the last 30s, reuse in-memory data
+        if (state.allProducts.length > 0 && now - lastProductsFetchTime < 30000) {
+          if (state.isProductsLoading) set({ isProductsLoading: false });
+          return;
         }
+
+        // 2. Deduplicate in-flight fetch requests across components
+        if (fetchProductsPromise) {
+          return fetchProductsPromise;
+        }
+
+        // 3. Only show loading skeleton if we don't have any products in memory yet
+        if (state.allProducts.length === 0) {
+          set({ isProductsLoading: true });
+        }
+
+        fetchProductsPromise = (async () => {
+          try {
+            const res = await fetch('/api/products');
+            const data = await res.json();
+            lastProductsFetchTime = Date.now();
+            if (data.success && Array.isArray(data.products) && data.products.length > 0) {
+              const dbProducts: Product[] = data.products.map((p: any) => {
+                const rawGender = String(p.gender_target || p.genderTarget || 'unisex').toLowerCase();
+                let normalizedGender: 'male' | 'female' | 'unisex' = 'unisex';
+                if (rawGender === 'male' || rawGender === 'men' || rawGender === 'man') {
+                  normalizedGender = 'male';
+                } else if (rawGender === 'female' || rawGender === 'women' || rawGender === 'woman') {
+                  normalizedGender = 'female';
+                }
+
+                const rawOrigin = String(p.garment_origin_type || p.garmentOriginType || 'ready_made_boutique').toLowerCase();
+                const normalizedOrigin: GarmentOriginType = (rawOrigin === 'bespoke_atelier' || rawOrigin === 'handmade_designer') 
+                  ? 'handmade_designer' 
+                  : 'ready_made_boutique';
+
+                return {
+                  id: p.id,
+                  vendorId: p.vendorId || p.vendor_id || 'boutique',
+                  vendorName: p.vendorName || p.vendor_name || (p.vendor_id ? p.vendor_id.replace(/-/g, ' ') : 'Ìrísí Partner'),
+                  vendorCity: p.vendorCity || p.vendor_city || '',
+                  vendorState: p.vendorState || p.vendor_state || '',
+                  vendorLocation: p.vendorLocation || p.vendor_location || '',
+                  dispatchDays: p.vendorDispatchDays || p.dispatch_days || '1-2 business days',
+                  shippingRates: p.vendorShippingRates || p.shipping_rates || {
+                    sameCity: 1000,
+                    closeHub: 2500,
+                    interstate: 4500,
+                    parkPickup: 1500,
+                    parkPickupEnabled: true,
+                  },
+                  name: p.name,
+                  category: (p.category || 'tops').toLowerCase() as GarmentCategory,
+                  genderTarget: normalizedGender,
+                  garmentOriginType: normalizedOrigin,
+                  price: Number(p.price) || 0,
+                  description: p.description || '',
+                  tags: Array.isArray(p.tags) ? p.tags : ['Ready-to-Wear'],
+                  colors: Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : [{ name: 'Default', hex: '#111111' }],
+                  sizes: p.sizes || ['S', 'M', 'L', 'XL', 'XXL'],
+                  sizeChart: {},
+                  imageUrl: p.imageUrl || p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
+                  videoUrl: p.videoUrl || p.video_url || undefined,
+                  fabricComposition: 'Premium Nigerian Fabric',
+                  fitNotes: 'Standard ready-to-wear sizing',
+                  rating: 5.0,
+                  reviewCount: 12,
+                  layerZIndex: 2,
+                  badge: normalizedOrigin === 'ready_made_boutique' ? 'Fast 24-48h Drop' : 'Bespoke Handmade'
+                };
+              });
+
+              // Set strictly to live PostgreSQL database products (no mock merging)
+              set({ allProducts: dbProducts });
+            } else if (data.success && Array.isArray(data.products) && data.products.length === 0) {
+              set({ allProducts: [] });
+            }
+          } catch (e) {
+            console.error('Error hydrating products from DB:', e);
+          } finally {
+            set({ isProductsLoading: false });
+            fetchProductsPromise = null;
+          }
+        })();
+
+        return fetchProductsPromise;
       },
       addCustomProduct: (newProduct) => {
         set((state) => ({

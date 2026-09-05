@@ -292,7 +292,7 @@ export default function MobileShopView() {
 
       {/* ITEM COUNT */}
       <div className="px-4 pb-3 flex items-center justify-between text-xs text-[var(--text-secondary)]">
-        {isProductsLoading ? (
+        {isProductsLoading && (!allProducts || allProducts.length === 0) ? (
           <span className="flex items-center gap-1.5 text-[11px] text-[var(--gold-accent)] font-mono-luxury font-bold animate-pulse">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--gold-accent)] animate-ping" />
             <span>Loading pieces...</span>
@@ -300,13 +300,13 @@ export default function MobileShopView() {
         ) : (
           <span>{filteredProducts.length} items</span>
         )}
-        {totalPages > 1 && !isProductsLoading && (
+        {totalPages > 1 && !(isProductsLoading && (!allProducts || allProducts.length === 0)) && (
           <span className="font-mono-luxury text-[11px]">Page {currentPage} of {totalPages}</span>
         )}
       </div>
 
       {/* PRODUCT GRID */}
-      {isProductsLoading ? (
+      {isProductsLoading && (!allProducts || allProducts.length === 0) ? (
         <div className="grid grid-cols-2 px-2 gap-x-2.5 gap-y-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="flex flex-col justify-between h-full space-y-2 animate-pulse">
@@ -345,7 +345,7 @@ export default function MobileShopView() {
       ) : (
         <>
           <div className={gridCols === 1 ? "grid grid-cols-1 px-3 gap-y-8" : "grid grid-cols-2 px-2 gap-x-2.5 gap-y-6"}>
-            {paginatedProducts.map((product) => {
+            {paginatedProducts.map((product, idx) => {
               const saved = isInVault(product.id);
               const origPrice = product.originalPrice;
               const hasDiscount = typeof origPrice === 'number' && origPrice > product.price;
@@ -364,6 +364,9 @@ export default function MobileShopView() {
                           alt={product.name}
                           fill
                           unoptimized
+                          priority={idx < 4}
+                          loading={idx < 4 ? 'eager' : 'lazy'}
+                          sizes="(max-width: 768px) 50vw, 33vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </Link>

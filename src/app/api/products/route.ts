@@ -50,13 +50,18 @@ export async function GET(request: Request) {
       query = query.eq('garment_origin_type', origin);
     }
 
-    const { data: products, error } = await query;
+    const [productsResult, vendorsResult] = await Promise.all([
+      query,
+      supabase.from('vendors').select('id, brand_name, designer_name, location, bio'),
+    ]);
+
+    const { data: products, error } = productsResult;
+    const { data: vendorsList } = vendorsResult;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const { data: vendorsList } = await supabase.from('vendors').select('id, brand_name, designer_name, location, bio');
     const vendorMap = new Map<string, any>();
 
     // Fetch product variants for sizing & stock
@@ -317,11 +322,18 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({
-      success: true,
-      count: formatted.length,
-      products: formatted,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        count: formatted.length,
+        products: formatted,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -44,14 +44,17 @@ export async function GET(
       parkPickupEnabled: true,
     };
 
-    if (product.vendor_id) {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id, brand_name, designer_name, location, bio, rating')
-        .eq('id', product.vendor_id)
-        .maybeSingle();
+    const [vendorRes, variantsRes] = await Promise.all([
+      product.vendor_id
+        ? supabase.from('vendors').select('id, brand_name, designer_name, location, bio, rating').eq('id', product.vendor_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabase.from('product_variants').select('*').eq('product_id', id),
+    ]);
 
-      if (vendor) {
+    const vendor = vendorRes.data;
+    const variants = variantsRes.data;
+
+    if (vendor) {
         vendorName = vendor.brand_name || vendor.designer_name || 'Verified Vendor';
         if (vendor.bio && vendor.bio.startsWith('{') && vendor.bio.endsWith('}')) {
           try {
@@ -92,9 +95,8 @@ export async function GET(
         }
 
         vendorLocation = vendor.location || (vendorCity && vendorState ? `${vendorCity}, ${vendorState}` : vendorCity || vendorState || '');
-      } else {
-        vendorName = product.vendor_id.charAt(0).toUpperCase() + product.vendor_id.slice(1).replace(/-/g, ' ');
-      }
+    } else if (product.vendor_id) {
+      vendorName = product.vendor_id.charAt(0).toUpperCase() + product.vendor_id.slice(1).replace(/-/g, ' ');
     }
 
     const COLOR_HEX_MAP: Record<string, string> = {
@@ -216,12 +218,6 @@ export async function GET(
 
     const isAccessory = product.category === 'accessories';
 
-    // Fetch product variants for sizing & stock
-    const { data: variants } = await supabase
-      .from('product_variants')
-      .select('*')
-      .eq('product_id', id);
-
     const dynamicSizeStock: Record<string, { enabled: boolean; quantity: number }> = {};
     let dynamicTotalStock = 0;
     if (variants && Array.isArray(variants) && variants.length > 0) {
@@ -281,10 +277,17 @@ export async function GET(
       badge: isAccessory ? 'Jewelry & Accessories' : 'Ready-to-Wear'
     };
 
-    return NextResponse.json({
-      success: true,
-      product: formattedProduct,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        product: formattedProduct,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
