@@ -60,7 +60,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isFitPredictorOpen, setIsFitPredictorOpen] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
-  const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const [hasNudged, setHasNudged] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -83,28 +83,60 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
     return items.length > 0 ? items : [{ type: 'image', url: '/images/products/BlackTrapStarHoodie.jpg' }];
   }, [product.imageUrl, product.videoUrl, product.images]);
 
-  // Autoplay video reliably without browser blocking
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = true;
-      videoRef.current.defaultMuted = true;
-      videoRef.current.play().catch(() => {});
+  // Reliable instant video autoplay without native iOS/Android play button overlay
+  const playVideo = () => {
+    const v = videoRef.current;
+    if (v) {
+      v.muted = true;
+      v.defaultMuted = true;
+      v.playsInline = true;
+      v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
+      v.setAttribute('muted', '');
+      const p = v.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          setTimeout(() => v?.play().catch(() => {}), 60);
+        });
+      }
     }
-  }, [product.videoUrl, activeMediaIndex]);
+  };
 
-  // Hide swipe hint animation after 3.5s
+  // IntersectionObserver plays video the instant user begins swiping into it
   useEffect(() => {
-    const timer = setTimeout(() => setShowSwipeHint(false), 3500);
-    return () => clearTimeout(timer);
-  }, []);
+    const v = videoRef.current;
+    if (!v) return;
+
+    v.muted = true;
+    v.defaultMuted = true;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            playVideo();
+          } else {
+            v.pause();
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(v);
+    return () => observer.disconnect();
+  }, [mediaItems]);
 
   const handleCarouselScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setHasNudged(true);
     const el = e.currentTarget;
     if (el.clientWidth > 0) {
       const index = Math.round(el.scrollLeft / el.clientWidth);
       if (index !== activeMediaIndex) {
         setActiveMediaIndex(index);
-        setShowSwipeHint(false);
+      }
+      if (mediaItems[index]?.type === 'video') {
+        playVideo();
       }
     }
   };
@@ -203,10 +235,19 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
 
       {/* 2. PRODUCT HERO SWIPEABLE MEDIA CAROUSEL (Photo + Auto-Looping Silent Catwalk Video) */}
       <div className="relative w-full h-[54vh] sm:h-[60vh] max-h-[500px] bg-black overflow-hidden group">
-        {/* Swipeable Horizontal Scroll Container */}
-        <div
+        {/* Swipeable Horizontal Scroll Container with organic peek animation */}
+        <motion.div
           ref={carouselRef}
           onScroll={handleCarouselScroll}
+          animate={hasNudged || mediaItems.length <= 1 ? { x: 0 } : { x: [0, -50, 0, -25, 0] }}
+          transition={{
+            delay: 0.8,
+            duration: 1.3,
+            times: [0, 0.3, 0.6, 0.8, 1],
+            ease: [0.25, 1, 0.5, 1],
+          }}
+          onAnimationComplete={() => setHasNudged(true)}
+          onTouchStart={() => setHasNudged(true)}
           className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
         >
           {mediaItems.map((item, idx) => (
@@ -226,7 +267,12 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                     loop
                     muted
                     playsInline
-                    className="w-full h-full object-cover"
+                    controls={false}
+                    disablePictureInPicture
+                    preload="auto"
+                    onLoadedData={playVideo}
+                    onCanPlay={playVideo}
+                    className="w-full h-full object-cover pointer-events-none"
                   />
                 </div>
               ) : (
@@ -241,18 +287,9 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
               )}
             </div>
           ))}
-        </div>
+        </motion.div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
-
-        {/* Floating Swipe Hint Animation (Shows for 3.5s on load if multiple media items) */}
-        {mediaItems.length > 1 && showSwipeHint && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-bounce">
-            <div className="px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-[var(--gold-accent)]/60 text-[var(--gold-accent)] text-[10px] font-mono-luxury font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xl">
-              <span>👉 Swipe for {product.videoUrl ? 'Catwalk' : 'More'}</span>
-            </div>
-          </div>
-        )}
 
         {/* Media Slide Counter (1 / 2) */}
         {mediaItems.length > 1 && (
