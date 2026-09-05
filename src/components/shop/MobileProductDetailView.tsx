@@ -63,6 +63,33 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   const [hasNudged, setHasNudged] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isDraggingCarousel = useRef(false);
+  const carouselTouchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleCarouselTouchStart = (e: React.TouchEvent) => {
+    setHasNudged(true);
+    playVideo();
+    const t = e.touches[0];
+    carouselTouchStart.current = { x: t.clientX, y: t.clientY };
+    isDraggingCarousel.current = false;
+  };
+
+  const handleCarouselTouchMove = (e: React.TouchEvent) => {
+    if (!carouselTouchStart.current) return;
+    const t = e.touches[0];
+    const dx = Math.abs(t.clientX - carouselTouchStart.current.x);
+    const dy = Math.abs(t.clientY - carouselTouchStart.current.y);
+    if (dx > 8 || dy > 8) {
+      isDraggingCarousel.current = true;
+    }
+  };
+
+  const handleCarouselTouchEnd = () => {
+    carouselTouchStart.current = null;
+    setTimeout(() => {
+      isDraggingCarousel.current = false;
+    }, 250);
+  };
 
   // Multi-media gallery items (Photos + Catwalk Video)
   const mediaItems = useMemo(() => {
@@ -171,6 +198,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   const handleCarouselScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setHasNudged(true);
     playVideo();
+    isDraggingCarousel.current = true;
     const el = e.currentTarget;
     if (el.clientWidth > 0) {
       const index = Math.round(el.scrollLeft / el.clientWidth);
@@ -322,21 +350,30 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
             ease: [0.25, 1, 0.5, 1],
           }}
           onAnimationComplete={() => setHasNudged(true)}
-          onTouchStart={() => {
-            setHasNudged(true);
-            playVideo();
-          }}
+          onTouchStart={handleCarouselTouchStart}
+          onTouchMove={handleCarouselTouchMove}
+          onTouchEnd={handleCarouselTouchEnd}
           onPointerDown={() => {
             setHasNudged(true);
             playVideo();
           }}
-          className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
+          className="flex w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none touch-manipulation overscroll-x-contain"
+          style={{
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x pan-y',
+          }}
         >
           {mediaItems.map((item, idx) => (
             <div
               key={idx}
               className="min-w-full w-full h-full snap-center relative flex-shrink-0 cursor-pointer"
-              onClick={() => {
+              onClick={(e) => {
+                if (isDraggingCarousel.current) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
                 if (item.type === 'video') {
                   const v = videoRef.current;
                   if (v && v.paused) {
@@ -396,7 +433,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                   fill
                   unoptimized
                   priority={idx === 0}
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                  className="object-cover object-center group-hover:scale-105 transition-transform duration-700 pointer-events-none"
                 />
               )}
             </div>

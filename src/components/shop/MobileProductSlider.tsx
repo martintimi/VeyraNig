@@ -35,9 +35,6 @@ export default function MobileProductSlider({
   const [isInView, setIsInView] = useState(false);
   const [hasNudged, setHasNudged] = useState(false);
 
-  // Touch tracking to distinguish horizontal swipe vs intentional click
-  const touchStartPos = useRef<{ x: number; y: number; time: number } | null>(null);
-  const isDragging = useRef(false);
 
   // Gather all unique images & video for this product
   const slides = useMemo<MediaSlide[]>(() => {
@@ -114,9 +111,24 @@ export default function MobileProductSlider({
     return () => observer.disconnect();
   }, [hasMultiple, hasNudged]);
 
+  // Touch tracking to distinguish horizontal swipe vs intentional click vs vertical page scroll
+  const touchStartPos = useRef<{ x: number; y: number; time: number } | null>(null);
+  const isDragging = useRef(false);
+  const justNavigated = useRef(false);
+
+  const navigateToProduct = useCallback(() => {
+    if (isDragging.current || justNavigated.current) return;
+    justNavigated.current = true;
+    router.push(`/shop/${product.id}`);
+    setTimeout(() => {
+      justNavigated.current = false;
+    }, 1000);
+  }, [product.id, router]);
+
   // Handle slide index update on horizontal scroll
   const handleScroll = useCallback(() => {
     setHasNudged(true);
+    isDragging.current = true;
     const el = scrollRef.current;
     if (!el || el.clientWidth === 0) return;
     const currentIdx = Math.round(el.scrollLeft / el.clientWidth);
@@ -137,8 +149,10 @@ export default function MobileProductSlider({
     if (!touchStartPos.current) return;
     const t = e.touches[0];
     const dx = Math.abs(t.clientX - touchStartPos.current.x);
+    const dy = Math.abs(t.clientY - touchStartPos.current.y);
 
-    if (dx > 8) {
+    // If finger moved in either horizontal or vertical direction, it's a drag/scroll, not a tap
+    if (dx > 8 || dy > 8) {
       isDragging.current = true;
     }
   };
@@ -147,13 +161,16 @@ export default function MobileProductSlider({
     if (!touchStartPos.current) return;
     const dt = Date.now() - touchStartPos.current.time;
 
-    // If tap was quick and not dragging, treat as click to navigate
+    // If tap was quick and not dragging/scrolling, navigate
     if (!isDragging.current && dt < 400) {
-      router.push(`/shop/${product.id}`);
+      navigateToProduct();
     }
 
     touchStartPos.current = null;
-    isDragging.current = false;
+    // Keep isDragging.current true for 250ms so synthetic click is suppressed
+    setTimeout(() => {
+      isDragging.current = false;
+    }, 250);
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -162,7 +179,7 @@ export default function MobileProductSlider({
       e.stopPropagation();
       return;
     }
-    router.push(`/shop/${product.id}`);
+    navigateToProduct();
   };
 
   return (
@@ -187,10 +204,11 @@ export default function MobileProductSlider({
           ease: [0.25, 1, 0.5, 1],
         }}
         onAnimationComplete={() => setHasNudged(true)}
-        className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-none touch-pan-x cursor-pointer"
+        className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none touch-manipulation cursor-pointer overscroll-x-contain"
         style={{
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x pan-y',
         }}
       >
         {slides.map((media, sIdx) => {
@@ -207,7 +225,7 @@ export default function MobileProductSlider({
                   loop
                   muted
                   playsInline
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover pointer-events-none"
                 />
               ) : (
                 <Image
@@ -218,7 +236,7 @@ export default function MobileProductSlider({
                   priority={priority && sIdx === 0}
                   loading={priority && sIdx === 0 ? 'eager' : 'lazy'}
                   sizes="(max-width: 768px) 50vw, 33vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none"
                 />
               )}
             </div>
