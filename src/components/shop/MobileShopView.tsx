@@ -12,6 +12,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import MobileQuickBuyDrawer from '@/components/mobile/MobileQuickBuyDrawer';
 import MobileStoriesRow from '@/components/mobile/MobileStoriesRow';
+import MobileProductSlider from '@/components/shop/MobileProductSlider';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -356,24 +357,16 @@ export default function MobileShopView() {
               return (
                 <div key={product.id} className={`flex flex-col justify-between h-full group ${gridCols === 1 ? 'pb-2 border-b border-[var(--border-subtle)]/50' : ''}`}>
                   <div>
-                    {/* Image Container */}
-                    <div className={`relative w-full bg-[var(--bg-secondary)] overflow-hidden rounded-xl border border-[var(--border-subtle)] ${gridCols === 1 ? 'aspect-[4/5] sm:aspect-[16/10]' : 'aspect-[4/5]'}`}>
-                      <Link href={`/shop/${product.id}`} className="block w-full h-full">
-                        <Image
-                          src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
-                          alt={product.name}
-                          fill
-                          unoptimized
-                          priority={idx < 4}
-                          loading={idx < 4 ? 'eager' : 'lazy'}
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </Link>
-
+                    {/* ASOS Swipeable Image Slider with Auto-Peek Animation & Dots */}
+                    <MobileProductSlider
+                      product={product}
+                      priority={idx < 4}
+                      aspectRatioClass={gridCols === 1 ? 'aspect-[4/5] sm:aspect-[16/10]' : 'aspect-[4/5]'}
+                      idx={idx}
+                    >
                       {/* Top-Left: Discount Badge */}
                       {hasDiscount && discountPercent > 0 && (
-                        <div className="absolute top-2.5 left-2.5 z-10">
+                        <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none">
                           <span className="px-1.5 py-0.5 rounded bg-white text-rose-600 text-[10px] font-mono-luxury font-bold tracking-tight shadow-sm">
                             -{discountPercent}%
                           </span>
@@ -383,8 +376,11 @@ export default function MobileShopView() {
                       {/* Wishlist heart — Instagram burst animation */}
                       <button
                         type="button"
-                        onClick={() => handleHeartClick(product)}
-                        className={`absolute top-2 right-2 p-1.5 cursor-pointer z-10 ${gridCols === 1 ? 'h-9 w-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleHeartClick(product);
+                        }}
+                        className={`absolute top-2 right-2 p-1.5 cursor-pointer z-20 ${gridCols === 1 ? 'h-9 w-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center' : ''}`}
                         aria-label="Save"
                       >
                         {burstingHearts.has(product.id) && (
@@ -406,7 +402,7 @@ export default function MobileShopView() {
                           }}
                         />
                       </button>
-                    </div>
+                    </MobileProductSlider>
 
                     {/* Info */}
                     <div className="pt-2.5 px-0.5 space-y-1">

@@ -7,6 +7,7 @@ import { ArrowLeft, Heart, ShoppingBag, Grid2X2, Square, Video } from 'lucide-re
 import Image from 'next/image';
 import Link from 'next/link';
 import MobileQuickBuyDrawer from '@/components/mobile/MobileQuickBuyDrawer';
+import MobileProductSlider from '@/components/shop/MobileProductSlider';
 import { products as fallbackProducts } from '@/lib/data/products';
 
 // Category metadata mapping for title and filtering
@@ -306,21 +307,16 @@ export default function DedicatedCategoryPage() {
               return (
                 <div key={product.id} className={`flex flex-col justify-between h-full group ${gridCols === 1 ? 'pb-3 border-b border-[var(--border-subtle)]/50' : ''}`}>
                   <div>
-                    {/* ASOS Media Container */}
-                    <div className={`relative w-full bg-[var(--bg-secondary)] overflow-hidden rounded-xl border border-[var(--border-subtle)] ${gridCols === 1 ? 'aspect-[4/5] sm:aspect-[16/10]' : 'aspect-[3/4] sm:aspect-[4/5]'}`}>
-                      <Link href={`/shop/${product.id}`} className="block w-full h-full">
-                        <Image
-                          src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
-                          alt={product.name}
-                          fill
-                          unoptimized
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </Link>
-
+                    {/* ASOS Swipeable Image Slider with Auto-Peek Animation & Dots */}
+                    <MobileProductSlider
+                      product={product}
+                      priority={idx < 4}
+                      aspectRatioClass={gridCols === 1 ? 'aspect-[4/5] sm:aspect-[16/10]' : 'aspect-[3/4] sm:aspect-[4/5]'}
+                      idx={idx}
+                    >
                       {/* Top-Left: Discount Badge */}
                       {hasDiscount && discountPercent > 0 && (
-                        <div className="absolute top-2.5 left-2.5 z-10">
+                        <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none">
                           <span className="px-1.5 py-0.5 rounded bg-white text-rose-600 text-[10px] font-mono-luxury font-bold tracking-tight shadow-sm">
                             -{discountPercent}%
                           </span>
@@ -329,7 +325,7 @@ export default function DedicatedCategoryPage() {
 
                       {/* ASOS Bottom-Left Micro Badge (SELLING FAST) */}
                       {isSellingFast && (
-                        <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none">
+                        <div className="absolute bottom-2.5 left-2.5 z-20 pointer-events-none">
                           <span className="px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-white text-[9px] font-mono-luxury uppercase font-bold tracking-wider shadow-sm">
                             Selling Fast
                           </span>
@@ -339,8 +335,11 @@ export default function DedicatedCategoryPage() {
                       {/* ASOS-Style Wishlist Heart on Image (White Circle + Heart Icon) */}
                       <button
                         type="button"
-                        onClick={(e) => handleHeartClick(product, e)}
-                        className="absolute bottom-2.5 right-2.5 h-8 w-8 rounded-full bg-white text-black shadow-md flex items-center justify-center transition-transform active:scale-75 cursor-pointer z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleHeartClick(product, e);
+                        }}
+                        className="absolute bottom-2.5 right-2.5 h-8 w-8 rounded-full bg-white text-black shadow-md flex items-center justify-center transition-transform active:scale-75 cursor-pointer z-20"
                         aria-label="Wishlist"
                       >
                         {burstingHearts.has(product.id) && (
@@ -357,7 +356,7 @@ export default function DedicatedCategoryPage() {
                           }`}
                         />
                       </button>
-                    </div>
+                    </MobileProductSlider>
 
                     {/* Product Typography (ASOS Hierarchy) */}
                     <div className="pt-2 px-0.5 space-y-0.5">
