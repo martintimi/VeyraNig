@@ -5,7 +5,7 @@ import { GarmentCategory, GenderTarget, getVendorSpecialty, VendorSpecialty } fr
 import {
   UploadCloud, Sparkles, Plus, Trash2, Check,
   Layers, ChevronDown, CheckCircle2, ArrowRight,
-  Loader2, AlertCircle, AlertTriangle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette,
+  AlertCircle, AlertTriangle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette,
   Shirt, Footprints, Gem, SlidersHorizontal, ChevronUp, Video, Play
 } from 'lucide-react';
 import Image from 'next/image';
@@ -1272,7 +1272,7 @@ export default function BatchProductUploadView({
                           </div>
                         ) : item.isVideoUploading || item.isTrimmingVideo ? (
                           <div className="h-12 px-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-1.5 text-[10px] font-mono-luxury text-[var(--gold-accent)] shrink-0">
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <Sparkles className="h-3 w-3 animate-spin text-[var(--gold-accent)]" />
                             <span>{item.isTrimmingVideo ? `Trimming (${item.trimProgress || 0}%)...` : 'Processing video...'}</span>
                           </div>
                         ) : (
@@ -1315,8 +1315,17 @@ export default function BatchProductUploadView({
                                 disabled={item.isTrimmingVideo}
                                 className="px-2 py-1 rounded bg-[var(--gold-accent)] text-black font-bold text-[9px] hover:bg-amber-400 flex items-center gap-1 cursor-pointer shadow-sm disabled:opacity-50"
                               >
-                                <Sparkles className="h-2.5 w-2.5" />
-                                <span>Auto-Trim to 5s &amp; Use</span>
+                                {item.isTrimmingVideo ? (
+                                  <>
+                                    <Sparkles className="h-2.5 w-2.5 animate-spin" />
+                                    <span>Trimming ({item.trimProgress || 0}%)...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="h-2.5 w-2.5" />
+                                    <span>Auto-Trim to 5s &amp; Use</span>
+                                  </>
+                                )}
                               </button>
                               <button
                                 type="button"
@@ -1354,7 +1363,7 @@ export default function BatchProductUploadView({
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Sparkles className="h-3.5 w-3.5 animate-spin" />
                     <span>Publishing ({publishProgress?.current || 1}/{publishProgress?.total || items.length})...</span>
                   </>
                 ) : (

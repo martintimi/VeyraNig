@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { GarmentCategory, GenderTarget, VendorSpecialty, getVendorSpecialty } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2,
-  Tag, ArrowRight, Loader2, X, Palette,
+  Tag, ArrowRight, X, Palette,
   Check, AlertTriangle, ShieldCheck, Camera,
   RefreshCw, Minus, ChevronDown, Sparkle,
   Shirt, Footprints, Gem, Layers, CheckCircle2, ExternalLink,
@@ -905,7 +905,7 @@ export default function MobileVendorPublish({
           >
             {isProcessingImages ? (
               <div className="space-y-2 py-4 flex flex-col items-center">
-                <Loader2 className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
+                <Sparkles className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
                 <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
                   Optimizing Photos...
                 </span>
@@ -1018,7 +1018,7 @@ export default function MobileVendorPublish({
                           >
                             {img.isDetectingColor ? (
                               <>
-                                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                <Sparkles className="h-2.5 w-2.5 animate-spin" />
                                 <span>Detecting...</span>
                               </>
                             ) : (
@@ -1070,7 +1070,7 @@ export default function MobileVendorPublish({
                 className="h-full min-h-[160px] rounded-2xl border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-all active:scale-95"
               >
                 {isProcessingImages ? (
-                  <Loader2 className="h-6 w-6 text-[var(--gold-accent)] animate-spin" />
+                  <Sparkles className="h-6 w-6 text-[var(--gold-accent)] animate-spin" />
                 ) : (
                   <>
                     <div className="h-8 w-8 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center mb-1.5">
@@ -1126,7 +1126,7 @@ export default function MobileVendorPublish({
                 >
                   {isTrimmingVideo ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Sparkles className="h-3.5 w-3.5 animate-spin" />
                       <span>Trimming to 5s ({trimProgress}%)...</span>
                     </>
                   ) : (
@@ -1169,7 +1169,7 @@ export default function MobileVendorPublish({
 
           {isVideoUploading ? (
             <div className="space-y-2 py-4 flex flex-col items-center">
-              <Loader2 className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
+              <Sparkles className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
               <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
                 Processing Video Clip...
               </span>
@@ -1292,7 +1292,7 @@ export default function MobileVendorPublish({
               disabled={isGeneratingAi}
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] border border-[var(--gold-accent)]/30 text-[10px] font-bold"
             >
-              {isGeneratingAi ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              {isGeneratingAi ? <Sparkles className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
               <span>Auto-Write</span>
             </button>
           </div>

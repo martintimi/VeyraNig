@@ -10,7 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Sparkles, Download, Copy, Check, Send,
-  CheckCircle2, ShoppingBag, Loader2,
+  CheckCircle2, ShoppingBag,
   Search, EyeOff, Tag, Plus
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -361,7 +361,7 @@ export default function DirectSalesAssistantPage() {
 
         {isLoadingProducts ? (
           <div className="py-8 flex items-center justify-center gap-2 text-xs font-mono-luxury text-[var(--text-muted)]">
-            <Loader2 className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
+            <Sparkles className="h-4 w-4 animate-spin text-[var(--gold-accent)]" />
             <span>Loading your catalog...</span>
           </div>
         ) : vendorProducts.length === 0 ? (

@@ -7,7 +7,7 @@ import { GarmentCategory, GenderTarget, VendorSpecialty, getVendorSpecialty, isB
 import {
   UploadCloud, CheckCircle2, Sparkles, Plus, Trash2,
   ShoppingBag, Tag, ArrowRight, ExternalLink,
-  Loader2, Wand2, X, Palette, Store, Clock,
+  Wand2, X, Palette, Store, Clock,
   Check, AlertTriangle, ShieldCheck, Shirt, Info, Sparkle, Lock, RotateCcw,
   Footprints, Gem, Crown, Watch, Layers, Video, Play
 } from 'lucide-react';
@@ -1116,7 +1116,7 @@ export default function PublishGarmentPage() {
               >
                 {isProcessingImages ? (
                   <div className="space-y-3 py-6 flex flex-col items-center">
-                    <Loader2 className="h-9 w-9 text-[var(--gold-accent)] animate-spin" />
+                    <Sparkles className="h-9 w-9 text-[var(--gold-accent)] animate-spin" />
                     <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
                       Optimizing Photos for Fast Loading...
                     </span>
@@ -1231,7 +1231,7 @@ export default function PublishGarmentPage() {
                               >
                                 {img.isDetectingColor ? (
                                   <>
-                                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                    <Sparkles className="h-2.5 w-2.5 animate-spin" />
                                     <span>Detecting...</span>
                                   </>
                                 ) : (
@@ -1283,7 +1283,7 @@ export default function PublishGarmentPage() {
                     className="h-full min-h-[180px] rounded-2xl border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-95 group"
                   >
                     {isProcessingImages ? (
-                      <Loader2 className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
+                      <Sparkles className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
                     ) : (
                       <>
                         <div className="h-10 w-10 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
@@ -1343,7 +1343,7 @@ export default function PublishGarmentPage() {
                     >
                       {isTrimmingVideo ? (
                         <>
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Sparkles className="h-3.5 w-3.5 animate-spin" />
                           <span>Trimming to 5s ({trimProgress}%)...</span>
                         </>
                       ) : (
@@ -1386,7 +1386,7 @@ export default function PublishGarmentPage() {
             >
               {isVideoUploading ? (
                 <div className="space-y-2 py-4 flex flex-col items-center">
-                  <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin" />
+                  <Sparkles className="h-8 w-8 text-[var(--gold-accent)] animate-spin" />
                   <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
                     Processing Video Clip...
                   </span>
@@ -1576,7 +1576,7 @@ export default function PublishGarmentPage() {
                 >
                   {isGeneratingAi ? (
                     <>
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <Sparkles className="h-3 w-3 animate-spin" />
                       <span>Writing with AI...</span>
                     </>
                   ) : (
