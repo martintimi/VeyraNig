@@ -14,6 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { vendorFetch } from '@/lib/services/apiClient';
+import { compressImage } from '@/lib/utils/imageUtils';
 
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
@@ -158,7 +159,9 @@ export default function MobileVendorPublish({
         }
   );
 
-  // Photo
+  // Photos (Multi-image support with colorway linking)
+  const [uploadedImages, setUploadedImages] = useState<Array<{ id: string; url: string; colorName?: string; isCover?: boolean }>>([]);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -249,7 +252,7 @@ export default function MobileVendorPublish({
           genderTarget,
           vendorType: vendorProfile.vendorType,
           brandName: vendorProfile.brandName,
-          imageUrl: imagePreview || null
+          imageUrl: uploadedImages[0]?.url || imagePreview || null
         })
       });
 
@@ -270,13 +273,76 @@ export default function MobileVendorPublish({
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsProcessingImages(true);
+    try {
+      const fileList = Array.from(files);
+      const newItems: Array<{ id: string; url: string; colorName?: string; isCover?: boolean }> = [];
+
+      for (const file of fileList) {
+        if (!file.type.startsWith('image/')) continue;
+        const compressedDataUrl = await compressImage(file, 1400, 0.85);
+        newItems.push({
+          id: `img-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          url: compressedDataUrl,
+          colorName: '',
+          isCover: false,
+        });
+      }
+
+      setUploadedImages((prev) => {
+        const combined = [...prev, ...newItems];
+        if (combined.length > 0 && !combined.some((img) => img.isCover)) {
+          combined[0].isCover = true;
+        }
+        return combined;
+      });
+
+      if (e.target) e.target.value = '';
+    } catch (err) {
+      console.error('Image upload/compression error:', err);
+      setErrorMessage('Failed to optimize some uploaded photos. Please try again.');
+    } finally {
+      setIsProcessingImages(false);
+    }
+  };
+
+  const handleSetCover = (id: string) => {
+    setUploadedImages((prev) => {
+      const target = prev.find((img) => img.id === id);
+      if (!target) return prev;
+      const rest = prev.filter((img) => img.id !== id);
+      return [{ ...target, isCover: true }, ...rest.map((img) => ({ ...img, isCover: false }))];
+    });
+  };
+
+  const handleRemoveImage = (id: string) => {
+    setUploadedImages((prev) => {
+      const filtered = prev.filter((img) => img.id !== id);
+      if (filtered.length > 0 && !filtered.some((img) => img.isCover)) {
+        filtered[0].isCover = true;
+      }
+      return filtered;
+    });
+  };
+
+  const handleAssignColor = (id: string, colorName: string) => {
+    setUploadedImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, colorName } : img))
+    );
+
+    if (colorName && colorName !== 'none') {
+      const found = STANDARD_COLORS.find(
+        (c) => c.name.toLowerCase() === colorName.toLowerCase()
+      );
+      const hex = found ? found.hex : '#111111';
+      setSelectedColors((prev) => {
+        if (prev.some((c) => c.name.toLowerCase() === colorName.toLowerCase())) return prev;
+        return [...prev, { name: colorName, hex }];
+      });
     }
   };
 
@@ -454,11 +520,28 @@ export default function MobileVendorPublish({
       return;
     }
 
+    if (uploadedImages.length === 0 && !imagePreview) {
+      setErrorMessage('Please upload at least one product photo for your piece');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setIsSubmitting(true);
     const activeVendorId = getActiveVendorId();
 
     try {
-      let finalImg = imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
+      let finalImg = uploadedImages[0]?.url || imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
+
+      const enrichedColorsToSubmit = category === 'accessories'
+        ? []
+        : (selectedColors.length > 0 ? selectedColors.map(c => {
+            const matchedImg = uploadedImages.find(img => img.colorName && img.colorName.toLowerCase() === c.name.toLowerCase());
+            return {
+              name: c.name,
+              hex: c.hex,
+              imageUrl: matchedImg?.url
+            };
+          }) : [{ name: 'As Pictured', hex: '#111111' }]);
 
       const payload = {
         name: name.trim(),
@@ -468,10 +551,11 @@ export default function MobileVendorPublish({
         garmentOriginType: 'ready_made_boutique',
         imageUrl: finalImg,
         image_url: finalImg,
+        images: uploadedImages.map(img => ({ url: img.url, colorName: img.colorName })),
         videoUrl: videoPreview || undefined,
         description: description.trim(),
         tags,
-        colors: category === 'accessories' ? [] : (selectedColors.length > 0 ? selectedColors.map(c => ({ name: c.name, hex: c.hex })) : [{ name: 'As Pictured', hex: '#111111' }]),
+        colors: enrichedColorsToSubmit,
         sizes: enabledSizes,
         sizeStock,
         stockQuantity: totalStock,
@@ -632,40 +716,146 @@ export default function MobileVendorPublish({
         </div>
       )}
 
-      {/* 2. Showcase Photo Card */}
-      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
-        <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury block">
-          1. Photo Showcase <strong className="text-rose-400">*</strong>
-        </span>
-
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-[var(--border-subtle)] rounded-2xl p-4 text-center cursor-pointer transition-all bg-[var(--bg-primary)] flex flex-col items-center justify-center min-h-[160px]"
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="hidden"
-          />
-
-          {imagePreview ? (
-            <div className="relative h-44 w-full rounded-xl overflow-hidden">
-              <Image src={imagePreview} alt="Preview" fill unoptimized className="object-cover" />
-            </div>
-          ) : (
-            <div className="space-y-1.5 py-4">
-              <Camera className="h-8 w-8 text-[var(--gold-accent)] mx-auto" />
-              <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
-                Tap to Upload Photo
-              </span>
-              <span className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
-                Take camera photo or pick from gallery
-              </span>
-            </div>
-          )}
+      {/* 1. Multi-Photo Showcase & Colorway Linking */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury flex items-center gap-1.5">
+            <Camera className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+            <span>1. Photo Showcase <strong className="text-rose-400">*</strong></span>
+          </span>
+          <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold">
+            {uploadedImages.length > 0 ? `${uploadedImages.length} ${uploadedImages.length === 1 ? 'Photo' : 'Photos'} Added` : 'Multi-Color & Views'}
+          </span>
         </div>
+
+        <p className="text-[10px] text-[var(--text-muted)] font-mono-luxury leading-relaxed">
+          Upload photos for every colorway (e.g. Red, Black, Green) & angles. The first photo is your main catalog cover.
+        </p>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageChange}
+          className="hidden"
+        />
+
+        {uploadedImages.length === 0 ? (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/60 rounded-2xl p-6 text-center cursor-pointer transition-all bg-[var(--bg-primary)] flex flex-col items-center justify-center min-h-[160px]"
+          >
+            {isProcessingImages ? (
+              <div className="space-y-2 py-4 flex flex-col items-center">
+                <Loader2 className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
+                <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
+                  Optimizing Photos...
+                </span>
+              </div>
+            ) : (
+              <div className="space-y-2 py-3">
+                <div className="h-12 w-12 rounded-2xl bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center mx-auto shadow-sm">
+                  <UploadCloud className="h-6 w-6" />
+                </div>
+                <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
+                  Tap to Select Photos
+                </span>
+                <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] block max-w-xs mx-auto">
+                  Select all your product colors & views at once from your gallery
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              {uploadedImages.map((img, idx) => (
+                <div
+                  key={img.id}
+                  className="relative rounded-2xl overflow-hidden surface-card border border-[var(--border-subtle)] flex flex-col group/card shadow-sm"
+                >
+                  <div className="relative h-36 w-full bg-black/40 overflow-hidden">
+                    <Image
+                      src={img.url}
+                      alt={`Product view ${idx + 1}`}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+
+                    {/* Cover Photo Badge / Set Cover Button */}
+                    {idx === 0 ? (
+                      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-[var(--gold-accent)] text-black text-[9px] font-mono-luxury font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-md">
+                        <Check className="h-2.5 w-2.5 stroke-[3]" />
+                        <span>Main Cover</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSetCover(img.id)}
+                        className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full bg-black/80 hover:bg-black text-white text-[9px] font-mono-luxury font-bold uppercase tracking-wider border border-white/20 transition-all cursor-pointer shadow-md"
+                      >
+                        Set Cover
+                      </button>
+                    )}
+
+                    {/* Delete Photo Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(img.id)}
+                      className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/80 text-rose-400 hover:text-rose-300 border border-rose-500/30 cursor-pointer shadow-lg active:scale-90 transition-transform"
+                      title="Remove photo"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  {/* Color Assignment Selector */}
+                  <div className="p-2 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)]">
+                    <label className="block text-[9px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold mb-1">
+                      Link to Color:
+                    </label>
+                    <select
+                      value={img.colorName || ''}
+                      onChange={(e) => handleAssignColor(img.id, e.target.value)}
+                      className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] cursor-pointer"
+                    >
+                      <option value="">General / All Colors</option>
+                      {STANDARD_COLORS.map((sc) => (
+                        <option key={sc.name} value={sc.name}>
+                          {sc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+
+              {/* Add More Photos Card */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="h-full min-h-[160px] rounded-2xl border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] bg-[var(--bg-primary)] flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-all active:scale-95"
+              >
+                {isProcessingImages ? (
+                  <Loader2 className="h-6 w-6 text-[var(--gold-accent)] animate-spin" />
+                ) : (
+                  <>
+                    <div className="h-8 w-8 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center mb-1.5">
+                      <Plus className="h-4 w-4" />
+                    </div>
+                    <span className="text-[11px] font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
+                      + Add Photo
+                    </span>
+                    <span className="text-[9px] font-mono-luxury text-[var(--text-muted)]">
+                      Color or angle
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 2. Catwalk / Movement Video (Optional 3-5s clip) */}

@@ -262,7 +262,48 @@ export async function GET(
     const videoTag = rawTags.find((t: string) => typeof t === 'string' && t.startsWith('video:'));
     const rawVideoUrl = videoTag ? videoTag.replace(/^video:/, '') : (product.video_url || undefined);
     const videoUrl = normalizeVideoUrl(rawVideoUrl);
-    const cleanTags = rawTags.filter((t: string) => typeof t === 'string' && !t.startsWith('video:'));
+
+    // Extract gallery images stored in tags as 'img:<url>'
+    const galleryImgTags = rawTags
+      .filter((t: string) => typeof t === 'string' && t.startsWith('img:'))
+      .map((t: string) => t.replace(/^img:/, ''));
+
+    // Extract color-specific images stored in tags as 'color_img:<colorName>:<url>'
+    const colorImgMap = new Map<string, string>();
+    rawTags
+      .filter((t: string) => typeof t === 'string' && t.startsWith('color_img:'))
+      .forEach((t: string) => {
+        const parts = t.slice('color_img:'.length).split(':');
+        if (parts.length >= 2) {
+          const colorName = parts[0].trim().toLowerCase();
+          const url = parts.slice(1).join(':');
+          colorImgMap.set(colorName, url);
+        }
+      });
+
+    // Combine images (primary image_url first, then gallery images, plus any color images)
+    const primaryImg = product.image_url || '/images/products/BlackTrapStarHoodie.jpg';
+    const colorImgs = Array.from(colorImgMap.values());
+    const rawImages = Array.isArray(product.images) ? product.images : [];
+    const combinedImages = Array.from(
+      new Set([primaryImg, ...rawImages, ...galleryImgTags, ...colorImgs].filter(Boolean))
+    );
+
+    // Attach imageUrl to matching colors
+    const enrichedColors = normalizedColors.map(col => {
+      const colNameLower = col.name.toLowerCase();
+      const matchedImg = colorImgMap.get(colNameLower);
+      return matchedImg ? { ...col, imageUrl: matchedImg } : col;
+    });
+
+    // Filter out internal system tags (video:, img:, color_img:) from public customer tags
+    const cleanTags = rawTags.filter(
+      (t: string) =>
+        typeof t === 'string' &&
+        !t.startsWith('video:') &&
+        !t.startsWith('img:') &&
+        !t.startsWith('color_img:')
+    );
 
     const formattedProduct = {
       id: product.id,
@@ -279,11 +320,11 @@ export async function GET(
       category: product.category || 'tops',
       genderTarget: product.gender_target || 'unisex',
       garmentOriginType: product.garment_origin_type || 'ready_made_boutique',
-      imageUrl: product.image_url || '/images/products/BlackTrapStarHoodie.jpg',
-      images: Array.isArray(product.images) ? product.images : (product.image_url ? [product.image_url] : []),
+      imageUrl: primaryImg,
+      images: combinedImages.length > 0 ? combinedImages : [primaryImg],
       videoUrl: videoUrl,
       tags: cleanTags.length > 0 ? cleanTags : ['Ready-to-Wear'],
-      colors: isAccessory ? [] : normalizedColors,
+      colors: isAccessory ? [] : enrichedColors,
       sizes: resolvedSizes,
       sizeStock: finalSizeStock,
       stockQuantity: dynamicTotalStock > 0 ? dynamicTotalStock : (isAccessory ? 20 : 50),

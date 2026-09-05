@@ -183,6 +183,22 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
     }
   };
 
+  const handleSelectColor = (colorObj: any) => {
+    setSelectedColor(colorObj);
+
+    const targetUrl = colorObj?.imageUrl;
+    if (targetUrl && carouselRef.current) {
+      const targetIdx = mediaItems.findIndex((m) => m.url === targetUrl);
+      if (targetIdx !== -1) {
+        setActiveMediaIndex(targetIdx);
+        carouselRef.current.scrollTo({
+          left: targetIdx * carouselRef.current.clientWidth,
+          behavior: 'smooth',
+        });
+      }
+    }
+  };
+
   // Stock for chosen color and size
   const currentVariantStock = (() => {
     if (product.sizeStock && typeof product.sizeStock === 'object') {
@@ -526,7 +542,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                   <button
                     key={`color-${colorName}-${index}`}
                     type="button"
-                    onClick={() => setSelectedColor(typeof c === 'object' ? c : { name: colorName, hex: colorHex })}
+                    onClick={() => handleSelectColor(typeof c === 'object' ? c : { name: colorName, hex: colorHex })}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all cursor-pointer ${
                       isChosen
                         ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] ring-2 ring-[var(--gold-accent)] shadow-md'

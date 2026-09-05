@@ -307,7 +307,47 @@ export async function GET(request: Request) {
       const videoTag = rawTags.find((t: string) => typeof t === 'string' && t.startsWith('video:'));
       const rawVideoUrl = videoTag ? videoTag.replace(/^video:/, '') : (p.video_url || undefined);
       const videoUrl = normalizeVideoUrl(rawVideoUrl);
-      const cleanTags = rawTags.filter((t: string) => typeof t === 'string' && !t.startsWith('video:'));
+
+      // Extract gallery images stored in tags as 'img:<url>'
+      const galleryImgTags = rawTags
+        .filter((t: string) => typeof t === 'string' && t.startsWith('img:'))
+        .map((t: string) => t.replace(/^img:/, ''));
+
+      // Extract color-specific images stored in tags as 'color_img:<colorName>:<url>'
+      const colorImgMap = new Map<string, string>();
+      rawTags
+        .filter((t: string) => typeof t === 'string' && t.startsWith('color_img:'))
+        .forEach((t: string) => {
+          const parts = t.slice('color_img:'.length).split(':');
+          if (parts.length >= 2) {
+            const colorName = parts[0].trim().toLowerCase();
+            const url = parts.slice(1).join(':');
+            colorImgMap.set(colorName, url);
+          }
+        });
+
+      // Combine images (resolvedImg first, then gallery images, plus any color images)
+      const colorImgs = Array.from(colorImgMap.values());
+      const rawImages = Array.isArray(p.images) ? p.images : [];
+      const combinedImages = Array.from(
+        new Set([resolvedImg, ...rawImages, ...galleryImgTags, ...colorImgs].filter(Boolean))
+      );
+
+      // Attach imageUrl to matching colors
+      const enrichedColors = normalizedColors.map(col => {
+        const colNameLower = col.name.toLowerCase();
+        const matchedImg = colorImgMap.get(colNameLower);
+        return matchedImg ? { ...col, imageUrl: matchedImg } : col;
+      });
+
+      // Filter out internal system tags (video:, img:, color_img:) from public customer tags
+      const cleanTags = rawTags.filter(
+        (t: string) =>
+          typeof t === 'string' &&
+          !t.startsWith('video:') &&
+          !t.startsWith('img:') &&
+          !t.startsWith('color_img:')
+      );
 
       return {
         id: p.id,
@@ -318,11 +358,11 @@ export async function GET(request: Request) {
         garmentOriginType: p.garment_origin_type,
         imageUrl: resolvedImg,
         image_url: resolvedImg,
-        images: Array.isArray(p.images) ? p.images : (resolvedImg ? [resolvedImg] : []),
+        images: combinedImages.length > 0 ? combinedImages : (resolvedImg ? [resolvedImg] : []),
         videoUrl: videoUrl,
         description: p.description,
         tags: cleanTags,
-        colors: isAccessory ? [] : normalizedColors,
+        colors: isAccessory ? [] : enrichedColors,
         sizes: resolvedSizes,
         sizeStock: finalSizeStock,
         stockQuantity: dynamicTotalStock > 0 ? dynamicTotalStock : (isAccessory ? 20 : 50),
@@ -527,7 +567,34 @@ export async function POST(request: Request) {
       tagsList.push(`video:${videoToSave.trim()}`);
     }
 
-    const finalImage = imageUrl || image_url || getSmartFallbackImage(name, category);
+    const firstImageInList = Array.isArray(body.images) && body.images.length > 0
+      ? (typeof body.images[0] === 'string' ? body.images[0] : body.images[0]?.url)
+      : undefined;
+
+    const finalImage = imageUrl || image_url || firstImageInList || getSmartFallbackImage(name, category);
+
+    // Save additional gallery images & color-linked images into tagsList
+    const rawImagesToSave = body.images;
+    if (Array.isArray(rawImagesToSave)) {
+      rawImagesToSave.forEach((item: any) => {
+        const imgUrl = typeof item === 'string' ? item : item?.url;
+        const colorName = typeof item === 'object' ? item?.colorName : undefined;
+        if (imgUrl && typeof imgUrl === 'string' && imgUrl.trim() && imgUrl !== finalImage) {
+          tagsList.push(`img:${imgUrl.trim()}`);
+        }
+        if (colorName && typeof colorName === 'string' && colorName.trim() && imgUrl) {
+          tagsList.push(`color_img:${colorName.trim()}:${imgUrl.trim()}`);
+        }
+      });
+    }
+
+    if (Array.isArray(colors)) {
+      colors.forEach((c: any) => {
+        if (typeof c === 'object' && c?.name && c?.imageUrl) {
+          tagsList.push(`color_img:${c.name.trim()}:${c.imageUrl.trim()}`);
+        }
+      });
+    }
 
     const { data, error } = await supabase.from('products').insert({
       id: productId,
