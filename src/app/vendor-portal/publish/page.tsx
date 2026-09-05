@@ -9,7 +9,7 @@ import {
   ShoppingBag, Tag, ArrowRight, ExternalLink,
   Loader2, Wand2, X, Palette, Store, Clock,
   Check, AlertTriangle, ShieldCheck, Shirt, Info, Sparkle, Lock, RotateCcw,
-  Footprints, Gem, Crown, Watch, Layers
+  Footprints, Gem, Crown, Watch, Layers, Video, Play
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -191,6 +191,13 @@ export default function PublishGarmentPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Catwalk / Movement Video (Optional 3-5s micro-clip)
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [videoError, setVideoError] = useState('');
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -505,6 +512,65 @@ export default function PublishGarmentPage() {
     }
   };
 
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVideoError('');
+
+    // 1. Enforce file size limit (max 15MB)
+    if (file.size > 15 * 1024 * 1024) {
+      setVideoError('Video must be under 15MB. Please upload a short 3–5s clip.');
+      return;
+    }
+
+    // 2. Validate video duration using in-memory video element
+    const tempUrl = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = tempUrl;
+
+    video.onloadedmetadata = async () => {
+      URL.revokeObjectURL(tempUrl);
+      if (video.duration > 7.5) {
+        setVideoError(`Video is ${Math.round(video.duration)}s long. Please trim to 3–5s so it loads instantly for shoppers.`);
+        return;
+      }
+
+      setIsVideoUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setVideoPreview(data.url);
+          setVideoFile(file);
+        } else {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setVideoPreview(reader.result as string);
+            setVideoFile(file);
+          };
+          reader.readAsDataURL(file);
+        }
+      } catch (err) {
+        console.error('Video upload error:', err);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setVideoPreview(reader.result as string);
+          setVideoFile(file);
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setIsVideoUploading(false);
+      }
+    };
+  };
+
   const toggleColor = (color: { name: string; hex: string }) => {
     const exists = selectedColors.some(c => c.name.toLowerCase() === color.name.toLowerCase());
     if (exists) {
@@ -608,6 +674,7 @@ export default function PublishGarmentPage() {
         imageUrl: finalImageUrl,
         image_url: finalImageUrl,
         images: uploadedImages.map(img => ({ url: img.url, colorName: img.colorName })),
+        videoUrl: videoPreview || undefined,
         description: description.trim(),
         tags,
         colors: enrichedColorsToSubmit,
@@ -654,6 +721,9 @@ export default function PublishGarmentPage() {
     setDescription('');
     setImageFile(null);
     setImagePreview(null);
+    setVideoFile(null);
+    setVideoPreview(null);
+    setVideoError('');
     setTags([]);
     setIsSuccess(false);
     setCreatedProductId(null);
@@ -1132,10 +1202,98 @@ export default function PublishGarmentPage() {
             )}
           </div>
 
-          {/* Section 2: Piece Details & Pricing */}
+          {/* Section 2: Catwalk / Movement Video (Optional 3–5s micro-clip) */}
+          <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury flex items-center gap-2">
+                <Video className="h-4 w-4 text-[var(--gold-accent)]" />
+                <span>2. Catwalk Video (Optional)</span>
+              </span>
+              <span className="text-[11px] font-mono-luxury text-[var(--gold-accent)] font-bold">
+                3–5s micro-clip
+              </span>
+            </div>
+
+            <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
+              Upload a short 3–5 second clip of a model walking, posing, or showing garment drape. This video autoplays smoothly in the catalog to boost conversion.
+            </p>
+
+            {videoError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono-luxury flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{videoError}</span>
+              </div>
+            )}
+
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime"
+              onChange={handleVideoChange}
+              className="hidden"
+            />
+
+            <div
+              onClick={() => {
+                if (!videoPreview && !isVideoUploading) videoInputRef.current?.click();
+              }}
+              className="border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/60 rounded-2xl p-6 text-center cursor-pointer transition-all bg-[var(--bg-primary)] flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden"
+            >
+              {isVideoUploading ? (
+                <div className="space-y-2 py-4 flex flex-col items-center">
+                  <Loader2 className="h-8 w-8 text-[var(--gold-accent)] animate-spin" />
+                  <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
+                    Processing Video Clip...
+                  </span>
+                </div>
+              ) : videoPreview ? (
+                <div className="relative w-full max-w-md mx-auto rounded-xl overflow-hidden bg-black aspect-[16/9]">
+                  <video
+                    src={videoPreview}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 left-2 z-10 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-mono-luxury text-emerald-400 uppercase font-bold flex items-center gap-1 border border-emerald-500/30">
+                    <Check className="h-3 w-3" />
+                    <span>Catwalk Video Ready</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setVideoPreview(null);
+                      setVideoFile(null);
+                    }}
+                    className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/80 text-rose-400 hover:text-rose-300 border border-rose-500/30 cursor-pointer shadow-lg active:scale-90 transition-transform"
+                    aria-label="Remove video"
+                    title="Remove video"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2 py-3">
+                  <div className="h-12 w-12 rounded-2xl bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center mx-auto shadow-sm">
+                    <Video className="h-6 w-6" />
+                  </div>
+                  <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
+                    Click to Upload Model Catwalk Video
+                  </span>
+                  <span className="text-[11px] font-mono-luxury text-[var(--text-secondary)] block max-w-sm mx-auto">
+                    Short 3–5s micro-clip of model walk or movement (Max 15MB, MP4 / WebM / MOV)
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section 3: Piece Details & Pricing */}
           <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-6">
             <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
-              2. Piece Details & Pricing
+              3. Piece Details & Pricing
             </span>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -1303,12 +1461,12 @@ export default function PublishGarmentPage() {
 
           </div>
 
-          {/* Section 3: Colorway Variations (Only for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
+          {/* Section 4: Colorway Variations (Only for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
           {category !== 'accessories' && (
             <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
               <div>
                 <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
-                  3. Available Colorways
+                  4. Available Colorways
                 </span>
                 <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
                   Select all shades available in your store inventory for this piece.
@@ -1380,16 +1538,16 @@ export default function PublishGarmentPage() {
             </div>
           )}
 
-          {/* Section 4: Adaptive Size Stock & Inventory */}
+          {/* Section 5: Adaptive Size Stock & Inventory */}
           <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
                   {category === 'footwear'
-                    ? '4. Shoe / Slide Sizing & Inventory (EU Sizes)'
+                    ? '5. Shoe / Slide Sizing & Inventory (EU Sizes)'
                     : category === 'accessories'
-                    ? '3. Accessory / Jewelry Stock Units'
-                    : '4. Ready-to-Wear Size Stocks & Units'}
+                    ? '4. Accessory / Jewelry Stock Units'
+                    : '5. Ready-to-Wear Size Stocks & Units'}
                 </span>
                 <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
                   {category === 'footwear'
