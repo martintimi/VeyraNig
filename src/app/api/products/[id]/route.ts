@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { normalizeVideoUrl } from '@/lib/utils/videoUtils';
 
 const NIGERIAN_STATES = [
   'Lagos', 'Ogun', 'Oyo', 'Abuja', 'FCT - Abuja', 'Rivers', 'Anambra', 'Enugu', 'Delta',
@@ -259,7 +260,8 @@ export async function GET(
 
     const rawTags: string[] = Array.isArray(product.tags) ? product.tags : [];
     const videoTag = rawTags.find((t: string) => typeof t === 'string' && t.startsWith('video:'));
-    const videoUrl = videoTag ? videoTag.replace(/^video:/, '') : (product.video_url || undefined);
+    const rawVideoUrl = videoTag ? videoTag.replace(/^video:/, '') : (product.video_url || undefined);
+    const videoUrl = normalizeVideoUrl(rawVideoUrl);
     const cleanTags = rawTags.filter((t: string) => typeof t === 'string' && !t.startsWith('video:'));
 
     const formattedProduct = {
@@ -278,6 +280,7 @@ export async function GET(
       genderTarget: product.gender_target || 'unisex',
       garmentOriginType: product.garment_origin_type || 'ready_made_boutique',
       imageUrl: product.image_url || '/images/products/BlackTrapStarHoodie.jpg',
+      images: Array.isArray(product.images) ? product.images : (product.image_url ? [product.image_url] : []),
       videoUrl: videoUrl,
       tags: cleanTags.length > 0 ? cleanTags : ['Ready-to-Wear'],
       colors: isAccessory ? [] : normalizedColors,

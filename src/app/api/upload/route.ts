@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { normalizeVideoBuffer } from '@/lib/utils/videoUtils';
 
 // Configure Cloudinary if environment variables are set
 if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -22,9 +23,17 @@ export async function POST(request: Request) {
 
     // Read bytes
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    let buffer: any = Buffer.from(bytes);
 
     const isVideo = file.type.startsWith('video/') || file.name.endsWith('.mp4') || file.name.endsWith('.webm') || file.name.endsWith('.mov');
+
+    let mimeType = file.type || (isVideo ? 'video/mp4' : 'image/jpeg');
+
+    if (isVideo) {
+      const normalized = normalizeVideoBuffer(buffer, mimeType);
+      buffer = normalized.buffer;
+      mimeType = normalized.mimeType;
+    }
 
     // 1. Cloudinary Upload (Direct high-speed CDN video streaming)
     if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -53,7 +62,6 @@ export async function POST(request: Request) {
 
     // 2. Fallback: Base64 data URL if Cloudinary keys are not yet added in .env.local
     const base64 = buffer.toString('base64');
-    const mimeType = file.type || (isVideo ? 'video/mp4' : 'image/jpeg');
     const dataUrl = `data:${mimeType};base64,${base64}`;
 
     return NextResponse.json({

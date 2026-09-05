@@ -369,6 +369,9 @@ export default function MarketplaceGrid() {
           {paginatedProducts.map((product) => {
             const isWorn = activeOutfit[product.category]?.id === product.id;
             const fitResult = calculateFitMatch(bodyProfile, product);
+            const secondaryImage = product.images && product.images.length > 1
+              ? product.images.find((img) => img && img !== product.imageUrl)
+              : undefined;
 
             return (
               <div
@@ -380,6 +383,12 @@ export default function MarketplaceGrid() {
                 {/* Image Container with Quick Look Click */}
                 <div
                   onClick={() => setQuickLookProduct(product)}
+                  onMouseEnter={(e) => {
+                    const video = e.currentTarget.querySelector('video');
+                    if (video && video.paused) {
+                      video.play().catch(() => {});
+                    }
+                  }}
                   className="relative h-48 sm:h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block cursor-pointer group/img"
                 >
                   <Image
@@ -387,8 +396,17 @@ export default function MarketplaceGrid() {
                     alt={product.name}
                     fill
                     unoptimized
-                    className={`object-cover transition-all duration-500 brightness-95 group-hover/img:brightness-100 ${product.videoUrl ? 'group-hover/img:opacity-0' : 'group-hover/img:scale-105'}`}
+                    className="object-cover transition-all duration-500 brightness-95 group-hover/img:brightness-100 group-hover/img:scale-105"
                   />
+                  {!product.videoUrl && secondaryImage && (
+                    <Image
+                      src={secondaryImage}
+                      alt={`${product.name} alternate view`}
+                      fill
+                      unoptimized
+                      className="object-cover opacity-0 group-hover/img:opacity-100 transition-opacity duration-500 pointer-events-none group-hover/img:scale-105"
+                    />
+                  )}
                   {product.videoUrl && (
                     <video
                       src={product.videoUrl}
@@ -396,6 +414,9 @@ export default function MarketplaceGrid() {
                       loop
                       muted
                       playsInline
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                       className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 pointer-events-none"
                     />
                   )}

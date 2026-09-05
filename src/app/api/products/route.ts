@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { normalizeVideoUrl } from '@/lib/utils/videoUtils';
 
 const NIGERIAN_STATES = [
   'Lagos', 'Ogun', 'Oyo', 'Abuja', 'FCT - Abuja', 'Rivers', 'Anambra', 'Enugu', 'Delta',
@@ -304,7 +305,8 @@ export async function GET(request: Request) {
 
       const rawTags: string[] = Array.isArray(p.tags) ? p.tags : [];
       const videoTag = rawTags.find((t: string) => typeof t === 'string' && t.startsWith('video:'));
-      const videoUrl = videoTag ? videoTag.replace(/^video:/, '') : (p.video_url || undefined);
+      const rawVideoUrl = videoTag ? videoTag.replace(/^video:/, '') : (p.video_url || undefined);
+      const videoUrl = normalizeVideoUrl(rawVideoUrl);
       const cleanTags = rawTags.filter((t: string) => typeof t === 'string' && !t.startsWith('video:'));
 
       return {
@@ -316,6 +318,7 @@ export async function GET(request: Request) {
         garmentOriginType: p.garment_origin_type,
         imageUrl: resolvedImg,
         image_url: resolvedImg,
+        images: Array.isArray(p.images) ? p.images : (resolvedImg ? [resolvedImg] : []),
         videoUrl: videoUrl,
         description: p.description,
         tags: cleanTags,
@@ -518,7 +521,8 @@ export async function POST(request: Request) {
       ? tags.map((t: any) => typeof t === 'string' ? t.replace(/^#/, '') : String(t))
       : [];
 
-    const videoToSave = body.videoUrl || body.video_url;
+    const rawVideoToSave = body.videoUrl || body.video_url;
+    const videoToSave = normalizeVideoUrl(rawVideoToSave);
     if (videoToSave && typeof videoToSave === 'string' && videoToSave.trim()) {
       tagsList.push(`video:${videoToSave.trim()}`);
     }
