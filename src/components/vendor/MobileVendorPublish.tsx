@@ -999,12 +999,12 @@ export default function MobileVendorPublish({
         )}
       </div>
 
-      {/* 2. Catwalk / Movement Video (Optional 3-5s clip) */}
+      {/* 2. Product Video (Optional 3-5s clip) */}
       <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
         <div className="flex items-center justify-between">
           <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury flex items-center gap-1.5">
             <Video className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-            <span>2. Catwalk Video (Optional)</span>
+            <span>2. Product Video (Optional)</span>
           </span>
           <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold">
             3–5s micro-clip
@@ -1051,7 +1051,7 @@ export default function MobileVendorPublish({
               />
               <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[9px] font-mono-luxury text-emerald-400 uppercase font-bold flex items-center gap-1 border border-emerald-500/30">
                 <Check className="h-3 w-3" />
-                <span>Catwalk Video Ready</span>
+                <span>Product Video Ready</span>
               </div>
               <button
                 type="button"
@@ -1070,10 +1070,10 @@ export default function MobileVendorPublish({
             <div className="space-y-1 py-3">
               <Video className="h-7 w-7 text-[var(--gold-accent)] mx-auto" />
               <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
-                Tap to Add Model Catwalk / Fabric Swish
+                Tap to Add Product Video
               </span>
               <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] block max-w-xs mx-auto">
-                Short 3–5 second clip of model walk or movement (Max 15MB)
+                Short 3–5 second clip of product or movement (Max 15MB)
               </span>
             </div>
           )}

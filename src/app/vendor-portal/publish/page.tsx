@@ -1223,12 +1223,12 @@ export default function PublishGarmentPage() {
             )}
           </div>
 
-          {/* Section 2: Catwalk / Movement Video (Optional 3–5s micro-clip) */}
+          {/* Section 2: Product Video (Optional 3–5s micro-clip) */}
           <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury flex items-center gap-2">
                 <Video className="h-4 w-4 text-[var(--gold-accent)]" />
-                <span>2. Catwalk Video (Optional)</span>
+                <span>2. Product Video (Optional)</span>
               </span>
               <span className="text-[11px] font-mono-luxury text-[var(--gold-accent)] font-bold">
                 3–5s micro-clip
@@ -1236,7 +1236,7 @@ export default function PublishGarmentPage() {
             </div>
 
             <p className="text-xs text-[var(--text-secondary)] font-mono-luxury leading-relaxed">
-              Upload a short 3–5 second clip of a model walking, posing, or showing garment drape. This video autoplays smoothly in the catalog to boost conversion.
+              Upload a short 3–5 second video clip of the product in motion. This video autoplays smoothly in the catalog to showcase the piece.
             </p>
 
             {videoError && (
@@ -1279,7 +1279,7 @@ export default function PublishGarmentPage() {
                   />
                   <div className="absolute top-2 left-2 z-10 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-mono-luxury text-emerald-400 uppercase font-bold flex items-center gap-1 border border-emerald-500/30">
                     <Check className="h-3 w-3" />
-                    <span>Catwalk Video Ready</span>
+                    <span>Product Video Ready</span>
                   </div>
                   <button
                     type="button"
@@ -1301,10 +1301,10 @@ export default function PublishGarmentPage() {
                     <Video className="h-6 w-6" />
                   </div>
                   <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
-                    Click to Upload Model Catwalk Video
+                    Click to Upload Product Video
                   </span>
                   <span className="text-[11px] font-mono-luxury text-[var(--text-secondary)] block max-w-sm mx-auto">
-                    Short 3–5s micro-clip of model walk or movement (Max 15MB, MP4 / WebM / MOV)
+                    Short 3–5s video clip of the product (Max 15MB, MP4 / WebM / MOV)
                   </span>
                 </div>
               )}

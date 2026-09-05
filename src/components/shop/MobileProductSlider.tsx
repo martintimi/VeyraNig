@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Video } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface MediaSlide {
@@ -226,25 +225,6 @@ export default function MobileProductSlider({
           );
         })}
       </motion.div>
-
-      {/* Active Colorway Pill (Shows when slide belongs to a specific color) */}
-      {slides[activeIndex]?.colorName && (
-        <div className="absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[9px] font-mono-luxury font-bold text-white flex items-center gap-1.5 shadow-md pointer-events-none animate-fadeIn">
-          <span
-            className="h-2 w-2 rounded-full border border-white/40 shrink-0"
-            style={{ backgroundColor: slides[activeIndex]?.colorHex || '#111111' }}
-          />
-          <span className="truncate max-w-[80px]">{slides[activeIndex]?.colorName}</span>
-        </div>
-      )}
-
-      {/* Catwalk Badge */}
-      {slides[activeIndex]?.type === 'video' && (
-        <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-emerald-500/30 text-[9px] font-mono-luxury font-bold text-emerald-400 flex items-center gap-1 shadow-md pointer-events-none">
-          <Video className="h-2.5 w-2.5" />
-          <span>Catwalk Video</span>
-        </div>
-      )}
 
       {/* Slide Dot Indicators */}
       {hasMultiple && (

@@ -284,7 +284,7 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            {/* Watch Catwalk Video Button if video exists and isn't currently playing */}
+            {/* Watch Product Video Button if video exists and isn't currently playing */}
             {product.videoUrl && !isVideoPlaying && (
               <button
                 type="button"
@@ -292,7 +292,7 @@ export default function ProductDetailPage() {
                 className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-full bg-black/80 hover:bg-black text-[var(--gold-accent)] hover:text-amber-300 text-xs font-mono-luxury font-bold flex items-center gap-1.5 border border-white/15 backdrop-blur-md shadow-lg transition-transform active:scale-95 cursor-pointer"
               >
                 <Play className="h-3.5 w-3.5 fill-current" />
-                <span>Watch Catwalk</span>
+                <span>Watch Video</span>
               </button>
             )}
 
