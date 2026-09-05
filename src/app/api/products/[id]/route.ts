@@ -8,6 +8,9 @@ const NIGERIAN_STATES = [
   'Kebbi', 'Kogi', 'Nasarawa', 'Niger', 'Plateau', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'Bauchi', 'Borno', 'Adamawa'
 ];
 
+const productDetailCache = new Map<string, { data: any; timestamp: number }>();
+const DETAIL_CACHE_TTL_MS = 45000; // 45 seconds
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,6 +20,16 @@ export async function GET(
 
     if (!id) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
+    }
+
+    const cached = productDetailCache.get(id);
+    if (cached && Date.now() - cached.timestamp < DETAIL_CACHE_TTL_MS) {
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+          'X-Cache': 'HIT',
+        },
+      });
     }
 
     const supabase = await createClient();
@@ -277,14 +290,18 @@ export async function GET(
       badge: isAccessory ? 'Jewelry & Accessories' : 'Ready-to-Wear'
     };
 
+    const responsePayload = {
+      success: true,
+      product: formattedProduct,
+    };
+    productDetailCache.set(id, { data: responsePayload, timestamp: Date.now() });
+
     return NextResponse.json(
-      {
-        success: true,
-        product: formattedProduct,
-      },
+      responsePayload,
       {
         headers: {
           'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+          'X-Cache': 'MISS',
         },
       }
     );

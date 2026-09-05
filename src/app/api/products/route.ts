@@ -21,6 +21,13 @@ export function getSmartFallbackImage(name: string = '', category: string = ''):
   return '/images/products/BlackTrapStarHoodie.jpg';
 }
 
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+const apiProductsCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 30000; // 30 seconds
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -32,6 +39,17 @@ export async function GET(request: Request) {
     const gender = searchParams.get('gender');
     const origin = searchParams.get('origin');
     const limit = parseInt(searchParams.get('limit') || '50');
+
+    const cacheKey = `${vendorId || ''}_${category || ''}_${gender || ''}_${origin || ''}_${limit}`;
+    const cached = apiProductsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
 
     const supabase = await createClient();
 
@@ -322,15 +340,19 @@ export async function GET(request: Request) {
       };
     });
 
+    const responsePayload = {
+      success: true,
+      count: formatted.length,
+      products: formatted,
+    };
+    apiProductsCache.set(cacheKey, { data: responsePayload, timestamp: Date.now() });
+
     return NextResponse.json(
-      {
-        success: true,
-        count: formatted.length,
-        products: formatted,
-      },
+      responsePayload,
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=60',
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+          'X-Cache': 'MISS',
         },
       }
     );
@@ -341,6 +363,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    apiProductsCache.clear();
     const body = await request.json();
     const resolvedVendorId = 
       body.vendorId || 
