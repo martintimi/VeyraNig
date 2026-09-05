@@ -279,6 +279,11 @@ export async function GET(request: Request) {
           ? { '40': { enabled: true, quantity: 10 }, '41': { enabled: true, quantity: 10 }, '42': { enabled: true, quantity: 10 } }
           : { S: { enabled: true, quantity: 10 }, M: { enabled: true, quantity: 20 }, L: { enabled: true, quantity: 20 } });
 
+      const rawTags: string[] = Array.isArray(p.tags) ? p.tags : [];
+      const videoTag = rawTags.find((t: string) => typeof t === 'string' && t.startsWith('video:'));
+      const videoUrl = videoTag ? videoTag.replace(/^video:/, '') : (p.video_url || undefined);
+      const cleanTags = rawTags.filter((t: string) => typeof t === 'string' && !t.startsWith('video:'));
+
       return {
         id: p.id,
         name: p.name,
@@ -288,22 +293,20 @@ export async function GET(request: Request) {
         garmentOriginType: p.garment_origin_type,
         imageUrl: resolvedImg,
         image_url: resolvedImg,
-        videoUrl: p.video_url || p.tailoring_specs?.videoUrl || undefined,
+        videoUrl: videoUrl,
         description: p.description,
-        tags: p.tags || [],
+        tags: cleanTags,
         colors: isAccessory ? [] : normalizedColors,
         sizes: resolvedSizes,
         sizeStock: finalSizeStock,
         stockQuantity: dynamicTotalStock > 0 ? dynamicTotalStock : (isAccessory ? 20 : 50),
         isCustomizable: p.is_customizable,
-        tailoringSpecs: p.tailoring_specs,
         vendorId: p.vendor_id,
         vendorName: vendorInfo?.brand_name || p.vendor_id?.replace(/-/g, ' ').toUpperCase() || 'Ìrísí Partner',
         vendorLocation: vendorInfo?.location || 'Lagos, Nigeria',
         vendorCity: vendorInfo?.city || 'Lagos',
         vendorState: vendorInfo?.state || 'Lagos',
         vendorDispatchDays: vendorInfo?.dispatchDays || '1-2 business days',
-        weightKg: p.tailoring_specs?.weightKg ? Number(p.tailoring_specs.weightKg) : undefined,
         vendorShippingRates: vendorInfo?.shippingRates || {
           sameCity: 1000,
           closeHub: 2500,
@@ -480,6 +483,11 @@ export async function POST(request: Request) {
       ? tags.map((t: any) => typeof t === 'string' ? t.replace(/^#/, '') : String(t))
       : [];
 
+    const videoToSave = body.videoUrl || body.video_url;
+    if (videoToSave && typeof videoToSave === 'string' && videoToSave.trim()) {
+      tagsList.push(`video:${videoToSave.trim()}`);
+    }
+
     const finalImage = imageUrl || image_url || getSmartFallbackImage(name, category);
 
     const { data, error } = await supabase.from('products').insert({
@@ -493,11 +501,6 @@ export async function POST(request: Request) {
       description: description && description.trim().toLowerCase() !== name.trim().toLowerCase() ? description : '',
       tags: tagsList,
       colors: colorsList,
-      tailoring_specs: { 
-        ...(tailoringSpecs || {}), 
-        ...((body.videoUrl || body.video_url) ? { videoUrl: body.videoUrl || body.video_url } : {}), 
-        ...(body.weightKg ? { weightKg: Number(body.weightKg) } : {}) 
-      },
       vendor_id: vendorId,
       is_published: true,
     }).select().single();

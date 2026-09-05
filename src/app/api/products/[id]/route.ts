@@ -248,6 +248,11 @@ export async function GET(
         ? { '40': { enabled: true, quantity: 10 }, '41': { enabled: true, quantity: 10 }, '42': { enabled: true, quantity: 10 } }
         : { S: { enabled: true, quantity: 10 }, M: { enabled: true, quantity: 20 }, L: { enabled: true, quantity: 20 } });
 
+    const rawTags: string[] = Array.isArray(product.tags) ? product.tags : [];
+    const videoTag = rawTags.find((t: string) => typeof t === 'string' && t.startsWith('video:'));
+    const videoUrl = videoTag ? videoTag.replace(/^video:/, '') : (product.video_url || undefined);
+    const cleanTags = rawTags.filter((t: string) => typeof t === 'string' && !t.startsWith('video:'));
+
     const formattedProduct = {
       id: product.id,
       vendorId: product.vendor_id,
@@ -264,7 +269,8 @@ export async function GET(
       genderTarget: product.gender_target || 'unisex',
       garmentOriginType: product.garment_origin_type || 'ready_made_boutique',
       imageUrl: product.image_url || '/images/products/BlackTrapStarHoodie.jpg',
-      tags: Array.isArray(product.tags) && product.tags.length > 0 ? product.tags : ['Ready-to-Wear'],
+      videoUrl: videoUrl,
+      tags: cleanTags.length > 0 ? cleanTags : ['Ready-to-Wear'],
       colors: isAccessory ? [] : normalizedColors,
       sizes: resolvedSizes,
       sizeStock: finalSizeStock,
