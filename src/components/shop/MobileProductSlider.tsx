@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 
 interface MediaSlide {
   type: 'image' | 'video';
@@ -28,12 +27,9 @@ export default function MobileProductSlider({
   children,
 }: MobileProductSliderProps) {
   const router = useRouter();
-  const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isInView, setIsInView] = useState(false);
-  const [hasNudged, setHasNudged] = useState(false);
 
 
   // Gather all unique images & video for this product
@@ -84,33 +80,6 @@ export default function MobileProductSlider({
 
   const hasMultiple = slides.length > 1;
 
-  // Viewport observer to trigger the swipe peek animation once visible
-  useEffect(() => {
-    if (!hasMultiple || hasNudged) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    if (typeof IntersectionObserver === 'undefined') {
-      setIsInView(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.25 }
-    );
-
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [hasMultiple, hasNudged]);
-
   // Touch tracking to distinguish horizontal swipe vs intentional click vs vertical page scroll
   const touchStartPos = useRef<{ x: number; y: number; time: number } | null>(null);
   const isDragging = useRef(false);
@@ -127,7 +96,6 @@ export default function MobileProductSlider({
 
   // Handle slide index update on horizontal scroll
   const handleScroll = useCallback(() => {
-    setHasNudged(true);
     isDragging.current = true;
     const el = scrollRef.current;
     if (!el || el.clientWidth === 0) return;
@@ -139,7 +107,6 @@ export default function MobileProductSlider({
 
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    setHasNudged(true);
     const t = e.touches[0];
     touchStartPos.current = { x: t.clientX, y: t.clientY, time: Date.now() };
     isDragging.current = false;
@@ -184,26 +151,16 @@ export default function MobileProductSlider({
 
   return (
     <div
-      ref={containerRef}
       className={`relative w-full bg-[var(--bg-secondary)] overflow-hidden rounded-xl border border-[var(--border-subtle)] ${aspectRatioClass} select-none group`}
     >
-      {/* Horizontal Snap Scroll Container with organic peek animation */}
-      <motion.div
+      {/* Horizontal Snap Scroll Container */}
+      <div
         ref={scrollRef}
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleClick}
-        onPointerDown={() => setHasNudged(true)}
-        animate={hasNudged || !isInView || slides.length <= 1 ? { x: 0 } : { x: [0, -45, 0, -22, 0] }}
-        transition={{
-          delay: 0.35 + (idx % 2) * 0.15,
-          duration: 1.4,
-          times: [0, 0.3, 0.6, 0.8, 1],
-          ease: [0.25, 1, 0.5, 1],
-        }}
-        onAnimationComplete={() => setHasNudged(true)}
         className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none touch-manipulation cursor-pointer overscroll-x-contain"
         style={{
           scrollSnapType: 'x mandatory',
@@ -242,7 +199,7 @@ export default function MobileProductSlider({
             </div>
           );
         })}
-      </motion.div>
+      </div>
 
       {/* Slide Dot Indicators */}
       {hasMultiple && (
