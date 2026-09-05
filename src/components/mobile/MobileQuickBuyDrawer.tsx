@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useStore } from '@/lib/store/useStore';
-import { X, Check, ShoppingBag, ShieldCheck, Zap } from 'lucide-react';
+import { X, Check, ShoppingBag, ShieldCheck, Zap, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
+import FitPredictorModal from '@/components/shop/FitPredictorModal';
 
 interface QuickBuyDrawerProps {
   product: any | null;
@@ -37,6 +38,7 @@ export default function MobileQuickBuyDrawer({ product, onClose }: QuickBuyDrawe
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'Standard', hex: '#111111' });
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [isFitPredictorOpen, setIsFitPredictorOpen] = useState(false);
 
   const handleAddBag = () => {
     setIsAdding(true);
@@ -117,7 +119,19 @@ export default function MobileQuickBuyDrawer({ product, onClose }: QuickBuyDrawe
         {/* 1-Tap Ready-to-Wear Size Selector */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-mono-luxury">
-            <span className="uppercase text-[var(--text-secondary)] font-bold">Select Size:</span>
+            <div className="flex items-center gap-2">
+              <span className="uppercase text-[var(--text-secondary)] font-bold">Select Size:</span>
+              {!isAccessory && (
+                <button
+                  type="button"
+                  onClick={() => setIsFitPredictorOpen(true)}
+                  className="text-[10px] text-[var(--gold-accent)] font-bold inline-flex items-center gap-1 hover:underline cursor-pointer bg-[var(--gold-subtle)] px-2 py-0.5 rounded-full border border-[var(--gold-accent)]/30"
+                >
+                  <Sparkles className="h-2.5 w-2.5" />
+                  <span>Find My Size</span>
+                </button>
+              )}
+            </div>
             <span className="text-[var(--gold-accent)] font-bold">Size: {selectedSize}</span>
           </div>
 
@@ -221,6 +235,15 @@ export default function MobileQuickBuyDrawer({ product, onClose }: QuickBuyDrawe
         </div>
 
       </div>
+
+      {/* Fit Predictor Modal */}
+      <FitPredictorModal
+        isOpen={isFitPredictorOpen}
+        onClose={() => setIsFitPredictorOpen(false)}
+        onSelectSize={(sz) => setSelectedSize(sz)}
+        category={product.category}
+        availableSizes={availableSizes}
+      />
     </div>
   );
 }

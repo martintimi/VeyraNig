@@ -8,10 +8,12 @@ import { useStore } from '@/lib/store/useStore';
 import {
   ArrowLeft, Bookmark, Share2, Sparkles, ShieldCheck, MapPin,
   Clock, Truck, ShoppingBag, Zap, Star, Check, CheckCircle2,
-  ChevronDown, ChevronUp, Store, RotateCcw, X, ZoomIn
+  ChevronDown, ChevronUp, Store, RotateCcw, X, ZoomIn,
+  Video, Volume2, VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import FitPredictorModal from '@/components/shop/FitPredictorModal';
 
 interface MobileProductDetailViewProps {
   product: any;
@@ -56,6 +58,9 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isFitPredictorOpen, setIsFitPredictorOpen] = useState(false);
+  const [activeMediaTab, setActiveMediaTab] = useState<'photo' | 'video'>(product.videoUrl ? 'video' : 'photo');
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
 
   // Stock for chosen color and size
   const currentVariantStock = (() => {
@@ -149,19 +154,82 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         </div>
       </div>
 
-      {/* 2. PRODUCT HERO IMAGE (High-fashion editorial mobile height, tap to open lightbox) */}
+      {/* 2. PRODUCT HERO IMAGE / CATWALK VIDEO (High-fashion editorial mobile height) */}
       <div
-        onClick={() => setIsImageModalOpen(true)}
+        onClick={() => {
+          if (activeMediaTab === 'photo') setIsImageModalOpen(true);
+        }}
         className="relative w-full h-[54vh] sm:h-[60vh] max-h-[500px] bg-black overflow-hidden cursor-pointer group"
       >
-        <Image
-          src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
-          alt={product.name}
-          fill
-          unoptimized
-          priority
-          className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-        />
+        {product.videoUrl && activeMediaTab === 'video' ? (
+          <div className="relative w-full h-full bg-black">
+            <video
+              src={product.videoUrl}
+              autoPlay
+              loop
+              muted={isVideoMuted}
+              playsInline
+              className="w-full h-full object-cover"
+            />
+            {/* Audio Mute/Unmute Toggle */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsVideoMuted(!isVideoMuted);
+              }}
+              className="absolute top-16 right-3 z-30 p-2 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white shadow-xl cursor-pointer"
+              aria-label={isVideoMuted ? 'Unmute video' : 'Mute video'}
+            >
+              {isVideoMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5 text-[var(--gold-accent)]" />}
+            </button>
+          </div>
+        ) : (
+          <Image
+            src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
+            alt={product.name}
+            fill
+            unoptimized
+            priority
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+          />
+        )}
+
+        {/* Photo vs Catwalk Video Switcher (If video available) */}
+        {product.videoUrl && (
+          <div className="absolute top-16 left-3 z-30 flex items-center bg-black/75 backdrop-blur-md p-1 rounded-full border border-white/20 shadow-2xl">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMediaTab('photo');
+              }}
+              className={`px-3 py-1 rounded-full text-[10px] font-mono-luxury font-bold uppercase transition-all cursor-pointer ${
+                activeMediaTab === 'photo'
+                  ? 'bg-white text-black shadow-md'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              Photo
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMediaTab('video');
+              }}
+              className={`px-3 py-1 rounded-full text-[10px] font-mono-luxury font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                activeMediaTab === 'video'
+                  ? 'bg-[var(--gold-accent)] text-black shadow-md'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <Video className="h-3 w-3" />
+              <span>Catwalk</span>
+            </button>
+          </div>
+        )}
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
 
         {/* Bottom Floating Controls */}
@@ -318,9 +386,21 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         ) : (
           <div className="p-4 rounded-2xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
             <div className="flex items-center justify-between text-xs font-mono-luxury">
-              <span className="text-[var(--text-secondary)] uppercase font-bold">
-                {product.category === 'footwear' ? 'Shoe Size (EU):' : 'Select Size:'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-secondary)] uppercase font-bold">
+                  {product.category === 'footwear' ? 'Shoe Size (EU):' : 'Select Size:'}
+                </span>
+                {product.category !== 'footwear' && (
+                  <button
+                    type="button"
+                    onClick={() => setIsFitPredictorOpen(true)}
+                    className="text-[10px] text-[var(--gold-accent)] font-bold inline-flex items-center gap-1 hover:underline cursor-pointer bg-[var(--gold-subtle)] px-2 py-0.5 rounded-full border border-[var(--gold-accent)]/30"
+                  >
+                    <Sparkles className="h-2.5 w-2.5" />
+                    <span>Find My Size</span>
+                  </button>
+                )}
+              </div>
               <span className="text-[var(--gold-accent)] font-bold">{selectedSize}</span>
             </div>
 
@@ -533,6 +613,15 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Fit Predictor Modal */}
+      <FitPredictorModal
+        isOpen={isFitPredictorOpen}
+        onClose={() => setIsFitPredictorOpen(false)}
+        onSelectSize={(sz) => setSelectedSize(sz)}
+        category={product.category}
+        availableSizes={availableSizes}
+      />
 
     </div>
   );

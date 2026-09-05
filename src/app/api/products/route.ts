@@ -288,6 +288,7 @@ export async function GET(request: Request) {
         garmentOriginType: p.garment_origin_type,
         imageUrl: resolvedImg,
         image_url: resolvedImg,
+        videoUrl: p.video_url || p.tailoring_specs?.videoUrl || undefined,
         description: p.description,
         tags: p.tags || [],
         colors: isAccessory ? [] : normalizedColors,
@@ -492,7 +493,11 @@ export async function POST(request: Request) {
       description: description && description.trim().toLowerCase() !== name.trim().toLowerCase() ? description : '',
       tags: tagsList,
       colors: colorsList,
-      tailoring_specs: { ...(tailoringSpecs || {}), ...(body.weightKg ? { weightKg: Number(body.weightKg) } : {}) },
+      tailoring_specs: { 
+        ...(tailoringSpecs || {}), 
+        ...((body.videoUrl || body.video_url) ? { videoUrl: body.videoUrl || body.video_url } : {}), 
+        ...(body.weightKg ? { weightKg: Number(body.weightKg) } : {}) 
+      },
       vendor_id: vendorId,
       is_published: true,
     }).select().single();

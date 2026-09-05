@@ -7,7 +7,8 @@ import {
   Tag, ArrowRight, Loader2, X, Palette,
   Check, AlertTriangle, ShieldCheck, Camera,
   RefreshCw, Minus, ChevronDown, Sparkle,
-  Shirt, Footprints, Gem, Layers, CheckCircle2, ExternalLink
+  Shirt, Footprints, Gem, Layers, CheckCircle2, ExternalLink,
+  Video, Play
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -162,6 +163,13 @@ export default function MobileVendorPublish({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Catwalk / Movement Video (3-5s micro-clip)
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [videoError, setVideoError] = useState('');
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -272,6 +280,65 @@ export default function MobileVendorPublish({
     }
   };
 
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVideoError('');
+
+    // 1. Enforce file size limit (max 15MB)
+    if (file.size > 15 * 1024 * 1024) {
+      setVideoError('Video must be under 15MB. Please upload a short 3–5s clip.');
+      return;
+    }
+
+    // 2. Validate video duration using in-memory video element
+    const tempUrl = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = tempUrl;
+
+    video.onloadedmetadata = async () => {
+      URL.revokeObjectURL(tempUrl);
+      if (video.duration > 7.5) {
+        setVideoError(`Video is ${Math.round(video.duration)}s long. Please trim to 3–5s so it loads instantly for shoppers.`);
+        return;
+      }
+
+      setIsVideoUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setVideoPreview(data.url);
+          setVideoFile(file);
+        } else {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setVideoPreview(reader.result as string);
+            setVideoFile(file);
+          };
+          reader.readAsDataURL(file);
+        }
+      } catch (err) {
+        console.error('Video upload error:', err);
+        setVideoError('Failed to process video clip.');
+      } finally {
+        setIsVideoUploading(false);
+      }
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(tempUrl);
+      setVideoError('Could not read video file. Please use MP4 or WebM format.');
+    };
+  };
+
   const toggleColor = (color: { name: string; hex: string }) => {
     const exists = selectedColors.some(c => c.name.toLowerCase() === color.name.toLowerCase());
     if (exists) {
@@ -331,6 +398,9 @@ export default function MobileVendorPublish({
     setTagInput('');
     setImageFile(null);
     setImagePreview(null);
+    setVideoFile(null);
+    setVideoPreview(null);
+    setVideoError('');
     setSelectedColors([{ name: 'Black', hex: '#111111' }]);
     setSizeStock(
       category === 'footwear'
@@ -398,6 +468,7 @@ export default function MobileVendorPublish({
         garmentOriginType: 'ready_made_boutique',
         imageUrl: finalImg,
         image_url: finalImg,
+        videoUrl: videoPreview || undefined,
         description: description.trim(),
         tags,
         colors: category === 'accessories' ? [] : (selectedColors.length > 0 ? selectedColors.map(c => ({ name: c.name, hex: c.hex })) : [{ name: 'As Pictured', hex: '#111111' }]),
@@ -591,6 +662,87 @@ export default function MobileVendorPublish({
               </span>
               <span className="text-[10px] font-mono-luxury text-[var(--text-muted)]">
                 Take camera photo or pick from gallery
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 2. Catwalk / Movement Video (Optional 3-5s clip) */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury flex items-center gap-1.5">
+            <Video className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
+            <span>2. Catwalk Video (Optional)</span>
+          </span>
+          <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold">
+            3–5s micro-clip
+          </span>
+        </div>
+
+        {videoError && (
+          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-mono-luxury flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            <span>{videoError}</span>
+          </div>
+        )}
+
+        <div
+          onClick={() => {
+            if (!videoPreview && !isVideoUploading) videoInputRef.current?.click();
+          }}
+          className="border-2 border-dashed border-[var(--border-subtle)] rounded-2xl p-4 text-center cursor-pointer transition-all bg-[var(--bg-primary)] flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden"
+        >
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime"
+            onChange={handleVideoChange}
+            className="hidden"
+          />
+
+          {isVideoUploading ? (
+            <div className="space-y-2 py-4 flex flex-col items-center">
+              <Loader2 className="h-7 w-7 text-[var(--gold-accent)] animate-spin" />
+              <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)]">
+                Processing Video Clip...
+              </span>
+            </div>
+          ) : videoPreview ? (
+            <div className="relative w-full rounded-xl overflow-hidden bg-black aspect-[16/9] max-h-56">
+              <video
+                src={videoPreview}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[9px] font-mono-luxury text-emerald-400 uppercase font-bold flex items-center gap-1 border border-emerald-500/30">
+                <Check className="h-3 w-3" />
+                <span>Catwalk Video Ready</span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setVideoPreview(null);
+                  setVideoFile(null);
+                }}
+                className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/80 text-rose-400 hover:text-rose-300 border border-rose-500/30 cursor-pointer shadow-lg active:scale-90 transition-transform"
+                aria-label="Remove video"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1 py-3">
+              <Video className="h-7 w-7 text-[var(--gold-accent)] mx-auto" />
+              <span className="text-xs font-mono-luxury uppercase font-bold text-[var(--text-primary)] block">
+                Tap to Add Model Catwalk / Fabric Swish
+              </span>
+              <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] block max-w-xs mx-auto">
+                Short 3–5 second clip of model walk or movement (Max 15MB)
               </span>
             </div>
           )}

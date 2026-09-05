@@ -92,6 +92,7 @@ export interface Product {
   sizes: string[];
   sizeChart: Record<string, GarmentMeasurement>;
   imageUrl: string;
+  videoUrl?: string;
   fabricComposition: string;
   fitNotes: string;
   rating: number;
