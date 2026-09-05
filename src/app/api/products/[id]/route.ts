@@ -284,7 +284,9 @@ export async function GET(
     // Combine images (primary image_url first, then gallery images, plus any color images)
     const primaryImg = product.image_url || '/images/products/BlackTrapStarHoodie.jpg';
     const colorImgs = Array.from(colorImgMap.values());
-    const rawImages = Array.isArray(product.images) ? product.images : [];
+    const rawImages = Array.isArray(product.images)
+      ? product.images.map((img: any) => typeof img === 'string' ? img : img?.url).filter(Boolean)
+      : [];
     const combinedImages = Array.from(
       new Set([primaryImg, ...rawImages, ...galleryImgTags, ...colorImgs].filter(Boolean))
     );

@@ -1,7 +1,7 @@
 'use client';
 
 import { vendorFetch, getActiveVendorId } from '@/lib/services/apiClient';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useStore } from '@/lib/store/useStore';
 import { GarmentCategory, GenderTarget, VendorSpecialty, getVendorSpecialty, isBoutiqueVendor } from '@/types';
 import {
@@ -147,9 +147,7 @@ export default function PublishGarmentPage() {
   const [aiToast, setAiToast] = useState('');
 
   // Interactive Colorway State (Apparel & Footwear only)
-  const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([
-    { name: 'Black', hex: '#111111' }
-  ]);
+  const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([]);
   const [customColorName, setCustomColorName] = useState('');
   const [customColorHex, setCustomColorHex] = useState('#2563eb');
   const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
@@ -191,6 +189,24 @@ export default function PublishGarmentPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Unique colorways derived strictly from uploaded photos with assigned colors
+  const photoDerivedColors = useMemo(() => {
+    const map = new Map<string, { name: string; hex: string; imageUrl?: string }>();
+    uploadedImages.forEach((img) => {
+      if (img.colorName && img.colorName.trim() && img.colorName !== 'none' && img.colorName !== 'General / All Colors') {
+        const key = img.colorName.trim().toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, {
+            name: img.colorName.trim(),
+            hex: img.colorHex || '#111111',
+            imageUrl: img.url,
+          });
+        }
+      }
+    });
+    return Array.from(map.values());
+  }, [uploadedImages]);
 
   // Catwalk / Movement Video (Optional 3-5s micro-clip)
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -656,14 +672,17 @@ export default function PublishGarmentPage() {
 
       const enrichedColorsToSubmit = category === 'accessories'
         ? []
-        : (selectedColors.length > 0 ? selectedColors.map(c => {
-            const matchedImg = uploadedImages.find(img => img.colorName && img.colorName.toLowerCase() === c.name.toLowerCase());
-            return {
-              name: c.name,
-              hex: c.hex,
-              imageUrl: matchedImg?.url
-            };
-          }) : [{ name: 'As Pictured', hex: '#111111' }]);
+        : (photoDerivedColors.length > 0
+            ? photoDerivedColors
+            : (selectedColors.length > 0 ? selectedColors.map(c => {
+                const matchedImg = uploadedImages.find(img => img.colorName && img.colorName.toLowerCase() === c.name.toLowerCase());
+                return {
+                  name: c.name,
+                  hex: c.hex,
+                  imageUrl: matchedImg?.url
+                };
+              }) : [{ name: 'As Pictured', hex: '#111111' }])
+          );
 
       const payload = {
         name: name.trim(),
@@ -725,6 +744,8 @@ export default function PublishGarmentPage() {
     setVideoPreview(null);
     setVideoError('');
     setTags([]);
+    setUploadedImages([]);
+    setSelectedColors([]);
     setIsSuccess(false);
     setCreatedProductId(null);
     setErrorMessage('');
@@ -1464,75 +1485,113 @@ export default function PublishGarmentPage() {
           {/* Section 4: Colorway Variations (Only for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
           {category !== 'accessories' && (
             <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4">
-              <div>
-                <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
-                  4. Available Colorways
-                </span>
-                <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
-                  Select all shades available in your store inventory for this piece.
-                </p>
-              </div>
+              {photoDerivedColors.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <span>4. Available Colorways ({photoDerivedColors.length} Auto-Linked From Photos)</span>
+                      </span>
+                      <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-1">
+                        These colorways are automatically linked to your uploaded photos. Shoppers will see these exact shades, and tapping each color displays its matching photo.
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                {STANDARD_COLORS.map((c) => {
-                  const isSelected = selectedColors.some(sc => sc.name === c.name);
-                  return (
+                  <div className="flex flex-wrap items-center gap-2.5 pt-2">
+                    {photoDerivedColors.map((c: { name: string; hex: string; imageUrl?: string }) => (
+                      <div
+                        key={c.name}
+                        className="px-3.5 py-2 rounded-xl border border-[var(--gold-accent)]/50 bg-[var(--gold-subtle)] text-[var(--text-primary)] text-xs font-mono-luxury font-bold flex items-center gap-2.5 shadow-sm"
+                      >
+                        <span
+                          className="h-3.5 w-3.5 rounded-full border border-white/30 shrink-0"
+                          style={{ backgroundColor: c.hex }}
+                        />
+                        <span>{c.name}</span>
+                        <span className="text-[10px] text-emerald-400 font-normal">✓ Auto-linked</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="text-[10px] text-[var(--text-muted)] font-mono-luxury pt-1">
+                    💡 <em>Note:</em> To adjust any colorway name or fine-tune its shade, change it directly under each photo card in Section 1 above. Manual color selection is hidden to prevent duplicate swatches.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div>
+                    <span className="text-xs font-mono-luxury uppercase tracking-wider text-[var(--text-primary)] font-bold block">
+                      4. Available Colorways
+                    </span>
+                    <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)] mt-0.5">
+                      Select all shades available in your store inventory for this piece.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    {STANDARD_COLORS.map((c) => {
+                      const isSelected = selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
+                      return (
+                        <button
+                          key={c.name}
+                          type="button"
+                          onClick={() => toggleColor(c)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-mono-luxury flex items-center gap-2 transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold shadow-sm ring-1 ring-[var(--gold-accent)]'
+                              : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]'
+                          }`}
+                        >
+                          <span
+                            className="h-3.5 w-3.5 rounded-full border border-white/20 shrink-0"
+                            style={{
+                              background: c.name.toLowerCase().includes('multi')
+                                ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                                : c.hex
+                            }}
+                          />
+                          <span>{c.name}</span>
+                          {isSelected && <Check className="h-3 w-3 text-[var(--gold-accent)]" />}
+                        </button>
+                      );
+                    })}
+
                     <button
-                      key={c.name}
                       type="button"
-                      onClick={() => toggleColor(c)}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-mono-luxury flex items-center gap-2 transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold shadow-sm ring-1 ring-[var(--gold-accent)]'
-                          : 'border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]'
-                      }`}
+                      onClick={() => setShowCustomColorPicker(!showCustomColorPicker)}
+                      className="px-3 py-1.5 rounded-xl border border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury text-[var(--gold-accent)] flex items-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <span
-                        className="h-3.5 w-3.5 rounded-full border border-white/20 shrink-0"
-                        style={{
-                          background: c.name.toLowerCase().includes('multi')
-                            ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
-                            : c.hex
-                        }}
-                      />
-                      <span>{c.name}</span>
-                      {isSelected && <Check className="h-3 w-3 text-[var(--gold-accent)]" />}
+                      <Plus className="h-3 w-3" />
+                      <span>Custom Shade</span>
                     </button>
-                  );
-                })}
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowCustomColorPicker(!showCustomColorPicker)}
-                  className="px-3 py-1.5 rounded-xl border border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-xs font-mono-luxury text-[var(--gold-accent)] flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Plus className="h-3 w-3" />
-                  <span>Custom Shade</span>
-                </button>
-              </div>
-
-              {showCustomColorPicker && (
-                <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3 animate-fadeIn">
-                  <input
-                    type="color"
-                    value={customColorHex}
-                    onChange={(e) => setCustomColorHex(e.target.value)}
-                    className="h-9 w-9 rounded-lg border border-[var(--border-subtle)] cursor-pointer bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={customColorName}
-                    onChange={(e) => setCustomColorName(e.target.value)}
-                    placeholder="e.g. Royal Emerald"
-                    className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none flex-1 font-bold"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomColor}
-                    className="px-4 py-2 rounded-xl bg-[var(--gold-accent)] text-black text-xs font-mono-luxury uppercase font-bold cursor-pointer"
-                  >
-                    Add
-                  </button>
+                  {showCustomColorPicker && (
+                    <div className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3 animate-fadeIn mt-3">
+                      <input
+                        type="color"
+                        value={customColorHex}
+                        onChange={(e) => setCustomColorHex(e.target.value)}
+                        className="h-9 w-9 rounded-lg border border-[var(--border-subtle)] cursor-pointer bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={customColorName}
+                        onChange={(e) => setCustomColorName(e.target.value)}
+                        placeholder="e.g. Royal Emerald"
+                        className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none flex-1 font-bold"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCustomColor}
+                        className="px-4 py-2 rounded-xl bg-[var(--gold-accent)] text-black text-xs font-mono-luxury uppercase font-bold cursor-pointer"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

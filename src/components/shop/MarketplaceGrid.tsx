@@ -369,8 +369,11 @@ export default function MarketplaceGrid() {
           {paginatedProducts.map((product) => {
             const isWorn = activeOutfit[product.category]?.id === product.id;
             const fitResult = calculateFitMatch(bodyProfile, product);
-            const secondaryImage = product.images && product.images.length > 1
-              ? product.images.find((img) => img && img !== product.imageUrl)
+            const productImagesList: string[] = Array.isArray(product.images)
+              ? product.images.map((img: any) => typeof img === 'string' ? img : img?.url).filter(Boolean)
+              : (product.imageUrl ? [product.imageUrl] : []);
+            const secondaryImage = productImagesList.length > 1
+              ? productImagesList.find((img) => img !== product.imageUrl) || productImagesList[1]
               : undefined;
 
             return (
@@ -389,14 +392,14 @@ export default function MarketplaceGrid() {
                       video.play().catch(() => {});
                     }
                   }}
-                  className="relative h-48 sm:h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block cursor-pointer group/img"
+                  className="relative h-48 sm:h-80 w-full bg-[var(--bg-secondary)] overflow-hidden block cursor-pointer"
                 >
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
                     fill
                     unoptimized
-                    className="object-cover transition-all duration-500 brightness-95 group-hover/img:brightness-100 group-hover/img:scale-105"
+                    className="object-cover transition-all duration-500 brightness-95 group-hover:brightness-100 group-hover:scale-105"
                   />
                   {!product.videoUrl && secondaryImage && (
                     <Image
@@ -404,7 +407,7 @@ export default function MarketplaceGrid() {
                       alt={`${product.name} alternate view`}
                       fill
                       unoptimized
-                      className="object-cover opacity-0 group-hover/img:opacity-100 transition-opacity duration-500 pointer-events-none group-hover/img:scale-105"
+                      className="object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none group-hover:scale-105"
                     />
                   )}
                   {product.videoUrl && (
@@ -417,7 +420,7 @@ export default function MarketplaceGrid() {
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
-                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                     />
                   )}
                   

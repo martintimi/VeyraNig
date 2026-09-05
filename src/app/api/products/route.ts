@@ -328,7 +328,9 @@ export async function GET(request: Request) {
 
       // Combine images (resolvedImg first, then gallery images, plus any color images)
       const colorImgs = Array.from(colorImgMap.values());
-      const rawImages = Array.isArray(p.images) ? p.images : [];
+      const rawImages = Array.isArray(p.images)
+        ? p.images.map((img: any) => typeof img === 'string' ? img : img?.url).filter(Boolean)
+        : [];
       const combinedImages = Array.from(
         new Set([resolvedImg, ...rawImages, ...galleryImgTags, ...colorImgs].filter(Boolean))
       );

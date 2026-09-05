@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store/useStore';
 import {
   Sparkles, Check, ShoppingBag, ShieldCheck, Truck, RotateCcw,
   Star, Heart, ArrowLeft, ArrowRight, Share2, Ruler,
-  Building, Phone, MapPin, CheckCircle2, ChevronRight, Loader2, Store, Clock, Package
+  Building, Phone, MapPin, CheckCircle2, ChevronRight, Loader2, Store, Clock, Package, Play
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -44,6 +44,8 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(() => {
     return cachedProduct?.colors?.[0] || { name: 'As Pictured', hex: '#111111' };
   });
+  const [activeImage, setActiveImage] = useState<string>(() => cachedProduct?.imageUrl || '');
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
   const [reviewsData, setReviewsData] = useState<{ averageRating: number; fitAccuracyPercent: number; count: number; reviews: any[] }>({
     averageRating: 5.0,
@@ -61,8 +63,34 @@ export default function ProductDetailPage() {
       const pref = bodyProfile?.preferredSize || 'M';
       setSelectedSize(cachedProduct.sizes?.includes(pref) ? pref : (cachedProduct.sizes?.[0] || 'M'));
       setSelectedColor(cachedProduct.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
+      if (cachedProduct.imageUrl) setActiveImage(cachedProduct.imageUrl);
     }
   }, [cachedProduct, product, bodyProfile]);
+
+  const handleSelectColor = (c: any) => {
+    const colorObj = typeof c === 'object' ? c : { name: c, hex: '#111111' };
+    setSelectedColor(colorObj);
+    setIsVideoPlaying(false);
+
+    // 1. If color has direct imageUrl
+    if (colorObj.imageUrl) {
+      setActiveImage(colorObj.imageUrl);
+      return;
+    }
+
+    // 2. Look for matching image in product.images
+    if (Array.isArray(product?.images)) {
+      const match = product.images.find((img: any) => {
+        if (typeof img === 'object' && img.colorName?.toLowerCase() === colorObj.name?.toLowerCase()) {
+          return true;
+        }
+        return false;
+      });
+      if (match) {
+        setActiveImage(typeof match === 'string' ? match : match.url);
+      }
+    }
+  };
 
   // Fetch exact single product from API by ID (SWR style: silent update if cachedProduct exists)
   useEffect(() => {
@@ -83,7 +111,9 @@ export default function ProductDetailPage() {
           const pref = bodyProfile?.preferredSize || 'M';
           const defaultSz = p.sizes?.includes(pref) ? pref : (p.sizes?.[0] || 'M');
           setSelectedSize((prev: string) => (p.sizes?.includes(prev) ? prev : defaultSz));
-          setSelectedColor((prev: any) => prev || p.colors?.[0] || { name: 'As Pictured', hex: '#111111' });
+          const initialColor = p.colors?.[0] || { name: 'As Pictured', hex: '#111111' };
+          setSelectedColor((prev: any) => prev || initialColor);
+          setActiveImage((prev: string) => prev || initialColor?.imageUrl || p.imageUrl || '');
 
           // Fetch reviews for this product
           try {
@@ -226,14 +256,26 @@ export default function ProductDetailPage() {
           
           {/* Main Product Image Container */}
           <div className="relative h-[480px] sm:h-[540px] w-full rounded-3xl overflow-hidden surface-card border border-[var(--border-subtle)] shadow-xl group">
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              unoptimized
-              priority
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-            />
+            {isVideoPlaying && product.videoUrl ? (
+              <video
+                src={product.videoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                controls
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Image
+                src={activeImage || product.imageUrl}
+                alt={product.name}
+                fill
+                unoptimized
+                priority
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+              />
+            )}
 
             {/* Vendor Badge Overlay */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
@@ -241,6 +283,18 @@ export default function ProductDetailPage() {
                 {product.vendorName}
               </span>
             </div>
+
+            {/* Watch Catwalk Video Button if video exists and isn't currently playing */}
+            {product.videoUrl && !isVideoPlaying && (
+              <button
+                type="button"
+                onClick={() => setIsVideoPlaying(true)}
+                className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-full bg-black/80 hover:bg-black text-[var(--gold-accent)] hover:text-amber-300 text-xs font-mono-luxury font-bold flex items-center gap-1.5 border border-white/15 backdrop-blur-md shadow-lg transition-transform active:scale-95 cursor-pointer"
+              >
+                <Play className="h-3.5 w-3.5 fill-current" />
+                <span>Watch Catwalk</span>
+              </button>
+            )}
 
             {/* Store Origin Location Badge on Photo */}
             <div className="absolute bottom-4 left-4 right-4 p-3 rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between text-xs font-mono-luxury text-white">
@@ -254,6 +308,74 @@ export default function ProductDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Desktop Multi-Image & Video Thumbnail Strip */}
+          {((product.images && product.images.length > 1) || product.videoUrl) && (
+            <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none">
+              {Array.from(new Set<string>([
+                product.imageUrl,
+                ...(Array.isArray(product.images) ? product.images.map((img: any) => typeof img === 'string' ? img : img?.url) : [])
+              ].filter(Boolean))).map((imgUrl: string, idx: number) => {
+                const isCurrent = (activeImage === imgUrl || (!activeImage && idx === 0)) && !isVideoPlaying;
+                const matchedColor = product.colors?.find((c: any) => c.imageUrl === imgUrl);
+
+                return (
+                  <button
+                    key={`thumb-${idx}`}
+                    type="button"
+                    onClick={() => {
+                      setActiveImage(imgUrl);
+                      setIsVideoPlaying(false);
+                      if (matchedColor) setSelectedColor(matchedColor);
+                    }}
+                    onMouseEnter={() => {
+                      setActiveImage(imgUrl);
+                      setIsVideoPlaying(false);
+                      if (matchedColor) setSelectedColor(matchedColor);
+                    }}
+                    className={`relative h-20 w-20 flex-shrink-0 rounded-2xl overflow-hidden border-2 transition-all cursor-pointer group/thumb ${
+                      isCurrent
+                        ? 'border-[var(--gold-accent)] ring-2 ring-[var(--gold-accent)]/40 scale-105 shadow-md'
+                        : 'border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/60 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <Image
+                      src={imgUrl}
+                      alt={`${product.name} view ${idx + 1}`}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                    {matchedColor && (
+                      <span
+                        className="absolute bottom-1 right-1 h-3 w-3 rounded-full border border-white/40 shadow-sm"
+                        style={{ backgroundColor: matchedColor.hex }}
+                        title={matchedColor.name}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Video Thumbnail if available */}
+              {product.videoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setIsVideoPlaying(true)}
+                  className={`relative h-20 w-20 flex-shrink-0 rounded-2xl overflow-hidden border-2 bg-black flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    isVideoPlaying
+                      ? 'border-[var(--gold-accent)] ring-2 ring-[var(--gold-accent)]/40 scale-105 shadow-md'
+                      : 'border-[var(--border-subtle)] hover:border-[var(--gold-accent)]/60 opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  <Play className="h-6 w-6 text-[var(--gold-accent)] fill-current mb-0.5" />
+                  <span className="text-[9px] font-mono-luxury font-bold uppercase text-white tracking-wider">
+                    Video
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* NATIONWIDE COURIER & MOTOR PARK DELIVERY INFO */}
           <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 text-xs font-mono-luxury shadow-sm">
@@ -374,7 +496,8 @@ export default function ProductDetailPage() {
                     <button
                       key={`color-${colorName}-${index}`}
                       type="button"
-                      onClick={() => setSelectedColor(typeof c === 'object' ? c : { name: colorName, hex: colorHex })}
+                      onClick={() => handleSelectColor(c)}
+                      onMouseEnter={() => handleSelectColor(c)}
                       className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md border-transparent ring-2 ring-[var(--gold-accent)]'

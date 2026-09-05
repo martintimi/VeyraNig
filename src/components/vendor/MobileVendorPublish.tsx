@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { GarmentCategory, GenderTarget, VendorSpecialty, getVendorSpecialty } from '@/types';
 import {
   UploadCloud, Sparkles, Plus, Trash2,
@@ -122,9 +122,7 @@ export default function MobileVendorPublish({
   const [rawPrice, setRawPrice] = useState<string>('');
   
   // Colors (for apparel and footwear)
-  const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([
-    { name: 'Black', hex: '#111111' }
-  ]);
+  const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([]);
   const [customHex, setCustomHex] = useState('#2563eb');
   const [customName, setCustomName] = useState('');
   const [showCustomColor, setShowCustomColor] = useState(false);
@@ -173,6 +171,24 @@ export default function MobileVendorPublish({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Unique colorways derived strictly from uploaded photos with assigned colors
+  const photoDerivedColors = useMemo(() => {
+    const map = new Map<string, { name: string; hex: string; imageUrl?: string }>();
+    uploadedImages.forEach((img) => {
+      if (img.colorName && img.colorName.trim() && img.colorName !== 'none' && img.colorName !== 'General / All Colors') {
+        const key = img.colorName.trim().toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, {
+            name: img.colorName.trim(),
+            hex: img.colorHex || '#111111',
+            imageUrl: img.url,
+          });
+        }
+      }
+    });
+    return Array.from(map.values());
+  }, [uploadedImages]);
 
   // Catwalk / Movement Video (3-5s micro-clip)
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -538,12 +554,13 @@ export default function MobileVendorPublish({
     setDescription('');
     setTags([]);
     setTagInput('');
+    setUploadedImages([]);
     setImageFile(null);
     setImagePreview(null);
     setVideoFile(null);
     setVideoPreview(null);
     setVideoError('');
-    setSelectedColors([{ name: 'Black', hex: '#111111' }]);
+    setSelectedColors([]);
     setSizeStock(
       category === 'footwear'
         ? {
@@ -610,14 +627,17 @@ export default function MobileVendorPublish({
 
       const enrichedColorsToSubmit = category === 'accessories'
         ? []
-        : (selectedColors.length > 0 ? selectedColors.map(c => {
-            const matchedImg = uploadedImages.find(img => img.colorName && img.colorName.toLowerCase() === c.name.toLowerCase());
-            return {
-              name: c.name,
-              hex: c.hex,
-              imageUrl: matchedImg?.url
-            };
-          }) : [{ name: 'As Pictured', hex: '#111111' }]);
+        : (photoDerivedColors.length > 0
+            ? photoDerivedColors
+            : (selectedColors.length > 0 ? selectedColors.map(c => {
+                const matchedImg = uploadedImages.find(img => img.colorName && img.colorName.toLowerCase() === c.name.toLowerCase());
+                return {
+                  name: c.name,
+                  hex: c.hex,
+                  imageUrl: matchedImg?.url
+                };
+              }) : [{ name: 'As Pictured', hex: '#111111' }])
+          );
 
       const payload = {
         name: name.trim(),
@@ -1224,91 +1244,126 @@ export default function MobileVendorPublish({
       {/* 5. Color Palette (Only shown for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
       {category !== 'accessories' && (
         <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm font-mono-luxury text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-              4. Colorways &amp; Finishes
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowCustomColor(!showCustomColor)}
-              className="text-[10px] text-[var(--gold-accent)] font-bold hover:underline cursor-pointer"
-            >
-              {showCustomColor ? 'Close' : '+ Custom Color'}
-            </button>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 items-center">
-            {STANDARD_COLORS.map((c) => {
-              const isSel = selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
-              const isMulti = c.name.toLowerCase().includes('multi');
-              return (
+          {photoDerivedColors.length > 0 ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>4. Colorways ({photoDerivedColors.length} Auto-Linked)</span>
+                </span>
+                <span className="text-[10px] text-emerald-400 font-bold">Auto-Linked</span>
+              </div>
+              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+                Linked directly to your uploaded photos. Shoppers will see these exact shades, and tapping each color displays its matching photo.
+              </p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {photoDerivedColors.map((c: { name: string; hex: string; imageUrl?: string }) => (
+                  <div
+                    key={c.name}
+                    className="px-2.5 py-1.5 rounded-xl border border-[var(--gold-accent)]/50 bg-[var(--gold-subtle)] text-[var(--text-primary)] text-[11px] font-bold flex items-center gap-2 shadow-sm"
+                  >
+                    <span
+                      className="h-3 w-3 rounded-full border border-white/30 shrink-0"
+                      style={{ backgroundColor: c.hex }}
+                    />
+                    <span>{c.name}</span>
+                    <span className="text-[9px] text-emerald-400 font-normal">✓ Linked</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-[var(--text-muted)] pt-1">
+                💡 Change any color name or shade directly on each photo card in Section 1 above.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+                  4. Colorways &amp; Finishes
+                </span>
                 <button
-                  key={c.name}
                   type="button"
-                  onClick={() => toggleColor(c)}
-                  className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
-                    isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)] shadow-sm' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                  }`}
+                  onClick={() => setShowCustomColor(!showCustomColor)}
+                  className="text-[10px] text-[var(--gold-accent)] font-bold hover:underline cursor-pointer"
                 >
+                  {showCustomColor ? 'Close' : '+ Custom Color'}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {STANDARD_COLORS.map((c) => {
+                  const isSel = selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
+                  const isMulti = c.name.toLowerCase().includes('multi');
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => toggleColor(c)}
+                      className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                        isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)] shadow-sm' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      <span
+                        className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
+                        style={{
+                          background: isMulti
+                            ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                            : c.hex
+                        }}
+                      />
+                      <span>{c.name}</span>
+                    </button>
+                  );
+                })}
+
+                {/* Native Visual Color Wheel Trigger */}
+                <label
+                  title="Pick exact shade"
+                  className="px-2.5 py-1 rounded-xl border border-[var(--border-subtle)] text-[11px] flex items-center gap-1.5 cursor-pointer hover:border-[var(--gold-accent)] bg-[var(--bg-secondary)]"
+                >
+                  <input
+                    type="color"
+                    value={customHex}
+                    onChange={(e) => {
+                      setCustomHex(e.target.value);
+                      setShowCustomColor(true);
+                    }}
+                    className="sr-only"
+                  />
                   <span
                     className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
-                    style={{
-                      background: isMulti
-                        ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
-                        : c.hex
-                    }}
+                    style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
                   />
-                  <span>{c.name}</span>
-                </button>
-              );
-            })}
+                  <span className="text-[var(--gold-accent)] font-bold">Color Wheel</span>
+                </label>
+              </div>
 
-            {/* Native Visual Color Wheel Trigger */}
-            <label
-              title="Pick exact shade"
-              className="px-2.5 py-1 rounded-xl border border-[var(--border-subtle)] text-[11px] flex items-center gap-1.5 cursor-pointer hover:border-[var(--gold-accent)] bg-[var(--bg-secondary)]"
-            >
-              <input
-                type="color"
-                value={customHex}
-                onChange={(e) => {
-                  setCustomHex(e.target.value);
-                  setShowCustomColor(true);
-                }}
-                className="sr-only"
-              />
-              <span
-                className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
-                style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
-              />
-              <span className="text-[var(--gold-accent)] font-bold">Color Wheel</span>
-            </label>
-          </div>
-
-          {/* Custom Color Input */}
-          {showCustomColor && (
-            <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/50 mt-1 animate-fadeIn">
-              <input
-                type="color"
-                value={customHex}
-                onChange={(e) => setCustomHex(e.target.value)}
-                className="h-7 w-7 rounded-lg border border-white/20 cursor-pointer bg-transparent shrink-0"
-              />
-              <input
-                type="text"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Type custom color (e.g. Sage Green, Tie Dye)"
-                className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleAddCustomColor}
-                disabled={!customName.trim()}
-                className="px-3 py-1 rounded-lg bg-[var(--gold-accent)] text-black font-bold text-[10px] uppercase tracking-wider shrink-0 cursor-pointer disabled:opacity-40"
-              >
-                Add
-              </button>
+              {/* Custom Color Input */}
+              {showCustomColor && (
+                <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/50 mt-2 animate-fadeIn">
+                  <input
+                    type="color"
+                    value={customHex}
+                    onChange={(e) => setCustomHex(e.target.value)}
+                    className="h-7 w-7 rounded-lg border border-white/20 cursor-pointer bg-transparent shrink-0"
+                  />
+                  <input
+                    type="text"
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="Type custom color (e.g. Sage Green, Tie Dye)"
+                    className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomColor}
+                    disabled={!customName.trim()}
+                    className="px-3 py-1 rounded-lg bg-[var(--gold-accent)] text-black font-bold text-[10px] uppercase tracking-wider shrink-0 cursor-pointer disabled:opacity-40"
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

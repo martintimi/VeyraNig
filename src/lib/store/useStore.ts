@@ -602,6 +602,9 @@ export const useStore = create<IrisiState>()(
                   sizes: p.sizes || ['S', 'M', 'L', 'XL', 'XXL'],
                   sizeChart: {},
                   imageUrl: p.imageUrl || p.image_url || '/images/products/BlackTrapStarHoodie.jpg',
+                  images: Array.isArray(p.images) && p.images.length > 0
+                    ? p.images.map((img: any) => typeof img === 'string' ? img : img?.url).filter(Boolean)
+                    : (p.imageUrl ? [p.imageUrl] : []),
                   videoUrl: p.videoUrl || p.video_url || undefined,
                   fabricComposition: 'Premium Nigerian Fabric',
                   fitNotes: 'Standard ready-to-wear sizing',
