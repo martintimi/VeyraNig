@@ -16,6 +16,7 @@ import confetti from 'canvas-confetti';
 import { vendorFetch } from '@/lib/services/apiClient';
 import { compressImage } from '@/lib/utils/imageUtils';
 import { detectGarmentColor, FASHION_COLOR_PALETTE } from '@/lib/utils/colorDetector';
+import { trimVideoInBrowser } from '@/lib/utils/clientVideoTrimmer';
 
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
@@ -203,6 +204,9 @@ export default function MobileVendorPublish({
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
   const [videoError, setVideoError] = useState('');
+  const [pendingTrimFile, setPendingTrimFile] = useState<File | null>(null);
+  const [isTrimmingVideo, setIsTrimmingVideo] = useState(false);
+  const [trimProgress, setTrimProgress] = useState(0);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Submission State
@@ -343,7 +347,6 @@ export default function MobileVendorPublish({
         const combined = [...prev, ...newItems];
         if (combined.length > 0 && !combined.some((img) => img.isCover)) {
           combined[0].isCover = true;
-          if (!combined[0].label) combined[0].label = 'Front';
         }
         return combined;
       });
@@ -359,7 +362,7 @@ export default function MobileVendorPublish({
 
   const handleUpdateImageLabel = (id: string, label: string) => {
     setUploadedImages((prev) =>
-      prev.map((img) => (img.id === id ? { ...img, label } : img))
+      prev.map((img) => (img.id === id ? { ...img, label: img.label === label ? '' : label } : img))
     );
   };
 
@@ -458,11 +461,47 @@ export default function MobileVendorPublish({
     }
   };
 
+  const processAndUploadVideo = async (fileToUpload: File) => {
+    setIsVideoUploading(true);
+    setVideoError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setVideoPreview(data.url);
+        setVideoFile(fileToUpload);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setVideoPreview(reader.result as string);
+          setVideoFile(fileToUpload);
+        };
+        reader.readAsDataURL(fileToUpload);
+      }
+    } catch (err) {
+      console.error('Video upload error:', err);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVideoPreview(reader.result as string);
+        setVideoFile(fileToUpload);
+      };
+      reader.readAsDataURL(fileToUpload);
+    } finally {
+      setIsVideoUploading(false);
+    }
+  };
+
   const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setVideoError('');
+    setPendingTrimFile(null);
 
     // 1. Enforce file size limit (max 15MB)
     if (file.size > 15 * 1024 * 1024) {
@@ -478,43 +517,42 @@ export default function MobileVendorPublish({
 
     video.onloadedmetadata = async () => {
       URL.revokeObjectURL(tempUrl);
-      if (video.duration > 7.5) {
-        setVideoError(`Video is ${Math.round(video.duration)}s long. Please trim to 3–5s so it loads instantly for shoppers.`);
+      const roundedDur = Math.round(video.duration);
+      if (video.duration > 5.5) {
+        setPendingTrimFile(file);
+        setVideoError(`Video is ${roundedDur}s long (recommended catalog length is 3–5s for fast loading).`);
         return;
       }
 
-      setIsVideoUploading(true);
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        if (res.ok && data.url) {
-          setVideoPreview(data.url);
-          setVideoFile(file);
-        } else {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setVideoPreview(reader.result as string);
-            setVideoFile(file);
-          };
-          reader.readAsDataURL(file);
-        }
-      } catch (err) {
-        console.error('Video upload error:', err);
-        setVideoError('Failed to process video clip.');
-      } finally {
-        setIsVideoUploading(false);
-      }
+      setPendingTrimFile(null);
+      await processAndUploadVideo(file);
     };
 
     video.onerror = () => {
       URL.revokeObjectURL(tempUrl);
       setVideoError('Could not read video file. Please use MP4 or WebM format.');
     };
+  };
+
+  const handleAutoTrimVideo = async () => {
+    if (!pendingTrimFile) return;
+    setIsTrimmingVideo(true);
+    setTrimProgress(0);
+    setVideoError('');
+    try {
+      const trimmed = await trimVideoInBrowser(pendingTrimFile, {
+        targetSeconds: 5,
+        onProgress: (p) => setTrimProgress(p)
+      });
+      setPendingTrimFile(null);
+      await processAndUploadVideo(trimmed);
+    } catch (err: any) {
+      console.error('Trimming error:', err);
+      setVideoError('Could not trim video automatically. Please upload a shorter clip.');
+    } finally {
+      setIsTrimmingVideo(false);
+      setTrimProgress(0);
+    }
   };
 
   const toggleColor = (color: { name: string; hex: string }) => {
@@ -668,7 +706,7 @@ export default function MobileVendorPublish({
         image_url: finalImg,
         images: uploadedImages.map(img => ({
           url: img.url,
-          label: img.label || (img.isCover ? 'Cover' : 'Angle'),
+          label: img.label || (img.isCover ? 'Cover' : ''),
           colorName: img.colorName || undefined,
         })),
         videoUrl: videoPreview || undefined,
@@ -1065,9 +1103,53 @@ export default function MobileVendorPublish({
         </div>
 
         {videoError && (
-          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-mono-luxury flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            <span>{videoError}</span>
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-mono-luxury space-y-2 animate-fadeIn">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+              <div className="flex-1 space-y-0.5">
+                <p className="font-bold text-amber-300">{videoError}</p>
+                {pendingTrimFile && (
+                  <p className="text-[10px] text-[var(--text-secondary)]">
+                    We can automatically trim the first 5 seconds for you right now so it loads instantly for shoppers.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {pendingTrimFile && (
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleAutoTrimVideo}
+                  disabled={isTrimmingVideo}
+                  className="px-3 py-1.5 rounded-xl bg-[var(--gold-accent)] text-black font-bold text-xs hover:bg-amber-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  {isTrimmingVideo ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Trimming to 5s ({trimProgress}%)...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Auto-Trim to 5s &amp; Use</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingTrimFile(null);
+                    setVideoError('');
+                    videoInputRef.current?.click();
+                  }}
+                  disabled={isTrimmingVideo}
+                  className="px-2.5 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-white text-xs cursor-pointer disabled:opacity-50"
+                >
+                  Choose Different Video
+                </button>
+              </div>
+            )}
           </div>
         )}
 

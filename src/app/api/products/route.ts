@@ -458,7 +458,26 @@ export async function POST(request: Request) {
         const tagsList = Array.isArray(item.tags)
           ? item.tags.map((t: any) => typeof t === 'string' ? t.replace(/^#/, '') : String(t))
           : ['Ready-to-Wear'];
-        const finalImage = item.imageUrl || item.image_url || getSmartFallbackImage(item.name || 'Garment', item.category || 'tops');
+
+        const rawVideoToSave = item.videoUrl || item.video_url;
+        const videoToSave = normalizeVideoUrl(rawVideoToSave);
+        if (videoToSave && typeof videoToSave === 'string' && videoToSave.trim()) {
+          tagsList.push(`video:${videoToSave.trim()}`);
+        }
+
+        const rawImagesToSave = item.images;
+        if (Array.isArray(rawImagesToSave)) {
+          rawImagesToSave.forEach((imgItem: any) => {
+            const imgUrl = typeof imgItem === 'string' ? imgItem : imgItem?.url;
+            const colorName = typeof imgItem === 'object' ? imgItem?.colorName : undefined;
+            if (imgUrl && typeof imgUrl === 'string' && imgUrl.trim() && imgUrl !== finalImage) {
+              tagsList.push(`img:${imgUrl.trim()}`);
+            }
+            if (colorName && typeof colorName === 'string' && colorName.trim() && imgUrl) {
+              tagsList.push(`color_img:${colorName.trim()}:${imgUrl.trim()}`);
+            }
+          });
+        }
         
         return {
           id: pId,

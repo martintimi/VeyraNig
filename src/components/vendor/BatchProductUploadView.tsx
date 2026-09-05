@@ -5,13 +5,21 @@ import { GarmentCategory, GenderTarget, getVendorSpecialty, VendorSpecialty } fr
 import {
   UploadCloud, Sparkles, Plus, Trash2, Check,
   Layers, ChevronDown, CheckCircle2, ArrowRight,
-  Loader2, AlertCircle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette,
-  Shirt, Footprints, Gem, SlidersHorizontal, ChevronUp
+  Loader2, AlertCircle, AlertTriangle, Eye, RefreshCw, X, ShieldCheck, Edit3, Palette,
+  Shirt, Footprints, Gem, SlidersHorizontal, ChevronUp, Video, Play
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { vendorFetch } from '@/lib/services/apiClient';
+import { compressImage } from '@/lib/utils/imageUtils';
+import { trimVideoInBrowser } from '@/lib/utils/clientVideoTrimmer';
+
+interface BatchItemImage {
+  id: string;
+  url: string;
+  label?: string;
+}
 
 interface BatchItem {
   id: string;
@@ -22,6 +30,14 @@ interface BatchItem {
   genderTarget: GenderTarget;
   imageFile: File | null;
   imagePreview: string;
+  additionalImages?: BatchItemImage[];
+  videoFile?: File | null;
+  videoPreview?: string | null;
+  isVideoUploading?: boolean;
+  videoError?: string;
+  pendingTrimVideo?: File | null;
+  isTrimmingVideo?: boolean;
+  trimProgress?: number;
   selectedColors: { name: string; hex: string }[];
   isCustomColorOpen?: boolean;
   customColorText?: string;
@@ -195,6 +211,9 @@ export default function BatchProductUploadView({
             genderTarget: bulkGender || matchedCat.dept || 'unisex',
             imageFile: file,
             imagePreview: previewUrl,
+            additionalImages: [],
+            videoFile: null,
+            videoPreview: null,
             selectedColors: [],
             isCustomColorOpen: false,
             customColorText: '',
@@ -219,6 +238,151 @@ export default function BatchProductUploadView({
   // Remove an item from the batch
   const removeItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Extra images handlers for a batch item
+  const handleAddExtraImagesToItem = async (itemId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    try {
+      const newExtra: BatchItemImage[] = [];
+      for (const f of Array.from(files)) {
+        if (!f.type.startsWith('image/')) continue;
+        const compressed = await compressImage(f, 1400, 0.85);
+        newExtra.push({
+          id: `extra-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          url: compressed,
+          label: ''
+        });
+      }
+      setItems(prev => prev.map(item => {
+        if (item.id !== itemId) return item;
+        return {
+          ...item,
+          additionalImages: [...(item.additionalImages || []), ...newExtra]
+        };
+      }));
+    } catch (e) {
+      console.error('Error adding extra photos to batch item:', e);
+    }
+  };
+
+  const handleRemoveExtraImageFromItem = (itemId: string, extraImgId: string) => {
+    setItems(prev => prev.map(item => {
+      if (item.id !== itemId) return item;
+      return {
+        ...item,
+        additionalImages: (item.additionalImages || []).filter(img => img.id !== extraImgId)
+      };
+    }));
+  };
+
+  // Video handlers for a batch item
+  const processAndUploadBatchVideo = async (itemId: string, fileToUpload: File) => {
+    updateItem(itemId, { isVideoUploading: true, videoError: '', pendingTrimVideo: null });
+    try {
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        updateItem(itemId, {
+          videoPreview: data.url,
+          videoFile: fileToUpload,
+          isVideoUploading: false,
+          videoError: '',
+          pendingTrimVideo: null,
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          updateItem(itemId, {
+            videoPreview: reader.result as string,
+            videoFile: fileToUpload,
+            isVideoUploading: false,
+            videoError: '',
+            pendingTrimVideo: null,
+          });
+        };
+        reader.readAsDataURL(fileToUpload);
+      }
+    } catch (err) {
+      console.error('Batch video upload error:', err);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateItem(itemId, {
+          videoPreview: reader.result as string,
+          videoFile: fileToUpload,
+          isVideoUploading: false,
+          videoError: '',
+          pendingTrimVideo: null,
+        });
+      };
+      reader.readAsDataURL(fileToUpload);
+    }
+  };
+
+  const handleBatchItemVideoSelect = async (itemId: string, file: File | null) => {
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      updateItem(itemId, { videoError: 'Video must be under 15MB. Please upload a short 3–5s clip.' });
+      return;
+    }
+
+    const tempUrl = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = tempUrl;
+
+    video.onloadedmetadata = async () => {
+      URL.revokeObjectURL(tempUrl);
+      const roundedDur = Math.round(video.duration);
+      if (video.duration > 5.5) {
+        updateItem(itemId, {
+          pendingTrimVideo: file,
+          videoError: `Video is ${roundedDur}s long (recommended is 3–5s).`,
+        });
+        return;
+      }
+      await processAndUploadBatchVideo(itemId, file);
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(tempUrl);
+      updateItem(itemId, { videoError: 'Could not read video file. Please use MP4 or WebM format.' });
+    };
+  };
+
+  const handleAutoTrimBatchVideo = async (itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.pendingTrimVideo) return;
+
+    updateItem(itemId, { isTrimmingVideo: true, trimProgress: 0, videoError: '' });
+
+    try {
+      const trimmed = await trimVideoInBrowser(item.pendingTrimVideo, {
+        targetSeconds: 5,
+        onProgress: (p) => updateItem(itemId, { trimProgress: p })
+      });
+      await processAndUploadBatchVideo(itemId, trimmed);
+    } catch (err) {
+      console.error('Batch video trim error:', err);
+      updateItem(itemId, { videoError: 'Could not trim video automatically. Please upload a shorter clip.' });
+    } finally {
+      updateItem(itemId, { isTrimmingVideo: false, trimProgress: 0 });
+    }
+  };
+
+  const handleRemoveBatchVideo = (itemId: string) => {
+    updateItem(itemId, {
+      videoPreview: null,
+      videoFile: null,
+      videoError: '',
+      pendingTrimVideo: null,
+    });
   };
 
   // Multi-Color Toggle for an Item
@@ -350,6 +514,11 @@ export default function BatchProductUploadView({
         const totalItemStock = calculateTotalStock(item);
         const activeSizes = Object.keys(sizeStockObj);
 
+        const extraImgs = (item.additionalImages || []).map(img => ({
+          url: img.url,
+          label: img.label || 'Additional View'
+        }));
+
         return {
           name: item.name.trim(),
           price: cleanPrice,
@@ -358,6 +527,11 @@ export default function BatchProductUploadView({
           garmentOriginType: 'ready_made_boutique',
           imageUrl: item.imagePreview,
           image_url: item.imagePreview,
+          images: [
+            { url: item.imagePreview, isCover: true },
+            ...extraImgs
+          ],
+          videoUrl: item.videoPreview || undefined,
           description: '',
           tags: ['Ready-to-Wear', 'Collection Drop'],
           colors: item.category === 'accessories' ? [] : (item.selectedColors.length > 0 ? item.selectedColors.map(c => ({ name: c.name.trim() || 'Standard', hex: c.hex || '#111111' })) : [{ name: 'As Pictured', hex: '#111111' }]),
@@ -1032,6 +1206,127 @@ export default function BatchProductUploadView({
                               </div>
                             );
                           })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Showcase Media: Extra Angles & Video Micro-Clip */}
+                    <div className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2">
+                      <div className="flex items-center justify-between text-xs font-mono-luxury">
+                        <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold flex items-center gap-1.5">
+                          <Layers className="h-3 w-3 text-[var(--gold-accent)]" />
+                          <span>Product Views &amp; Video</span>
+                        </span>
+                        <span className="text-[10px] text-[var(--text-muted)] font-mono-luxury">
+                          1 Cover + {(item.additionalImages || []).length} Extra Views {item.videoPreview ? '+ 1 Video' : ''}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Additional Photos Strip */}
+                        {(item.additionalImages || []).map((img, extraIdx) => (
+                          <div key={img.id} className="relative h-12 w-12 rounded-lg overflow-hidden bg-black border border-[var(--border-subtle)] shrink-0 group">
+                            <Image src={img.url} alt={`View ${extraIdx + 2}`} fill unoptimized className="object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExtraImageFromItem(item.id, img.id)}
+                              className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-black/80 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[10px] font-bold cursor-pointer"
+                              title="Remove Photo"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Add Extra Photos Button */}
+                        <label className="h-12 px-2.5 rounded-lg border border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] bg-[var(--bg-primary)] flex items-center gap-1 text-[10px] font-mono-luxury font-bold text-[var(--text-muted)] hover:text-white cursor-pointer transition-colors shrink-0">
+                          <Plus className="h-3 w-3 text-[var(--gold-accent)]" />
+                          <span>+ Photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              handleAddExtraImagesToItem(item.id, e.target.files);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+
+                        {/* Video Slot */}
+                        {item.videoPreview ? (
+                          <div className="relative h-12 w-16 rounded-lg overflow-hidden bg-black border border-emerald-500/40 shrink-0 group">
+                            <video src={item.videoPreview} className="w-full h-full object-cover" muted playsInline />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                              <Play className="h-3 w-3 text-white/80 fill-current" />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBatchVideo(item.id)}
+                              className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-black/80 text-rose-400 hover:text-rose-300 flex items-center justify-center text-[10px] font-bold cursor-pointer"
+                              title="Remove Video"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : item.isVideoUploading || item.isTrimmingVideo ? (
+                          <div className="h-12 px-2.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-1.5 text-[10px] font-mono-luxury text-[var(--gold-accent)] shrink-0">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>{item.isTrimmingVideo ? `Trimming (${item.trimProgress || 0}%)...` : 'Processing video...'}</span>
+                          </div>
+                        ) : (
+                          <label className="h-12 px-2.5 rounded-lg border border-dashed border-[var(--border-subtle)] hover:border-[var(--gold-accent)] bg-[var(--bg-primary)] flex items-center gap-1 text-[10px] font-mono-luxury font-bold text-[var(--text-muted)] hover:text-white cursor-pointer transition-colors shrink-0">
+                            <Video className="h-3 w-3 text-[var(--gold-accent)]" />
+                            <span>+ Video</span>
+                            <input
+                              type="file"
+                              accept="video/mp4,video/webm,video/quicktime"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0] || null;
+                                handleBatchItemVideoSelect(item.id, f);
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+
+                      {/* Video Error & Auto-Trim Prompt for Batch Item */}
+                      {item.videoError && (
+                        <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-mono-luxury space-y-1.5 animate-fadeIn">
+                          <div className="flex items-start gap-1.5">
+                            <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="font-bold text-amber-300">{item.videoError}</p>
+                              {item.pendingTrimVideo && (
+                                <p className="text-[9px] text-[var(--text-secondary)]">
+                                  Automatically trim to first 5 seconds?
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {item.pendingTrimVideo && (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleAutoTrimBatchVideo(item.id)}
+                                disabled={item.isTrimmingVideo}
+                                className="px-2 py-1 rounded bg-[var(--gold-accent)] text-black font-bold text-[9px] hover:bg-amber-400 flex items-center gap-1 cursor-pointer shadow-sm disabled:opacity-50"
+                              >
+                                <Sparkles className="h-2.5 w-2.5" />
+                                <span>Auto-Trim to 5s &amp; Use</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateItem(item.id, { videoError: '', pendingTrimVideo: null })}
+                                className="px-1.5 py-1 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-white text-[9px] cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
