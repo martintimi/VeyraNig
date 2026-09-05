@@ -364,7 +364,8 @@ export default function MobileVendorPublish({
     const matched = FASHION_COLOR_PALETTE.find(
       (c) => c.name.toLowerCase() === colorName.toLowerCase()
     );
-    const resolvedHex = customHex || (matched ? matched.hex : '#111111');
+    const existingImg = uploadedImages.find((i) => i.id === id);
+    const resolvedHex = customHex || (matched ? matched.hex : existingImg?.colorHex || '#111111');
 
     setUploadedImages((prev) =>
       prev.map((img) =>
@@ -935,9 +936,9 @@ export default function MobileVendorPublish({
                         <input
                           type="text"
                           list="fashion-colors-list"
-                          placeholder="e.g. Cream, Olive, Red"
+                          placeholder="e.g. Blush Pink, Cream, Olive"
                           value={img.colorName || ''}
-                          onChange={(e) => handleAssignColor(img.id, e.target.value, img.colorHex)}
+                          onChange={(e) => handleAssignColor(img.id, e.target.value)}
                           className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] font-mono-luxury font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] placeholder:text-[var(--text-muted)]/50"
                         />
                       </div>
