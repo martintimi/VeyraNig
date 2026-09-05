@@ -311,7 +311,7 @@ export default function MobileShopView() {
         <div className="grid grid-cols-2 px-2 gap-x-2.5 gap-y-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="flex flex-col justify-between h-full space-y-2 animate-pulse">
-              <div className="relative aspect-[4/5] w-full bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
+              <div className="relative aspect-[3/4] w-full bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-subtle)] overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
               </div>
               <div className="space-y-1 px-0.5">
@@ -361,7 +361,7 @@ export default function MobileShopView() {
                     <MobileProductSlider
                       product={product}
                       priority={idx < 4}
-                      aspectRatioClass={gridCols === 1 ? 'aspect-[4/5] sm:aspect-[16/10]' : 'aspect-[4/5]'}
+                      aspectRatioClass={gridCols === 1 ? 'aspect-[3/4]' : 'aspect-[3/4]'}
                       idx={idx}
                     >
                       {/* Top-Left: Discount Badge */}

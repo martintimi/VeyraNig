@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Video } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface MediaSlide {
   type: 'image' | 'video';
@@ -23,18 +24,17 @@ interface MobileProductSliderProps {
 export default function MobileProductSlider({
   product,
   priority = false,
-  aspectRatioClass = 'aspect-[4/5]',
+  aspectRatioClass = 'aspect-[3/4]',
   idx = 0,
   children,
 }: MobileProductSliderProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const hasInteracted = useRef(false);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isInView, setIsInView] = useState(false);
   const [hasNudged, setHasNudged] = useState(false);
-  const [hasManualSwiped, setHasManualSwiped] = useState(false);
 
   // Touch tracking to distinguish horizontal swipe vs intentional click
   const touchStartPos = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -88,8 +88,36 @@ export default function MobileProductSlider({
 
   const hasMultiple = slides.length > 1;
 
+  // Viewport observer to trigger the swipe peek animation once visible
+  useEffect(() => {
+    if (!hasMultiple || hasNudged) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [hasMultiple, hasNudged]);
+
   // Handle slide index update on horizontal scroll
   const handleScroll = useCallback(() => {
+    setHasNudged(true);
     const el = scrollRef.current;
     if (!el || el.clientWidth === 0) return;
     const currentIdx = Math.round(el.scrollLeft / el.clientWidth);
@@ -100,6 +128,7 @@ export default function MobileProductSlider({
 
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
+    setHasNudged(true);
     const t = e.touches[0];
     touchStartPos.current = { x: t.clientX, y: t.clientY, time: Date.now() };
     isDragging.current = false;
@@ -109,16 +138,13 @@ export default function MobileProductSlider({
     if (!touchStartPos.current) return;
     const t = e.touches[0];
     const dx = Math.abs(t.clientX - touchStartPos.current.x);
-    const dy = Math.abs(t.clientY - touchStartPos.current.y);
 
     if (dx > 8) {
       isDragging.current = true;
-      hasInteracted.current = true;
-      setHasManualSwiped(true);
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     if (!touchStartPos.current) return;
     const dt = Date.now() - touchStartPos.current.time;
 
@@ -140,63 +166,28 @@ export default function MobileProductSlider({
     router.push(`/shop/${product.id}`);
   };
 
-  // ASOS Peek / Nudge Animation:
-  // When card enters the viewport, after a slight delay, peek ~38px to the right and slide back
-  // to visually demonstrate to the user that they can slide through multiple angles/colors!
-  useEffect(() => {
-    if (!hasMultiple || hasNudged) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    let timeoutId: NodeJS.Timeout;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting) {
-          observer.disconnect();
-
-          // Wait 450ms after entering view before showing the subtle peek
-          timeoutId = setTimeout(() => {
-            const scroller = scrollRef.current;
-            if (!scroller || hasInteracted.current) return;
-
-            // Peek 38px to reveal the next photo/colorway
-            scroller.scrollTo({ left: 38, behavior: 'smooth' });
-
-            // Settle back after 350ms
-            timeoutId = setTimeout(() => {
-              if (scroller && !hasInteracted.current) {
-                scroller.scrollTo({ left: 0, behavior: 'smooth' });
-              }
-              setHasNudged(true);
-            }, 350);
-          }, 450 + (idx % 2) * 150);
-        }
-      },
-      { threshold: 0.4 }
-    );
-
-    observer.observe(container);
-    return () => {
-      observer.disconnect();
-      clearTimeout(timeoutId);
-    };
-  }, [hasMultiple, hasNudged, idx]);
-
   return (
     <div
       ref={containerRef}
       className={`relative w-full bg-[var(--bg-secondary)] overflow-hidden rounded-xl border border-[var(--border-subtle)] ${aspectRatioClass} select-none group`}
     >
-      {/* Horizontal Snap Scroll Container */}
-      <div
+      {/* Horizontal Snap Scroll Container with organic peek animation */}
+      <motion.div
         ref={scrollRef}
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleClick}
+        onPointerDown={() => setHasNudged(true)}
+        animate={hasNudged || !isInView || slides.length <= 1 ? { x: 0 } : { x: [0, -45, 0, -22, 0] }}
+        transition={{
+          delay: 0.35 + (idx % 2) * 0.15,
+          duration: 1.4,
+          times: [0, 0.3, 0.6, 0.8, 1],
+          ease: [0.25, 1, 0.5, 1],
+        }}
+        onAnimationComplete={() => setHasNudged(true)}
         className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-none touch-pan-x cursor-pointer"
         style={{
           scrollSnapType: 'x mandatory',
@@ -234,15 +225,7 @@ export default function MobileProductSlider({
             </div>
           );
         })}
-      </div>
-
-      {/* Swipe Cue Nudge Pill (Fades once user manually swipes) */}
-      {hasMultiple && !hasManualSwiped && activeIndex === 0 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[9px] font-mono-luxury text-white font-bold flex items-center gap-1.5 shadow-lg pointer-events-none animate-fadeIn transition-opacity">
-          <span className="text-[var(--gold-accent)] font-bold tracking-tighter text-[10px] animate-pulse">‹ ›</span>
-          <span>Slide to view ({slides.length})</span>
-        </div>
-      )}
+      </motion.div>
 
       {/* Active Colorway Pill (Shows when slide belongs to a specific color) */}
       {slides[activeIndex]?.colorName && (
@@ -263,7 +246,7 @@ export default function MobileProductSlider({
         </div>
       )}
 
-      {/* ASOS Slide Dot Indicators */}
+      {/* Slide Dot Indicators */}
       {hasMultiple && (
         <div className="absolute bottom-2 left-0 right-0 flex items-center justify-center gap-1 pointer-events-none z-10">
           {slides.map((_, dotIdx) => (

@@ -311,7 +311,7 @@ export default function DedicatedCategoryPage() {
                     <MobileProductSlider
                       product={product}
                       priority={idx < 4}
-                      aspectRatioClass={gridCols === 1 ? 'aspect-[4/5] sm:aspect-[16/10]' : 'aspect-[3/4] sm:aspect-[4/5]'}
+                      aspectRatioClass={gridCols === 1 ? 'aspect-[3/4]' : 'aspect-[3/4]'}
                       idx={idx}
                     >
                       {/* Top-Left: Discount Badge */}
