@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -59,8 +59,55 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
   const [addedToast, setAddedToast] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isFitPredictorOpen, setIsFitPredictorOpen] = useState(false);
-  const [activeMediaTab, setActiveMediaTab] = useState<'photo' | 'video'>(product.videoUrl ? 'video' : 'photo');
-  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Multi-media gallery items (Photos + Catwalk Video)
+  const mediaItems = useMemo(() => {
+    const items: Array<{ type: 'image' | 'video'; url: string }> = [];
+    if (product.imageUrl) {
+      items.push({ type: 'image', url: product.imageUrl });
+    }
+    if (Array.isArray(product.images)) {
+      product.images.forEach((img: string) => {
+        if (img && img !== product.imageUrl && !items.some(it => it.url === img)) {
+          items.push({ type: 'image', url: img });
+        }
+      });
+    }
+    if (product.videoUrl) {
+      items.push({ type: 'video', url: product.videoUrl });
+    }
+    return items.length > 0 ? items : [{ type: 'image', url: '/images/products/BlackTrapStarHoodie.jpg' }];
+  }, [product.imageUrl, product.videoUrl, product.images]);
+
+  // Autoplay video reliably without browser blocking
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.defaultMuted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [product.videoUrl, activeMediaIndex]);
+
+  // Hide swipe hint animation after 3.5s
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSwipeHint(false), 3500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleCarouselScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.clientWidth > 0) {
+      const index = Math.round(el.scrollLeft / el.clientWidth);
+      if (index !== activeMediaIndex) {
+        setActiveMediaIndex(index);
+        setShowSwipeHint(false);
+      }
+    }
+  };
 
   // Stock for chosen color and size
   const currentVariantStock = (() => {
@@ -154,83 +201,83 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         </div>
       </div>
 
-      {/* 2. PRODUCT HERO IMAGE / CATWALK VIDEO (High-fashion editorial mobile height) */}
-      <div
-        onClick={() => {
-          if (activeMediaTab === 'photo') setIsImageModalOpen(true);
-        }}
-        className="relative w-full h-[54vh] sm:h-[60vh] max-h-[500px] bg-black overflow-hidden cursor-pointer group"
-      >
-        {product.videoUrl && activeMediaTab === 'video' ? (
-          <div className="relative w-full h-full bg-black">
-            <video
-              src={product.videoUrl}
-              autoPlay
-              loop
-              muted={isVideoMuted}
-              playsInline
-              className="w-full h-full object-cover"
-            />
-            {/* Audio Mute/Unmute Toggle */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsVideoMuted(!isVideoMuted);
+      {/* 2. PRODUCT HERO SWIPEABLE MEDIA CAROUSEL (Photo + Auto-Looping Silent Catwalk Video) */}
+      <div className="relative w-full h-[54vh] sm:h-[60vh] max-h-[500px] bg-black overflow-hidden group">
+        {/* Swipeable Horizontal Scroll Container */}
+        <div
+          ref={carouselRef}
+          onScroll={handleCarouselScroll}
+          className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
+        >
+          {mediaItems.map((item, idx) => (
+            <div
+              key={idx}
+              className="min-w-full w-full h-full snap-center relative flex-shrink-0 cursor-pointer"
+              onClick={() => {
+                if (item.type === 'image') setIsImageModalOpen(true);
               }}
-              className="absolute top-16 right-3 z-30 p-2 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white shadow-xl cursor-pointer"
-              aria-label={isVideoMuted ? 'Unmute video' : 'Mute video'}
             >
-              {isVideoMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5 text-[var(--gold-accent)]" />}
-            </button>
-          </div>
-        ) : (
-          <Image
-            src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
-            alt={product.name}
-            fill
-            unoptimized
-            priority
-            className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-          />
-        )}
-
-        {/* Photo vs Catwalk Video Switcher (If video available) */}
-        {product.videoUrl && (
-          <div className="absolute top-16 left-3 z-30 flex items-center bg-black/75 backdrop-blur-md p-1 rounded-full border border-white/20 shadow-2xl">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveMediaTab('photo');
-              }}
-              className={`px-3 py-1 rounded-full text-[10px] font-mono-luxury font-bold uppercase transition-all cursor-pointer ${
-                activeMediaTab === 'photo'
-                  ? 'bg-white text-black shadow-md'
-                  : 'text-white/70 hover:text-white'
-              }`}
-            >
-              Photo
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveMediaTab('video');
-              }}
-              className={`px-3 py-1 rounded-full text-[10px] font-mono-luxury font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
-                activeMediaTab === 'video'
-                  ? 'bg-[var(--gold-accent)] text-black shadow-md'
-                  : 'text-white/70 hover:text-white'
-              }`}
-            >
-              <Video className="h-3 w-3" />
-              <span>Catwalk</span>
-            </button>
-          </div>
-        )}
+              {item.type === 'video' ? (
+                <div className="relative w-full h-full bg-black">
+                  <video
+                    ref={videoRef}
+                    src={item.url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <Image
+                  src={item.url}
+                  alt={product.name}
+                  fill
+                  unoptimized
+                  priority={idx === 0}
+                  className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                />
+              )}
+            </div>
+          ))}
+        </div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
+
+        {/* Floating Swipe Hint Animation (Shows for 3.5s on load if multiple media items) */}
+        {mediaItems.length > 1 && showSwipeHint && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-bounce">
+            <div className="px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-[var(--gold-accent)]/60 text-[var(--gold-accent)] text-[10px] font-mono-luxury font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-2xl">
+              <span>👉 Swipe for {product.videoUrl ? 'Catwalk' : 'More'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Media Slide Counter (1 / 2) */}
+        {mediaItems.length > 1 && (
+          <div className="absolute top-16 right-3 z-20">
+            <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-[10px] font-mono-luxury font-bold border border-white/10 shadow-sm">
+              {activeMediaIndex + 1} / {mediaItems.length}
+            </span>
+          </div>
+        )}
+
+        {/* Bottom Carousel Indicator Dots */}
+        {mediaItems.length > 1 && (
+          <div className="absolute bottom-12 left-0 right-0 z-20 flex items-center justify-center gap-1.5 pointer-events-none">
+            {mediaItems.map((_, idx) => (
+              <div
+                key={idx}
+                className={`transition-all duration-300 rounded-full ${
+                  activeMediaIndex === idx
+                    ? 'w-5 h-1.5 bg-[var(--gold-accent)] shadow-sm'
+                    : 'w-1.5 h-1.5 bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Bottom Floating Controls */}
         <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between text-xs font-mono-luxury">

@@ -387,8 +387,18 @@ export default function MarketplaceGrid() {
                     alt={product.name}
                     fill
                     unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-100"
+                    className={`object-cover transition-all duration-500 brightness-95 group-hover/img:brightness-100 ${product.videoUrl ? 'group-hover/img:opacity-0' : 'group-hover/img:scale-105'}`}
                   />
+                  {product.videoUrl && (
+                    <video
+                      src={product.videoUrl}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    />
+                  )}
                   
                   {/* Top Left: Atelier Attribution */}
                   <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10">

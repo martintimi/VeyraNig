@@ -318,20 +318,14 @@ export default function DedicatedCategoryPage() {
                         />
                       </Link>
 
-                      {/* Top-Left: Catwalk Video Badge & Discount Badge */}
-                      <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1.5 items-start">
-                        {product.videoUrl && (
-                          <span className="px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md text-white text-[9px] font-mono-luxury uppercase font-bold tracking-wider flex items-center gap-1 border border-white/20 shadow-sm">
-                            <Video className="h-2.5 w-2.5 text-[var(--gold-accent)]" />
-                            <span>Catwalk</span>
-                          </span>
-                        )}
-                        {hasDiscount && discountPercent > 0 && (
+                      {/* Top-Left: Discount Badge */}
+                      {hasDiscount && discountPercent > 0 && (
+                        <div className="absolute top-2.5 left-2.5 z-10">
                           <span className="px-1.5 py-0.5 rounded bg-white text-rose-600 text-[10px] font-mono-luxury font-bold tracking-tight shadow-sm">
                             -{discountPercent}%
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {/* ASOS Bottom-Left Micro Badge (SELLING FAST) */}
                       {isSellingFast && (
