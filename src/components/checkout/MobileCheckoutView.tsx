@@ -496,7 +496,7 @@ export default function MobileCheckoutView() {
                 required
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="e.g. Plot 14, Commercial Avenue, near Central Market"
+                placeholder="House / flat number, street name, and landmark"
                 className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
               />
             </div>

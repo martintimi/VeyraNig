@@ -166,7 +166,7 @@ const oldInitialOrders: Order[] = [
     customerName: 'Chukwudi Eze',
     customerPhone: '+234 803 456 7890',
     customerEmail: 'chukwudi.eze@gmail.com',
-    deliveryAddress: 'Plot 14B, Adeola Odeku Street, Victoria Island',
+    deliveryAddress: '',
     deliveryCity: 'Lagos',
     customerMeasurements: {
       heightCm: 182,
@@ -219,7 +219,7 @@ const oldInitialOrders: Order[] = [
     customerName: 'Chukwudi Eze',
     customerPhone: '+234 803 456 7890',
     customerEmail: 'chukwudi.eze@gmail.com',
-    deliveryAddress: 'Plot 14B, Adeola Odeku Street, Victoria Island',
+    deliveryAddress: '',
     deliveryCity: 'Lagos',
     customerMeasurements: {
       heightCm: 182,

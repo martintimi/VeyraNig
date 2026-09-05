@@ -655,7 +655,7 @@ export default function ProfilePage() {
                 required
                 value={profileForm.deliveryAddress}
                 onChange={(e) => setProfileForm({ ...profileForm, deliveryAddress: e.target.value })}
-                placeholder="Plot 14B, Adeola Odeku Street"
+                placeholder="House / flat number, street name, and landmark"
                 className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
               />
             </div>
@@ -670,7 +670,7 @@ export default function ProfilePage() {
                   required
                   value={profileForm.city}
                   onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
-                  placeholder="Victoria Island or Lekki"
+                  placeholder="City or Town"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)]"
                 />
               </div>
@@ -684,7 +684,7 @@ export default function ProfilePage() {
                   required
                   value={profileForm.state}
                   onChange={(e) => setProfileForm({ ...profileForm, state: e.target.value })}
-                  placeholder="Lagos or Abuja"
+                  placeholder="State"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)]"
                 />
               </div>

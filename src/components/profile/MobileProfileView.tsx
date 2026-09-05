@@ -311,7 +311,7 @@ export default function MobileProfileView() {
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      placeholder="e.g. Lekki Phase 1, Victoria Island"
+                      placeholder="City or Town"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
                     />
                   </div>
@@ -324,7 +324,7 @@ export default function MobileProfileView() {
                       type="text"
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
-                      placeholder="e.g. 14 Admiralty Way"
+                      placeholder="House / flat number, street name, and landmark"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
                     />
                   </div>

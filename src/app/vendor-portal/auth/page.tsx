@@ -777,7 +777,7 @@ export default function VendorAuthPage() {
                     required
                     value={regForm.location}
                     onChange={(e) => setRegForm({ ...regForm, location: e.target.value })}
-                    placeholder="e.g. 14B Commercial Avenue, Yaba, Lagos"
+                    placeholder="Enter store or workshop address"
                     className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                   />
                 </div>
