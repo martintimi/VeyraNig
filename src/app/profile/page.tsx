@@ -228,7 +228,7 @@ export default function ProfilePage() {
             <span className="font-bold text-sm text-[var(--text-primary)]">{effectiveOrders.length} Completed</span>
           </div>
           <div className="px-4 py-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center shrink-0">
-            <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Body Twin ID</span>
+            <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase block">Fit Profile ID</span>
             <span className="font-mono-luxury font-bold text-xs text-[var(--gold-accent)]">{bodyProfile.twinId || 'VY-NIG-782'}</span>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function ProfilePage() {
           }`}
         >
           <Scissors className="h-4 w-4" />
-          <span>3D Digital Body Twin</span>
+          <span>Bespoke Sizing & Fit</span>
         </button>
 
         <button
@@ -471,13 +471,13 @@ export default function ProfilePage() {
       )}
 
       {/* ======================================================== */}
-      {/* TAB 2: 3D DIGITAL BODY TWIN */}
+      {/* TAB 2: BESPOKE SIZING & MEASUREMENTS */}
       {/* ======================================================== */}
       {activeTab === 'body_twin' && (
         <div className="space-y-6 animate-fadeIn">
           <div>
             <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-              Your 3D Digital Body Twin
+              Your Bespoke Sizing & Measurements Profile
             </h2>
             <p className="text-xs text-[var(--text-secondary)] font-mono-luxury mt-1">
               Used by Nigerian tailors & designers to guarantee 100% precision fit on Senator sets, Agbadas, and streetwear.
@@ -924,7 +924,7 @@ export default function ProfilePage() {
                 Rate Your Garments & Fit
               </h3>
               <p className="text-xs text-[var(--text-secondary)]">
-                How accurately did the tailoring match your body twin dimensions?
+                How accurately did the tailoring match your saved sizing dimensions?
               </p>
             </div>
 

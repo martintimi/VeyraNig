@@ -20,7 +20,7 @@ const RATING_LABELS: Record<number, string> = {
 };
 
 const EXPERIENCE_TAGS = [
-  '3D Body Twin Sizing',
+  'Accurate Sizing & Fit',
   'Artisan Craftsmanship',
   'Fast State-to-State Delivery',
   'Seamless Paystack Checkout',
@@ -31,7 +31,7 @@ const EXPERIENCE_TAGS = [
 export default function RateAppModal({ isOpen, onClose, userEmail, userName }: RateAppModalProps) {
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
-  const [selectedTags, setSelectedTags] = useState<string[]>(['3D Body Twin Sizing', 'Artisan Craftsmanship']);
+  const [selectedTags, setSelectedTags] = useState<string[]>(['Accurate Sizing & Fit', 'Artisan Craftsmanship']);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);

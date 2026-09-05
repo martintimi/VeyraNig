@@ -255,7 +255,7 @@ export default function MobileHomeView() {
     '100% Escrow via Paystack',
     'Doorstep Nationwide Delivery',
     'Verified Nigerian Designers',
-    '3D Body Twin Sizing',
+    'Verified Custom Sizing',
     'Fast Dispatch Logistics',
     'Bespoke Handmade Pieces',
   ];
@@ -376,10 +376,10 @@ export default function MobileHomeView() {
                 Shop Drops
               </Link>
               <Link
-                href="/studio"
+                href="/brands"
                 className="flex-1 py-3 rounded-full bg-black/60 backdrop-blur-md border border-[var(--gold-accent)]/50 text-[var(--gold-accent)] font-mono-luxury uppercase text-xs font-bold text-center active:scale-95 transition-transform"
               >
-                3D Body Twin
+                Top Ateliers
               </Link>
             </div>
           </div>
@@ -550,7 +550,7 @@ export default function MobileHomeView() {
         </FadeUp>
         {[
           { icon: Lock, label: 'Paystack Escrow Security', desc: 'Funds held safely. Released only after delivery confirmation.', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-          { icon: Sparkles, label: '3D Digital Body Twin', desc: 'Input measurements once. Eliminate size guesswork forever.', color: 'text-[var(--gold-accent)]', bg: 'bg-[var(--gold-subtle)] border-[var(--gold-accent)]/30' },
+          { icon: Sparkles, label: 'Custom Sizing Guarantee', desc: 'Input measurements once. Eliminate size guesswork forever.', color: 'text-[var(--gold-accent)]', bg: 'bg-[var(--gold-subtle)] border-[var(--gold-accent)]/30' },
           { icon: Truck, label: 'Nationwide Express Delivery', desc: 'Fast doorstep delivery across all 36 Nigerian states.', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
         ].map((p, idx) => (
           <FadeUp key={idx} delay={idx * 0.08}>
@@ -576,14 +576,14 @@ export default function MobileHomeView() {
           <div>
             <h4 className="font-editorial text-xl font-bold text-[var(--text-primary)]">Join the Ìrísí Collective</h4>
             <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs mx-auto leading-relaxed">
-              Build your 3D twin, unlock private drops, track orders, and shop bespoke custom fits.
+              Discover verified Nigerian designers, unlock exclusive drops, track orders, and shop bespoke custom fits.
             </p>
           </div>
           <Link
-            href="/studio"
+            href="/shop"
             className="inline-block px-6 py-3 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-xs font-mono-luxury uppercase font-bold shadow-lg active:scale-95 transition-transform"
           >
-            Launch 3D Studio
+            Explore Collections
           </Link>
         </div>
       </FadeUp>

@@ -19,8 +19,8 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'faq-1',
     category: 'sizing',
-    question: 'How does the 3D Digital Body Twin predict garment fit?',
-    answer: 'Our proprietary Ìrísí Digital Twin algorithms synthesize your height, weight, chest, waist, and hips against the exact pattern measurements drafted by each Nigerian designer. This ensures 98% silhouette fidelity before fabric is even cut, eliminating traditional sizing confusion.',
+    question: 'How does garment sizing work for bespoke tailoring and ready-to-wear?',
+    answer: 'Ready-to-wear pieces follow standard size charts (S, M, L, XL, XXL) with exact chest, waist, and length measurements. For bespoke tailoring (Senator suits, Agbadas, Kaftans), verified ateliers stitch directly to your custom tape measurements for a tailored fit.',
   },
   {
     id: 'faq-2',
@@ -104,7 +104,7 @@ export default function FaqHelpModal({ isOpen, onClose }: FaqHelpModalProps) {
               Need Help & FAQ Topics
             </h3>
             <p className="text-[11px] font-mono-luxury text-[var(--text-secondary)]">
-              Everything about 3D Twin sizing, escrow safety, delivery & alterations
+              Escrow safety, nationwide dispatch, alterations & sizing guides
             </p>
           </div>
         </div>
@@ -136,7 +136,7 @@ export default function FaqHelpModal({ isOpen, onClose }: FaqHelpModalProps) {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-3 text-[10px] font-mono-luxury">
           {[
             { id: 'all', label: 'All Topics' },
-            { id: 'sizing', label: '3D Twin Sizing' },
+            { id: 'sizing', label: 'Sizing & Tailoring' },
             { id: 'payment', label: 'Escrow & Paystack' },
             { id: 'delivery', label: 'Waybills & Shipping' },
             { id: 'returns', label: 'Returns & Alterations' },

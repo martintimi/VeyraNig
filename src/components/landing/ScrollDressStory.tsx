@@ -10,7 +10,7 @@ const dressingSteps = [
   {
     step: '01',
     title: '1. Mannequin Silhouette Calibration',
-    subtitle: 'Establishes 3D digital body twin contour based on height & weight',
+    subtitle: 'Establishes bespoke silhouette contour based on height & weight',
     layer: 'body',
     garmentName: 'Anatomy Baseline',
     price: 0,

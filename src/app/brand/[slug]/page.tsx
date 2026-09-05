@@ -401,16 +401,6 @@ export default function BrandStorefrontPage() {
                         <Eye className="h-3.5 w-3.5" />
                         <span>Quick Look</span>
                       </button>
-                      <button
-                        onClick={() => {
-                          setOutfitItem(p);
-                          router.push('/studio');
-                        }}
-                        className="p-2 rounded-full bg-black/80 text-[var(--gold-accent)] border border-[var(--gold-accent)]/50 hover:bg-[var(--gold-accent)] hover:text-black transition-all shadow-xl"
-                        title="Try on 3D Body Twin"
-                      >
-                        <Layers className="h-4 w-4" />
-                      </button>
                     </div>
                   </div>
 

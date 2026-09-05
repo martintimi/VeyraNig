@@ -38,8 +38,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'ÌRÍSÍ Nigeria | Multi-Brand Virtual Dressing Room & Luxury Marketplace',
-  description: 'Style Senator sets, bespoke native wear, streetwear hoodies, handcrafted leather footwear, bags, and fine jewelry from top Nigerian fashion designers on your digital body twin.',
+  title: 'ÌRÍSÍ Nigeria | Multi-Brand Couture & Ready-to-Wear Marketplace',
+  description: 'Shop Senator sets, bespoke native wear, streetwear hoodies, handcrafted leather footwear, bags, and luxury accessories from top Nigerian fashion designers.',
   icons: {
     icon: '/images/logo/irisi-icon.png',
     apple: '/images/logo/irisi-icon.png',

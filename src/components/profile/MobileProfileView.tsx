@@ -11,7 +11,6 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import MobileTwinDrawer from '@/components/studio/MobileTwinDrawer';
 import MobileQuickBuyDrawer from '@/components/mobile/MobileQuickBuyDrawer';
 import LuxuryLoader from '@/components/common/LuxuryLoader';
 import ChangePasswordModal from '@/components/profile/ChangePasswordModal';
@@ -34,7 +33,6 @@ export default function MobileProfileView() {
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'vault' | 'orders' | 'brands' | 'settings'>('profile');
-  const [isTwinOpen, setIsTwinOpen] = useState(false);
   const [quickBuyProduct, setQuickBuyProduct] = useState<any>(null);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState(bodyProfile.deliveryAddress || '');
@@ -136,13 +134,6 @@ export default function MobileProfileView() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] pb-36 select-none animate-fadeIn">
-      
-      {/* 3D Mobile Twin Bottom Sheet Drawer */}
-      <MobileTwinDrawer
-        isOpen={isTwinOpen}
-        onClose={() => setIsTwinOpen(false)}
-      />
-
       {/* 1. TOP APP BAR */}
       <div className="sticky top-0 z-30 bg-[var(--bg-primary)]/90 backdrop-blur-xl border-b border-[var(--border-subtle)] p-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -159,7 +150,7 @@ export default function MobileProfileView() {
               Patron Profile
             </h1>
             <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold">
-              3D Twin & Account Hub
+              Account & Sizing Profile
             </span>
           </div>
         </div>
@@ -214,28 +205,28 @@ export default function MobileProfileView() {
             </div>
           </div>
 
-          {/* 3D Twin Status Pill */}
+          {/* Sizing Profile Status Pill */}
           <div className="p-3.5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-xl bg-[var(--gold-subtle)] text-[var(--gold-accent)] flex items-center justify-center">
-                <Sparkles className="h-4 w-4" />
+                <Ruler className="h-4 w-4" />
               </div>
               <div>
                 <span className="font-bold text-xs font-mono-luxury text-[var(--text-primary)] block">
-                  3D Body Twin Active
+                  Saved Sizing Profile
                 </span>
                 <span className="text-[10px] font-mono-luxury text-[var(--text-secondary)]">
-                  Size: {bodyProfile.preferredSize || 'M'} · {bodyProfile.gender || 'Men'}
+                  Preferred Size: {bodyProfile.preferredSize || 'M'} · {bodyProfile.gender || 'Men'}
                 </span>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() => setIsTwinOpen(true)}
+              onClick={() => setActiveTab('profile')}
               className="px-3.5 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury uppercase text-[10px] font-bold shadow-md active:scale-95 transition-transform cursor-pointer"
             >
-              Open Studio
+              View Sizes
             </button>
           </div>
         </div>
@@ -243,7 +234,7 @@ export default function MobileProfileView() {
         {/* 3. NAVIGATION PILLS */}
         <div className="grid grid-cols-5 gap-1 p-1 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs font-mono-luxury">
           {[
-            { id: 'profile', label: 'Twin Fit', icon: Ruler },
+            { id: 'profile', label: 'My Sizes', icon: Ruler },
             { id: 'vault', label: `Vault (${vault.length})`, icon: Bookmark },
             { id: 'orders', label: `Orders (${effectiveOrders.length})`, icon: Package },
             { id: 'brands', label: 'Ateliers', icon: Store },
@@ -271,7 +262,7 @@ export default function MobileProfileView() {
 
         {/* 4. TAB CONTENTS */}
         
-        {/* Tab 1: 3D Twin Fit Profile & Address */}
+        {/* Tab 1: Sizing Profile & Address */}
         {activeTab === 'profile' && (
           <div className="space-y-4">
             
@@ -649,7 +640,7 @@ export default function MobileProfileView() {
                       Need Help / FAQ Topics
                     </h4>
                     <p className="text-[10px] font-mono-luxury text-[var(--text-secondary)]">
-                      3D Twin fit, escrow, nationwide dispatch & returns
+                      Escrow protection, nationwide dispatch & verified sizing
                     </p>
                   </div>
                 </div>
@@ -742,7 +733,7 @@ export default function MobileProfileView() {
                   }}
                   className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold uppercase underline"
                 >
-                  Edit in Twin Fit
+                  Edit Sizing & Address
                 </button>
               </div>
               <p className="text-xs font-mono-luxury text-[var(--text-primary)]">
@@ -764,12 +755,9 @@ export default function MobileProfileView() {
             </button>
 
             {/* App version footer */}
-            <div className="text-center pt-2 pb-4 space-y-1">
+            <div className="text-center pt-2 pb-4">
               <p className="text-[10px] font-mono-luxury text-[var(--text-muted)] uppercase tracking-widest">
-                Ìrísí Haute Couture Platform v2.4.0
-              </p>
-              <p className="text-[9px] font-mono-luxury text-[var(--text-muted)]/60">
-                Lagos · Abuja · London · New York
+                Ìrísí Platform v2.4.0
               </p>
             </div>
 

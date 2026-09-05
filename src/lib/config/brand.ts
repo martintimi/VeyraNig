@@ -15,7 +15,7 @@ export const BRAND_CONFIG = {
   supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || '',
   culturalMeaning: 'Appearance, Outward Presence, Stature & Aura',
   meta: {
-    title: 'ÌRÍSÍ Nigeria | Multi-Brand Virtual Dressing Room & Luxury Marketplace',
-    description: 'Style bespoke Senator suits, contemporary streetwear hoodies, artisanal leather slides, luxury bags, and fine jewelry from top Nigerian fashion designers on your digital body twin.',
+    title: 'ÌRÍSÍ Nigeria | Multi-Brand Couture & Ready-to-Wear Marketplace',
+    description: 'Shop bespoke Senator suits, contemporary streetwear hoodies, artisanal leather slides, luxury bags, and fine jewelry from top Nigerian fashion designers.',
   }
 };

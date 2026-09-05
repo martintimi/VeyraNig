@@ -131,7 +131,7 @@ export default function AuthModal() {
                 {mode === 'signup' ? 'Create Ìrísí Account' : 'Welcome Back'}
               </h3>
               <p className="text-xs text-[var(--text-secondary)] font-mono-luxury">
-                {mode === 'signup' ? 'Setup your Digital Body Twin' : 'Sign in to your saved fitting room'}
+                {mode === 'signup' ? 'Join the verified fashion collective' : 'Sign in to your patron account'}
               </p>
             </div>
           </div>

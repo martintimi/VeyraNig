@@ -14,7 +14,7 @@ interface HelpImproveModalProps {
 const CATEGORIES = [
   { id: 'Feature Idea', label: 'Feature Idea', icon: Lightbulb },
   { id: 'Bug / Glitch', label: 'Bug / Glitch', icon: Bug },
-  { id: '3D Twin Fit', label: '3D Twin Fit', icon: Layers },
+  { id: 'Sizing & Fit', label: 'Sizing & Fit', icon: Layers },
   { id: 'Checkout & Escrow', label: 'Checkout & Escrow', icon: ShieldCheck },
   { id: 'Waybill & Delivery', label: 'Waybill & Delivery', icon: Truck },
   { id: 'Design & UX', label: 'Design & UX', icon: Compass },
