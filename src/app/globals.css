@@ -58,17 +58,20 @@ button, a {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Suppress native mobile WebKit video play button overlay */
-video::-webkit-media-controls {
-  display: none !important;
-}
-video::-webkit-media-controls-start-playback-button {
-  display: none !important;
-  -webkit-appearance: none !important;
-}
-video::-webkit-media-controls-play-button {
+/* Suppress all native mobile WebKit video play buttons, overlays, and enclosures */
+video::-webkit-media-controls,
+video::-webkit-media-controls-start-playback-button,
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-overlay-play-button,
+video::-webkit-media-controls-enclosure,
+video::-webkit-media-controls-panel {
   display: none !important;
   -webkit-appearance: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 video {
   outline: none;

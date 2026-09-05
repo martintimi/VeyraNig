@@ -92,15 +92,55 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
       v.playsInline = true;
       v.setAttribute('playsinline', '');
       v.setAttribute('webkit-playsinline', '');
+      v.setAttribute('x5-playsinline', '');
       v.setAttribute('muted', '');
-      const p = v.play();
-      if (p !== undefined) {
-        p.catch(() => {
-          setTimeout(() => v?.play().catch(() => {}), 60);
-        });
+      if (v.paused) {
+        const p = v.play();
+        if (p !== undefined) {
+          p.catch(() => {
+            setTimeout(() => {
+              if (v?.paused) v?.play().catch(() => {});
+            }, 60);
+          });
+        }
       }
     }
   };
+
+  // iOS Safari Low Power Mode Unlock:
+  // In Low Power Mode, WebKit blocks programmatic play() unless triggered in a direct user touch frame.
+  // Listening to touchstart/pointerdown unlocks playback the instant the user touches to scroll or swipe!
+  useEffect(() => {
+    const handleGesture = () => {
+      playVideo();
+    };
+
+    // Immediate attempt on render
+    playVideo();
+
+    // Attach synchronous user gesture listeners on window and document
+    window.addEventListener('touchstart', handleGesture, { passive: true });
+    window.addEventListener('pointerdown', handleGesture, { passive: true });
+    window.addEventListener('touchend', handleGesture, { passive: true });
+
+    // Handle return from other tabs, pages, background, or bfcache
+    const handlePageResume = () => {
+      playVideo();
+    };
+
+    window.addEventListener('pageshow', handlePageResume);
+    window.addEventListener('focus', handlePageResume);
+    document.addEventListener('visibilitychange', handlePageResume);
+
+    return () => {
+      window.removeEventListener('touchstart', handleGesture);
+      window.removeEventListener('pointerdown', handleGesture);
+      window.removeEventListener('touchend', handleGesture);
+      window.removeEventListener('pageshow', handlePageResume);
+      window.removeEventListener('focus', handlePageResume);
+      document.removeEventListener('visibilitychange', handlePageResume);
+    };
+  }, [mediaItems]);
 
   // IntersectionObserver plays video the instant user begins swiping into it
   useEffect(() => {
@@ -109,18 +149,19 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
 
     v.muted = true;
     v.defaultMuted = true;
+    v.setAttribute('muted', '');
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             playVideo();
-          } else {
-            v.pause();
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.1 }
     );
 
     observer.observe(v);
@@ -129,6 +170,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
 
   const handleCarouselScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setHasNudged(true);
+    playVideo();
     const el = e.currentTarget;
     if (el.clientWidth > 0) {
       const index = Math.round(el.scrollLeft / el.clientWidth);
@@ -200,6 +242,23 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] pb-36 select-none animate-fadeIn">
+      {/* Absolute suppression of native mobile WebKit video play buttons & overlays */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        video::-webkit-media-controls,
+        video::-webkit-media-controls-start-playback-button,
+        video::-webkit-media-controls-play-button,
+        video::-webkit-media-controls-overlay-play-button,
+        video::-webkit-media-controls-enclosure,
+        video::-webkit-media-controls-panel {
+          display: none !important;
+          -webkit-appearance: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `}} />
       
       {/* 1. TOP FLOATING APP BAR (Glassmorphic Controls) */}
       <div className="fixed top-3 inset-x-3 z-40 flex items-center justify-between pointer-events-none">
@@ -247,19 +306,51 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
             ease: [0.25, 1, 0.5, 1],
           }}
           onAnimationComplete={() => setHasNudged(true)}
-          onTouchStart={() => setHasNudged(true)}
+          onTouchStart={() => {
+            setHasNudged(true);
+            playVideo();
+          }}
+          onPointerDown={() => {
+            setHasNudged(true);
+            playVideo();
+          }}
           className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
         >
           {mediaItems.map((item, idx) => (
             <div
               key={idx}
               className="min-w-full w-full h-full snap-center relative flex-shrink-0 cursor-pointer"
-              onClick={() => setIsImageModalOpen(true)}
+              onClick={() => {
+                if (item.type === 'video') {
+                  const v = videoRef.current;
+                  if (v && v.paused) {
+                    v.play().catch(() => {});
+                  } else {
+                    setIsImageModalOpen(true);
+                  }
+                } else {
+                  setIsImageModalOpen(true);
+                }
+              }}
+              onTouchStart={playVideo}
+              onPointerDown={playVideo}
             >
               {item.type === 'video' ? (
                 <div className="relative w-full h-full bg-black">
                   <video
-                    ref={videoRef}
+                    ref={(el) => {
+                      videoRef.current = el;
+                      if (el) {
+                        el.muted = true;
+                        el.defaultMuted = true;
+                        el.playsInline = true;
+                        el.setAttribute('muted', '');
+                        el.setAttribute('playsinline', '');
+                        el.setAttribute('webkit-playsinline', '');
+                        el.setAttribute('x5-playsinline', '');
+                        if (el.paused) el.play().catch(() => {});
+                      }
+                    }}
                     src={item.url}
                     autoPlay
                     loop
@@ -270,13 +361,8 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                     controls={false}
                     disablePictureInPicture
                     preload="auto"
-                    onTimeUpdate={(e) => {
-                      const v = e.currentTarget;
-                      // Seamless infinite loop without hitting native ended pause state
-                      if (v.duration && v.currentTime >= v.duration - 0.15) {
-                        v.currentTime = 0;
-                        v.play().catch(() => {});
-                      }
+                    onPause={(e) => {
+                      e.currentTarget.play().catch(() => {});
                     }}
                     onEnded={(e) => {
                       e.currentTarget.currentTime = 0;
@@ -675,14 +761,36 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
               {mediaItems[activeMediaIndex]?.type === 'video' ? (
                 <div className="relative w-full h-full max-h-[62vh] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
                   <video
+                    ref={(el) => {
+                      if (el) {
+                        el.muted = true;
+                        el.defaultMuted = true;
+                        el.playsInline = true;
+                        el.setAttribute('muted', '');
+                        el.setAttribute('playsinline', '');
+                        el.setAttribute('webkit-playsinline', '');
+                        el.setAttribute('x5-playsinline', '');
+                        if (el.paused) el.play().catch(() => {});
+                      }
+                    }}
                     src={mediaItems[activeMediaIndex].url}
                     autoPlay
                     loop
                     muted
                     playsInline
                     webkit-playsinline="true"
+                    x5-playsinline="true"
                     controls={false}
-                    className="w-full h-full object-contain"
+                    disablePictureInPicture
+                    preload="auto"
+                    onPause={(e) => {
+                      e.currentTarget.play().catch(() => {});
+                    }}
+                    onEnded={(e) => {
+                      e.currentTarget.currentTime = 0;
+                      e.currentTarget.play().catch(() => {});
+                    }}
+                    className="w-full h-full object-contain pointer-events-none"
                   />
                 </div>
               ) : (
