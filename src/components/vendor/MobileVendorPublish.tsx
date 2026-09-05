@@ -20,13 +20,19 @@ import { detectGarmentColor, FASHION_COLOR_PALETTE } from '@/lib/utils/colorDete
 const STANDARD_COLORS = [
   { name: 'Black', hex: '#111111' },
   { name: 'White', hex: '#ffffff' },
+  { name: 'Gold', hex: '#d4af37' },
+  { name: 'Silver', hex: '#c0c0c0' },
+  { name: 'Rose Gold', hex: '#b76e79' },
   { name: 'Black & White', hex: '#111111' },
   { name: 'Multi-Color / Pattern', hex: '#6366f1' },
   { name: 'Khaki / Beige', hex: '#d4b996' },
   { name: 'Chocolate Brown', hex: '#451a03' },
+  { name: 'Tan / Camel', hex: '#c19a6b' },
   { name: 'Navy Blue', hex: '#1e3a8a' },
   { name: 'Heather Grey', hex: '#9ca3af' },
+  { name: 'Charcoal Grey', hex: '#374151' },
   { name: 'Royal Blue', hex: '#2563eb' },
+  { name: 'Sky Blue', hex: '#38bdf8' },
   { name: 'Forest Green', hex: '#065f46' },
   { name: 'Olive Green', hex: '#4d7c0f' },
   { name: 'Wine / Burgundy', hex: '#831843' },
@@ -158,13 +164,15 @@ export default function MobileVendorPublish({
         }
   );
 
-  // Photos (Multi-image support with AI colorway linking)
+  // Photos (Multi-angle & multi-view support: Front, Back, Details, Jewelry, Bags, optional Colorway)
   const [uploadedImages, setUploadedImages] = useState<Array<{
     id: string;
     url: string;
+    label?: string;
     colorName?: string;
     colorHex?: string;
     isCover?: boolean;
+    showColorTag?: boolean;
     isDetectingColor?: boolean;
   }>>([]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
@@ -307,9 +315,11 @@ export default function MobileVendorPublish({
       const newItems: Array<{
         id: string;
         url: string;
+        label?: string;
         colorName?: string;
         colorHex?: string;
         isCover?: boolean;
+        showColorTag?: boolean;
         isDetectingColor?: boolean;
       }> = [];
 
@@ -317,33 +327,23 @@ export default function MobileVendorPublish({
         if (!file.type.startsWith('image/')) continue;
         const compressedDataUrl = await compressImage(file, 1400, 0.85);
 
-        // Run AI Computer Vision to detect garment color
-        const detected = await detectGarmentColor(compressedDataUrl);
-
         newItems.push({
           id: `img-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           url: compressedDataUrl,
-          colorName: detected.name,
-          colorHex: detected.hex,
+          label: '',
+          colorName: undefined,
+          colorHex: undefined,
           isCover: false,
+          showColorTag: false,
           isDetectingColor: false,
         });
-
-        // Automatically register detected color in product's colorways palette
-        if (detected.name) {
-          setSelectedColors((prev) => {
-            if (prev.some((c) => c.name.toLowerCase() === detected.name.toLowerCase())) {
-              return prev;
-            }
-            return [...prev, { name: detected.name, hex: detected.hex }];
-          });
-        }
       }
 
       setUploadedImages((prev) => {
         const combined = [...prev, ...newItems];
         if (combined.length > 0 && !combined.some((img) => img.isCover)) {
           combined[0].isCover = true;
+          if (!combined[0].label) combined[0].label = 'Front';
         }
         return combined;
       });
@@ -355,6 +355,26 @@ export default function MobileVendorPublish({
     } finally {
       setIsProcessingImages(false);
     }
+  };
+
+  const handleUpdateImageLabel = (id: string, label: string) => {
+    setUploadedImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, label } : img))
+    );
+  };
+
+  const handleToggleColorTag = (id: string) => {
+    setUploadedImages((prev) =>
+      prev.map((img) =>
+        img.id === id
+          ? {
+              ...img,
+              showColorTag: !img.showColorTag,
+              colorName: img.showColorTag ? undefined : (img.colorName || ''),
+            }
+          : img
+      )
+    );
   };
 
   const handleSetCover = (id: string) => {
@@ -623,21 +643,20 @@ export default function MobileVendorPublish({
     const activeVendorId = getActiveVendorId();
 
     try {
-      let finalImg = uploadedImages[0]?.url || imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
+      const coverImg = uploadedImages.find((i) => i.isCover) || uploadedImages[0];
+      let finalImg = coverImg?.url || imagePreview || '/images/products/BlackTrapStarHoodie.jpg';
 
-      const enrichedColorsToSubmit = category === 'accessories'
-        ? []
-        : (photoDerivedColors.length > 0
-            ? photoDerivedColors
-            : (selectedColors.length > 0 ? selectedColors.map(c => {
-                const matchedImg = uploadedImages.find(img => img.colorName && img.colorName.toLowerCase() === c.name.toLowerCase());
-                return {
-                  name: c.name,
-                  hex: c.hex,
-                  imageUrl: matchedImg?.url
-                };
-              }) : [{ name: 'As Pictured', hex: '#111111' }])
-          );
+      const enrichedColorsToSubmit = photoDerivedColors.length > 0
+        ? photoDerivedColors
+        : (selectedColors.length > 0 ? selectedColors.map(c => {
+            const matchedImg = uploadedImages.find(img => img.colorName && img.colorName.toLowerCase() === c.name.toLowerCase());
+            return {
+              name: c.name,
+              hex: c.hex,
+              imageUrl: matchedImg?.url || finalImg
+            };
+          }) : (category === 'accessories' ? [] : [{ name: 'As Pictured', hex: '#111111', imageUrl: finalImg }])
+        );
 
       const payload = {
         name: name.trim(),
@@ -647,7 +666,11 @@ export default function MobileVendorPublish({
         garmentOriginType: 'ready_made_boutique',
         imageUrl: finalImg,
         image_url: finalImg,
-        images: uploadedImages.map(img => ({ url: img.url, colorName: img.colorName })),
+        images: uploadedImages.map(img => ({
+          url: img.url,
+          label: img.label || (img.isCover ? 'Cover' : 'Angle'),
+          colorName: img.colorName || undefined,
+        })),
         videoUrl: videoPreview || undefined,
         description: description.trim(),
         tags,
@@ -812,20 +835,20 @@ export default function MobileVendorPublish({
         </div>
       )}
 
-      {/* 1. Multi-Photo Showcase & Colorway Linking */}
+      {/* 1. Multi-Photo Showcase (Multiple Views & Angles) */}
       <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-3 shadow-sm">
         <div className="flex items-center justify-between">
           <span className="text-xs uppercase font-bold text-[var(--text-primary)] font-mono-luxury flex items-center gap-1.5">
             <Camera className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
-            <span>1. Photo Showcase <strong className="text-rose-400">*</strong></span>
+            <span>1. Product Showcase Photos <strong className="text-rose-400">*</strong></span>
           </span>
           <span className="text-[10px] font-mono-luxury text-[var(--gold-accent)] font-bold">
-            {uploadedImages.length > 0 ? `${uploadedImages.length} ${uploadedImages.length === 1 ? 'Photo' : 'Photos'} Added` : 'Multi-Color & Views'}
+            {uploadedImages.length > 0 ? `${uploadedImages.length} ${uploadedImages.length === 1 ? 'Photo' : 'Photos'} Added` : 'Multi-Angle Supported'}
           </span>
         </div>
 
         <p className="text-[10px] text-[var(--text-muted)] font-mono-luxury leading-relaxed">
-          Upload photos for every colorway (e.g. Red, Black, Green) & angles. The first photo is your main catalog cover.
+          Upload multiple photos to showcase your piece: Front view, back view, styling angles, or close-up craftsmanship (jewelry, shoes, bags & apparel). First photo is your main cover.
         </p>
 
         <input
@@ -858,7 +881,7 @@ export default function MobileVendorPublish({
                   Tap to Select Photos
                 </span>
                 <span className="text-[10px] font-mono-luxury text-[var(--text-muted)] block max-w-xs mx-auto">
-                  Select all your product colors & views at once from your gallery
+                  Select multiple photos at once: Front view, back view, side profile, fabric or metal details
                 </span>
               </div>
             )}
@@ -907,67 +930,97 @@ export default function MobileVendorPublish({
                     </button>
                   </div>
 
-                  {/* AI Garment Color Detection & Swatch */}
+                  {/* Photo View Label & Optional Color Tag */}
                   <div className="p-2.5 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)] space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold flex items-center gap-1">
-                        <Palette className="h-3 w-3 text-[var(--gold-accent)]" />
-                        <span>Colorway</span>
+                      <span className="text-[9px] font-mono-luxury uppercase text-[var(--text-muted)] font-bold">
+                        View {idx + 1} {img.isCover ? '(Cover)' : ''}
                       </span>
 
                       <button
                         type="button"
-                        onClick={() => handleAiDetectForImage(img.id)}
-                        disabled={img.isDetectingColor}
-                        className="text-[9px] font-mono-luxury font-bold text-[var(--gold-accent)] hover:text-amber-300 flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Re-run AI garment color detection"
+                        onClick={() => handleToggleColorTag(img.id)}
+                        className="text-[9px] font-mono-luxury font-bold text-[var(--text-secondary)] hover:text-[var(--gold-accent)] transition-colors cursor-pointer flex items-center gap-1"
                       >
-                        {img.isDetectingColor ? (
-                          <>
-                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                            <span>Detecting...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-2.5 w-2.5" />
-                            <span>AI Detect</span>
-                          </>
-                        )}
+                        <Palette className="h-2.5 w-2.5" />
+                        <span>{img.showColorTag || img.colorName ? 'Color Tagged' : '+ Color Tag'}</span>
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {/* Interactive Color Picker Swatch */}
-                      <label 
-                        className="relative flex-shrink-0 h-7 w-7 rounded-lg border border-white/20 shadow-inner cursor-pointer overflow-hidden transition-transform active:scale-95" 
-                        style={{ backgroundColor: img.colorHex || '#111111' }}
-                        title="Click to adjust color shade"
-                      >
-                        <input
-                          type="color"
-                          value={img.colorHex || '#111111'}
-                          onChange={(e) => handleUpdateColorHex(img.id, e.target.value)}
-                          className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
-                        />
-                      </label>
-
-                      {/* Custom / Palette Name Input with Suggestions */}
-                      <div className="flex-1 min-w-0">
-                        <input
-                          type="text"
-                          list="fashion-colors-list"
-                          placeholder="e.g. Blush Pink, Cream, Olive"
-                          value={img.colorName || ''}
-                          onChange={(e) => handleAssignColor(img.id, e.target.value)}
-                          className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[11px] font-mono-luxury font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)] placeholder:text-[var(--text-muted)]/50"
-                        />
-                      </div>
+                    {/* Quick View Presets (Front, Back, Side, Detail, Model) */}
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {['Front', 'Back', 'Side', 'Detail', 'Model'].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => handleUpdateImageLabel(img.id, preset)}
+                          className={`px-2 py-0.5 rounded text-[9px] font-mono-luxury font-bold transition-all cursor-pointer ${
+                            img.label === preset
+                              ? 'bg-[var(--gold-accent)] text-black shadow-sm'
+                              : 'bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-white'
+                          }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
                     </div>
+
+                    {/* Optional Color Tagging (Only shown if vendor taps + Color Tag) */}
+                    {(img.showColorTag || img.colorName) && (
+                      <div className="pt-1.5 border-t border-[var(--border-subtle)]/60 space-y-1.5 animate-fadeIn">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold">
+                            Optional Colorway
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleAiDetectForImage(img.id)}
+                            disabled={img.isDetectingColor}
+                            className="text-[9px] font-mono-luxury font-bold text-[var(--gold-accent)] hover:text-amber-300 flex items-center gap-1 transition-colors disabled:opacity-50 cursor-pointer"
+                          >
+                            {img.isDetectingColor ? (
+                              <>
+                                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                <span>Detecting...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-2.5 w-2.5" />
+                                <span>AI Detect</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <label
+                            className="relative flex-shrink-0 h-6 w-6 rounded-md border border-white/20 shadow-inner cursor-pointer overflow-hidden"
+                            style={{ backgroundColor: img.colorHex || '#111111' }}
+                            title="Click to adjust color shade"
+                          >
+                            <input
+                              type="color"
+                              value={img.colorHex || '#111111'}
+                              onChange={(e) => handleUpdateColorHex(img.id, e.target.value)}
+                              className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
+                            />
+                          </label>
+                          <input
+                            type="text"
+                            list="fashion-colors-list-mobile"
+                            placeholder="e.g. Red, Black, Gold"
+                            value={img.colorName || ''}
+                            onChange={(e) => handleAssignColor(img.id, e.target.value)}
+                            className="flex-1 min-w-0 px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[10px] font-mono-luxury font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--gold-accent)]"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
 
-              <datalist id="fashion-colors-list">
+              <datalist id="fashion-colors-list-mobile">
                 {FASHION_COLOR_PALETTE.map((c) => (
                   <option key={c.name} value={c.name} />
                 ))}
@@ -989,7 +1042,7 @@ export default function MobileVendorPublish({
                       + Add Photo
                     </span>
                     <span className="text-[9px] font-mono-luxury text-[var(--text-muted)]">
-                      Color or angle
+                      View or angle
                     </span>
                   </>
                 )}
@@ -1241,133 +1294,134 @@ export default function MobileVendorPublish({
         )}
       </div>
 
-      {/* 5. Color Palette (Only shown for Apparel and Footwear - Hidden for Jewelry & Accessories) */}
-      {category !== 'accessories' && (
-        <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm font-mono-luxury text-xs">
-          {photoDerivedColors.length > 0 ? (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>4. Colorways ({photoDerivedColors.length} Auto-Linked)</span>
-                </span>
-                <span className="text-[10px] text-emerald-400 font-bold">Auto-Linked</span>
-              </div>
-              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
-                Linked directly to your uploaded photos. Shoppers will see these exact shades, and tapping each color displays its matching photo.
-              </p>
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {photoDerivedColors.map((c: { name: string; hex: string; imageUrl?: string }) => (
-                  <div
+      {/* 4. Colorways & Finishes (Optional for all pieces, including jewelry, bags & footwear) */}
+      <div className="p-4 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-2.5 shadow-sm font-mono-luxury text-xs">
+        {photoDerivedColors.length > 0 ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                <span>4. Tagged Colorways ({photoDerivedColors.length} Linked From Photos)</span>
+              </span>
+              <span className="text-[10px] text-emerald-400 font-bold">Linked</span>
+            </div>
+            <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+              Linked directly to your uploaded photos. Shoppers will see these exact shades, and tapping each color displays its matching photo.
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {photoDerivedColors.map((c: { name: string; hex: string; imageUrl?: string }) => (
+                <div
+                  key={c.name}
+                  className="px-2.5 py-1.5 rounded-xl border border-[var(--gold-accent)]/50 bg-[var(--gold-subtle)] text-[var(--text-primary)] text-[11px] font-bold flex items-center gap-2 shadow-sm"
+                >
+                  <span
+                    className="h-3 w-3 rounded-full border border-white/30 shrink-0"
+                    style={{ backgroundColor: c.hex }}
+                  />
+                  <span>{c.name}</span>
+                  <span className="text-[9px] text-emerald-400 font-normal">✓ Linked</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[9px] text-[var(--text-muted)] pt-1">
+              💡 Change any color name or shade directly on each photo card in Section 1 above.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
+                4. Colorways &amp; Finishes (Optional)
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowCustomColor(!showCustomColor)}
+                className="text-[10px] text-[var(--gold-accent)] font-bold hover:underline cursor-pointer"
+              >
+                {showCustomColor ? 'Close' : '+ Custom Color'}
+              </button>
+            </div>
+            <p className="text-[10px] text-[var(--text-muted)] mb-2.5 leading-relaxed">
+              Select the shade or finish for this piece (e.g. Gold, Silver, Black, Tan). Leave unselected for single-piece / as pictured.
+            </p>
+
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {STANDARD_COLORS.map((c) => {
+                const isSel = selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
+                const isMulti = c.name.toLowerCase().includes('multi');
+                return (
+                  <button
                     key={c.name}
-                    className="px-2.5 py-1.5 rounded-xl border border-[var(--gold-accent)]/50 bg-[var(--gold-subtle)] text-[var(--text-primary)] text-[11px] font-bold flex items-center gap-2 shadow-sm"
+                    type="button"
+                    onClick={() => toggleColor(c)}
+                    className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                      isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)] shadow-sm' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
+                    }`}
                   >
                     <span
-                      className="h-3 w-3 rounded-full border border-white/30 shrink-0"
-                      style={{ backgroundColor: c.hex }}
+                      className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
+                      style={{
+                        background: isMulti
+                          ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
+                          : c.hex
+                      }}
                     />
                     <span>{c.name}</span>
-                    <span className="text-[9px] text-emerald-400 font-normal">✓ Linked</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[9px] text-[var(--text-muted)] pt-1">
-                💡 Change any color name or shade directly on each photo card in Section 1 above.
-              </p>
+                  </button>
+                );
+              })}
+
+              {/* Native Visual Color Wheel Trigger */}
+              <label
+                title="Pick exact shade"
+                className="px-2.5 py-1 rounded-xl border border-[var(--border-subtle)] text-[11px] flex items-center gap-1.5 cursor-pointer hover:border-[var(--gold-accent)] bg-[var(--bg-secondary)]"
+              >
+                <input
+                  type="color"
+                  value={customHex}
+                  onChange={(e) => {
+                    setCustomHex(e.target.value);
+                    setShowCustomColor(true);
+                  }}
+                  className="sr-only"
+                />
+                <span
+                  className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
+                  style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                />
+                <span className="text-[var(--gold-accent)] font-bold">Color Wheel</span>
+              </label>
             </div>
-          ) : (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs uppercase font-bold text-[var(--text-primary)] block">
-                  4. Colorways &amp; Finishes
-                </span>
+
+            {/* Custom Color Input */}
+            {showCustomColor && (
+              <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/50 mt-2 animate-fadeIn">
+                <input
+                  type="color"
+                  value={customHex}
+                  onChange={(e) => setCustomHex(e.target.value)}
+                  className="h-7 w-7 rounded-lg border border-white/20 cursor-pointer bg-transparent shrink-0"
+                />
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="Type custom color (e.g. Sage Green, Tie Dye)"
+                  className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none"
+                />
                 <button
                   type="button"
-                  onClick={() => setShowCustomColor(!showCustomColor)}
-                  className="text-[10px] text-[var(--gold-accent)] font-bold hover:underline cursor-pointer"
+                  onClick={handleAddCustomColor}
+                  disabled={!customName.trim()}
+                  className="px-3 py-1 rounded-lg bg-[var(--gold-accent)] text-black font-bold text-[10px] uppercase tracking-wider shrink-0 cursor-pointer disabled:opacity-40"
                 >
-                  {showCustomColor ? 'Close' : '+ Custom Color'}
+                  Add
                 </button>
               </div>
-
-              <div className="flex flex-wrap gap-1.5 items-center">
-                {STANDARD_COLORS.map((c) => {
-                  const isSel = selectedColors.some(sc => sc.name.toLowerCase() === c.name.toLowerCase());
-                  const isMulti = c.name.toLowerCase().includes('multi');
-                  return (
-                    <button
-                      key={c.name}
-                      type="button"
-                      onClick={() => toggleColor(c)}
-                      className={`px-2.5 py-1 rounded-xl border text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
-                        isSel ? 'border-[var(--gold-accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] font-bold ring-1 ring-[var(--gold-accent)] shadow-sm' : 'border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                      }`}
-                    >
-                      <span
-                        className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
-                        style={{
-                          background: isMulti
-                            ? 'conic-gradient(from 180deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444, #ec4899)'
-                            : c.hex
-                        }}
-                      />
-                      <span>{c.name}</span>
-                    </button>
-                  );
-                })}
-
-                {/* Native Visual Color Wheel Trigger */}
-                <label
-                  title="Pick exact shade"
-                  className="px-2.5 py-1 rounded-xl border border-[var(--border-subtle)] text-[11px] flex items-center gap-1.5 cursor-pointer hover:border-[var(--gold-accent)] bg-[var(--bg-secondary)]"
-                >
-                  <input
-                    type="color"
-                    value={customHex}
-                    onChange={(e) => {
-                      setCustomHex(e.target.value);
-                      setShowCustomColor(true);
-                    }}
-                    className="sr-only"
-                  />
-                  <span
-                    className="h-2.5 w-2.5 rounded-full border border-white/20 shrink-0"
-                    style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
-                  />
-                  <span className="text-[var(--gold-accent)] font-bold">Color Wheel</span>
-                </label>
-              </div>
-
-              {/* Custom Color Input */}
-              {showCustomColor && (
-                <div className="flex items-center gap-2 p-2 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--gold-accent)]/50 mt-2 animate-fadeIn">
-                  <input
-                    type="color"
-                    value={customHex}
-                    onChange={(e) => setCustomHex(e.target.value)}
-                    className="h-7 w-7 rounded-lg border border-white/20 cursor-pointer bg-transparent shrink-0"
-                  />
-                  <input
-                    type="text"
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    placeholder="Type custom color (e.g. Sage Green, Tie Dye)"
-                    className="w-full px-2 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-primary)] focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomColor}
-                    disabled={!customName.trim()}
-                    className="px-3 py-1 rounded-lg bg-[var(--gold-accent)] text-black font-bold text-[10px] uppercase tracking-wider shrink-0 cursor-pointer disabled:opacity-40"
-                  >
-                    Add
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Success Toast */}
       {successToast && (
