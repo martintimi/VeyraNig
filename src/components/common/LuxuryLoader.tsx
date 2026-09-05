@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import IrisiIcon from './IrisiIcon';
+import { motion } from 'framer-motion';
 
 interface LuxuryLoaderProps {
   fullScreen?: boolean;
@@ -12,9 +12,7 @@ interface LuxuryLoaderProps {
 
 export default function LuxuryLoader({
   fullScreen = true,
-  label = 'Ì R Í S Í',
-  sublabel = 'Appearance & Presence · Nigerian Luxury',
-  autoHideMs
+  autoHideMs,
 }: LuxuryLoaderProps) {
   // If fullScreen (app splash screen), default to auto-hiding after 850ms
   const effectiveAutoHide = autoHideMs !== undefined ? autoHideMs : (fullScreen ? 850 : undefined);
@@ -40,32 +38,92 @@ export default function LuxuryLoader({
 
   if (!visible) return null;
 
+  // Couture Floating Pearl / Liquid Fashion Bubbles
+  const bubbles = [
+    { size: 10, delay: 0, bounceY: -14, duration: 1.15 },
+    { size: 18, delay: 0.16, bounceY: -20, duration: 1.15 },
+    { size: 24, delay: 0.32, bounceY: -24, duration: 1.15 },
+    { size: 16, delay: 0.48, bounceY: -18, duration: 1.15 },
+    { size: 10, delay: 0.64, bounceY: -12, duration: 1.15 },
+  ];
+
+  // Effervescent Floating Micro-Bubbles (Champagne / Fragrance ambiance)
+  const floatingParticles = [
+    { x: -32, y: -16, delay: 0.1, size: 4, duration: 2.2 },
+    { x: 28, y: -22, delay: 0.5, size: 5, duration: 2.6 },
+    { x: -16, y: -32, delay: 0.9, size: 3.5, duration: 2.0 },
+    { x: 14, y: -28, delay: 1.3, size: 4.5, duration: 2.4 },
+    { x: -6, y: -40, delay: 1.7, size: 3, duration: 2.1 },
+  ];
+
   const content = (
-    <div className="relative flex flex-col items-center space-y-4 animate-pulse select-none">
-      {/* ÌRÍSÍ Architectural Monogram with Gold Shimmer */}
-      <div className="relative flex items-center justify-center h-20 w-20 rounded-3xl surface-card border border-[var(--gold-accent)]/40 shadow-2xl p-3 bg-[var(--bg-secondary)]">
-        <IrisiIcon size={46} variant="gold" className="drop-shadow-md" />
-        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
-        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-500" />
+    <div className="relative flex flex-col items-center justify-center select-none py-8">
+      {/* Soft Ambient Couture Glow Aura */}
+      <div className="absolute w-36 h-36 rounded-full bg-[var(--gold-accent)]/15 blur-2xl pointer-events-none animate-pulse" />
+
+      {/* Floating Effervescent Micro-Bubbles */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        {floatingParticles.map((p, i) => (
+          <motion.div
+            key={`particle-${i}`}
+            animate={{
+              y: [0, p.y - 18, p.y - 42],
+              x: [p.x, p.x + (i % 2 === 0 ? 5 : -5), p.x],
+              opacity: [0, 0.75, 0],
+              scale: [0.5, 1.2, 0.3],
+            }}
+            transition={{
+              duration: p.duration,
+              repeat: Infinity,
+              ease: 'easeOut',
+              delay: p.delay,
+            }}
+            style={{ width: p.size, height: p.size }}
+            className="absolute rounded-full bg-gradient-to-tr from-[var(--gold-accent)] to-white shadow-sm shadow-[var(--gold-accent)]/40"
+          >
+            <div className="absolute top-[1px] left-[1px] w-[1.5px] h-[1.5px] rounded-full bg-white" />
+          </motion.div>
+        ))}
       </div>
 
-      {/* Luxury Typography */}
-      <div className="text-center space-y-1">
-        <div className="font-editorial text-3xl font-bold tracking-[0.34em] text-[var(--text-primary)]">
-          {label}
-        </div>
-        <div className="text-[9px] font-mono-luxury uppercase tracking-[0.35em] text-[var(--gold-accent)] font-bold">
-          {sublabel}
-        </div>
+      {/* Main Rhythmic Fashion Bubbles Row */}
+      <div className="flex items-center gap-2 sm:gap-3 relative z-10 py-4">
+        {bubbles.map((b, index) => (
+          <motion.div
+            key={index}
+            animate={{
+              y: [0, b.bounceY, 0],
+              scale: [1, 1.15, 1],
+              opacity: [0.7, 1, 0.7],
+            }}
+            transition={{
+              duration: b.duration,
+              repeat: Infinity,
+              ease: [0.33, 1, 0.68, 1],
+              delay: b.delay,
+            }}
+            style={{ width: b.size, height: b.size }}
+            className="relative rounded-full bg-gradient-to-tr from-[#b88924] via-[var(--gold-accent)] to-amber-100 shadow-lg shadow-[var(--gold-accent)]/30 border border-white/50 backdrop-blur-md flex items-center justify-center"
+          >
+            {/* Glossy Spherical Specular Reflection Highlight */}
+            <div className="absolute top-[16%] left-[20%] w-[32%] h-[32%] rounded-full bg-white/90 blur-[0.3px]" />
+          </motion.div>
+        ))}
       </div>
 
-      {/* Minimalist Progress Line */}
-      <div className="w-36 h-[2px] bg-[var(--border-subtle)] rounded-full overflow-hidden mt-4">
-        <div
-          className="h-full bg-gradient-to-r from-[var(--gold-accent)] via-amber-200 to-emerald-400 animate-shimmer"
-          style={{ width: '100%' }}
-        />
-      </div>
+      {/* Delicate Breathing Light Ripple Beneath */}
+      <motion.div
+        animate={{
+          scale: [0.8, 1.35, 0.8],
+          opacity: [0.35, 0.1, 0.35],
+        }}
+        transition={{
+          duration: 1.6,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="w-24 h-2 rounded-full bg-gradient-to-r from-transparent via-[var(--gold-accent)]/35 to-transparent blur-[2px]"
+      />
     </div>
   );
 

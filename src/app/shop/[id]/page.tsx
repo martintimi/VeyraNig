@@ -84,13 +84,7 @@ export default function ProductDetailPage() {
   }, [productId, fetchProductsFromDb]);
 
   if (isLoading) {
-    return (
-      <LuxuryLoader
-        fullScreen={false}
-        label="Ì R Í S Í"
-        sublabel="Loading Garment Architecture..."
-      />
-    );
+    return <LuxuryLoader fullScreen={false} />;
   }
 
   if (!product || errorMsg) {
