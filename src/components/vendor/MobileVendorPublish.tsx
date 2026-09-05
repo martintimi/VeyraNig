@@ -111,18 +111,21 @@ export default function MobileVendorPublish({
 
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
   const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>(
-    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry' ? 'accessories' :
     vendorSpecialty === 'footwear' ? 'footwear' :
-    vendorSpecialty === 'apparel' ? 'apparel' : 'all'
+    vendorSpecialty === 'apparel' || vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear' ? 'apparel' : 'all'
   );
   const [name, setName] = useState('');
   const [subCategory, setSubCategory] = useState(
+    vendorSpecialty === 'caps' ? 'men_caps_fila' :
     vendorSpecialty === 'jewelry' ? 'men_jewelry_chains' :
+    vendorSpecialty === 'accessories' ? 'men_bags_wallets' :
     vendorSpecialty === 'footwear' ? 'men_slides_palms' :
+    vendorSpecialty === 'native_tailoring' ? 'senator_kaftan' :
     MALE_CATEGORIES[0].id
   );
   const [category, setCategory] = useState<GarmentCategory>(
-    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry' ? 'accessories' :
     vendorSpecialty === 'footwear' ? 'footwear' :
     MALE_CATEGORIES[0].generalCat
   );
@@ -143,7 +146,7 @@ export default function MobileVendorPublish({
 
   // Sizing & Stock
   const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>(
-    vendorSpecialty === 'jewelry'
+    vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry'
       ? { 'One Size': { enabled: true, quantity: 20 } }
       : vendorSpecialty === 'footwear'
       ? {
@@ -225,9 +228,15 @@ export default function MobileVendorPublish({
   }, [errorMessage]);
 
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
-  const filteredCategoryList = catFilterTab === 'all' 
-    ? currentCategoryList 
-    : currentCategoryList.filter(c => c.group === catFilterTab);
+
+  const filteredCategoryList = currentCategoryList.filter(c => {
+    if (vendorSpecialty === 'caps') return c.group === 'accessories' && (c.id.includes('cap') || c.id.includes('hat') || c.id.includes('fila'));
+    if (vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry') return c.group === 'accessories';
+    if (vendorSpecialty === 'footwear') return c.group === 'footwear';
+    if (vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear' || vendorSpecialty === 'apparel') return c.group === 'apparel';
+    if (catFilterTab === 'all') return true;
+    return c.group === catFilterTab;
+  });
   const currentSizeList = category === 'footwear' ? FOOTWEAR_SIZES : category === 'accessories' ? ACCESSORY_SIZES : APPAREL_SIZES;
 
   const handleCategorySelect = (selectedSubCatId: string, generalCat: GarmentCategory) => {

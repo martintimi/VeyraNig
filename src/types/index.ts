@@ -106,7 +106,15 @@ export interface Product {
   weightKg?: number;
 }
 
-export type VendorSpecialty = 'apparel' | 'footwear' | 'jewelry' | 'multi_department';
+export type VendorSpecialty =
+  | 'apparel'
+  | 'native_tailoring'
+  | 'streetwear'
+  | 'footwear'
+  | 'caps'
+  | 'jewelry'
+  | 'accessories'
+  | 'multi_department';
 
 export interface Vendor {
   id: string;
@@ -165,10 +173,92 @@ export function getVendorSpecialty(vendorOrProfile: any): VendorSpecialty {
   }
   if (!spec) return 'multi_department';
   const s = String(spec).toLowerCase().trim();
-  if (s === 'jewelry' || s === 'accessories' || s.includes('jewel') || s.includes('watch')) return 'jewelry';
+  if (s === 'caps' || s.includes('cap') || s.includes('hat') || s.includes('headwear') || s.includes('beanie')) return 'caps';
+  if (s === 'native_tailoring' || s.includes('native') || s.includes('agbada') || s.includes('kaftan') || s.includes('senator')) return 'native_tailoring';
+  if (s === 'streetwear' || s.includes('street')) return 'streetwear';
+  if (s === 'accessories' || s.includes('bag') || s.includes('watch') || s.includes('belt')) return 'accessories';
+  if (s === 'jewelry' || s.includes('jewel') || s.includes('chain')) return 'jewelry';
   if (s === 'footwear' || s === 'shoes' || s.includes('shoe') || s.includes('foot') || s.includes('slide')) return 'footwear';
   if (s === 'apparel' || s === 'clothing' || s.includes('wear') || s.includes('tailor') || s.includes('fashion')) return 'apparel';
   return 'multi_department';
+}
+
+export interface VendorSpecialtyInfo {
+  label: string;
+  badge: string;
+  publishLabel: string;
+  ordersLabel: string;
+  storeProfileLabel: string;
+}
+
+export function getVendorSpecialtyInfo(specialty: VendorSpecialty, isBoutique: boolean): VendorSpecialtyInfo {
+  switch (specialty) {
+    case 'caps':
+      return {
+        label: 'Caps, Hats & Headwear',
+        badge: 'Caps & Headwear Atelier',
+        publishLabel: 'Add Headwear Drop',
+        ordersLabel: 'Headwear Orders to Pack',
+        storeProfileLabel: 'Headwear Store Profile',
+      };
+    case 'accessories':
+      return {
+        label: 'Jewelry, Watches & Accessories',
+        badge: 'Luxury Accessories Merchant',
+        publishLabel: 'Add Accessory Drop',
+        ordersLabel: 'Accessory Orders to Pack',
+        storeProfileLabel: 'Accessories Store Profile',
+      };
+    case 'jewelry':
+      return {
+        label: 'Fine Jewelry & Chains',
+        badge: 'Fine Jewelry Atelier',
+        publishLabel: 'Add Jewelry Drop',
+        ordersLabel: 'Jewelry Orders to Pack',
+        storeProfileLabel: 'Jewelry Store Profile',
+      };
+    case 'footwear':
+      return {
+        label: 'Footwear & Slides',
+        badge: 'Footwear & Slides Atelier',
+        publishLabel: 'Add Footwear Drop',
+        ordersLabel: 'Footwear Orders to Pack',
+        storeProfileLabel: 'Footwear Store Profile',
+      };
+    case 'native_tailoring':
+      return {
+        label: 'Bespoke Native Tailoring',
+        badge: 'Bespoke Native Atelier',
+        publishLabel: 'Publish Bespoke Garment',
+        ordersLabel: 'Tailoring Orders to Cut',
+        storeProfileLabel: 'Atelier Store Profile',
+      };
+    case 'streetwear':
+      return {
+        label: 'Streetwear & Clothing',
+        badge: 'Streetwear & RTW Brand',
+        publishLabel: 'Add RTW Clothing Drop',
+        ordersLabel: 'Garment Orders to Pack',
+        storeProfileLabel: 'Boutique Store Profile',
+      };
+    case 'apparel':
+      return {
+        label: isBoutique ? 'Ready-to-Wear Clothing' : 'Bespoke Tailoring',
+        badge: isBoutique ? 'Ready-Made Boutique' : 'Bespoke Atelier',
+        publishLabel: isBoutique ? 'Add RTW Product' : 'Publish Bespoke Garment',
+        ordersLabel: isBoutique ? 'Orders to Pack & Dispatch' : 'Tailoring Orders to Cut',
+        storeProfileLabel: isBoutique ? 'Boutique Store Profile' : 'Atelier Store Profile',
+      };
+    case 'multi_department':
+    default:
+      return {
+        label: 'Multi-Department Boutique',
+        badge: isBoutique ? 'Ready-Made Boutique' : 'Multi-Department Atelier',
+        publishLabel: isBoutique ? 'Add RTW Product' : 'Publish Bespoke Garment',
+        ordersLabel: 'Orders to Pack & Dispatch',
+        storeProfileLabel: 'Store Profile',
+      };
+  }
 }
 
 export interface ActiveOutfit {

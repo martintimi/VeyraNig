@@ -8,7 +8,7 @@ import {
   Plus, ExternalLink, ShieldCheck, ShoppingBag,
   Scissors, AlertTriangle, AlertCircle, Clock,
   ArrowRight, Store, Copy, Check, Share2, Banknote, Lock,
-  Gem, Footprints, Shirt
+  Gem, Footprints, Shirt, Crown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -28,7 +28,7 @@ interface MobileVendorOverviewProps {
   recentOrders?: any[];
 }
 
-import { isBoutiqueVendor, getVendorSpecialty } from '@/types';
+import { isBoutiqueVendor, getVendorSpecialty, getVendorSpecialtyInfo } from '@/types';
 
 export default function MobileVendorOverview({
   vendorProfile,
@@ -43,6 +43,7 @@ export default function MobileVendorOverview({
   const [copied, setCopied] = useState(false);
   const isBoutique = isBoutiqueVendor(vendorProfile);
   const specialty = getVendorSpecialty(vendorProfile);
+  const specialtyInfo = getVendorSpecialtyInfo(specialty, isBoutique);
 
   const isVerified = profileStatus?.isVerified || profileStatus?.approvalStatus === 'approved';
   const isRejected = profileStatus?.approvalStatus === 'rejected';
@@ -128,28 +129,24 @@ export default function MobileVendorOverview({
         <div className="flex items-start justify-between gap-2 relative z-10">
           <div>
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[9px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20 mb-1.5">
-              {specialty === 'jewelry' ? (
+              {specialty === 'caps' ? (
+                <Crown className="h-3 w-3" />
+              ) : specialty === 'accessories' ? (
+                <Sparkles className="h-3 w-3" />
+              ) : specialty === 'jewelry' ? (
                 <Gem className="h-3 w-3" />
               ) : specialty === 'footwear' ? (
                 <Footprints className="h-3 w-3" />
-              ) : specialty === 'apparel' ? (
+              ) : specialty === 'native_tailoring' ? (
+                <Scissors className="h-3 w-3" />
+              ) : specialty === 'streetwear' || specialty === 'apparel' ? (
                 <Shirt className="h-3 w-3" />
               ) : isBoutique ? (
                 <ShoppingBag className="h-3 w-3" />
               ) : (
                 <Scissors className="h-3 w-3" />
               )}
-              <span>
-                {specialty === 'jewelry'
-                  ? 'Fine Jewelry Merchant'
-                  : specialty === 'footwear'
-                  ? 'Footwear & Slides'
-                  : specialty === 'apparel'
-                  ? 'Designer Apparel'
-                  : isBoutique
-                  ? 'Ready-Made Boutique'
-                  : 'Bespoke Atelier'}
-              </span>
+              <span>{specialtyInfo.badge}</span>
             </div>
             <h2 className="font-editorial text-2xl font-bold text-[var(--text-primary)] leading-tight">
               {vendorProfile.designerName || vendorProfile.brandName}

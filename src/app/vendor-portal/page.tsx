@@ -9,16 +9,17 @@ import {
   TrendingUp, PackageCheck, DollarSign, Sparkles,
   ArrowUpRight, Plus, ExternalLink, ShieldCheck, CheckCircle2,
   ShoppingBag, Scissors, Layers, Loader2, Clock, AlertTriangle, AlertCircle, ArrowRight, Store, RefreshCw, Star, Lock,
-  Gem, Footprints, Shirt
+  Gem, Footprints, Shirt, Crown
 } from 'lucide-react';
 import MobileVendorOverview from '@/components/vendor/MobileVendorOverview';
 import VendorLuxuryLoader from '@/components/vendor/VendorLuxuryLoader';
-import { isBoutiqueVendor, getVendorSpecialty } from '@/types';
+import { isBoutiqueVendor, getVendorSpecialty, getVendorSpecialtyInfo } from '@/types';
 
 export default function VendorOverviewPage() {
   const { vendorProfile, setVendorProfile } = useStore();
   const isBoutique = isBoutiqueVendor(vendorProfile);
   const specialty = getVendorSpecialty(vendorProfile);
+  const specialtyInfo = getVendorSpecialtyInfo(specialty, isBoutique);
 
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -271,40 +272,30 @@ export default function VendorOverviewPage() {
         <div className="p-6 sm:p-8 rounded-3xl surface-card border border-[var(--border-subtle)] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="relative z-10 space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-xs font-mono-luxury uppercase font-bold">
-              {specialty === 'jewelry' ? (
+              {specialty === 'caps' ? (
+                <Crown className="h-3.5 w-3.5" />
+              ) : specialty === 'accessories' ? (
+                <Sparkles className="h-3.5 w-3.5" />
+              ) : specialty === 'jewelry' ? (
                 <Gem className="h-3.5 w-3.5" />
               ) : specialty === 'footwear' ? (
                 <Footprints className="h-3.5 w-3.5" />
-              ) : specialty === 'apparel' ? (
+              ) : specialty === 'native_tailoring' ? (
+                <Scissors className="h-3.5 w-3.5" />
+              ) : specialty === 'streetwear' || specialty === 'apparel' ? (
                 <Shirt className="h-3.5 w-3.5" />
               ) : isBoutique ? (
                 <ShoppingBag className="h-3.5 w-3.5" />
               ) : (
                 <Scissors className="h-3.5 w-3.5" />
               )}
-              <span>
-                {specialty === 'jewelry'
-                  ? 'Fine Jewelry & Luxury Dashboard'
-                  : specialty === 'footwear'
-                  ? 'Footwear & Slides Dashboard'
-                  : specialty === 'apparel'
-                  ? 'Designer Apparel & Tailoring Hub'
-                  : isBoutique
-                  ? 'Ready-to-Wear Retail Dashboard'
-                  : '3D Virtual Tailoring Hub'}
-              </span>
+              <span>{specialtyInfo.badge}</span>
             </div>
             <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
               Welcome back, {vendorProfile.designerName || vendorProfile.brandName}
             </h1>
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              {specialty === 'jewelry'
-                ? `Your jewelry boutique has ${dbProducts.length} live drops in database and ${pendingOrdersCount} orders awaiting dispatch.`
-                : specialty === 'footwear'
-                ? `Your footwear atelier has ${dbProducts.length} live drops in database and ${pendingOrdersCount} orders awaiting dispatch.`
-                : isBoutique
-                ? `Your boutique has ${dbProducts.length} live drops in database and ${pendingOrdersCount} orders awaiting pack.`
-                : `Your atelier has ${dbProducts.length} bespoke pieces and ${pendingOrdersCount} orders in queue.`}
+              Your {specialtyInfo.label.toLowerCase()} storefront has {dbProducts.length} live drops in database and {pendingOrdersCount} orders awaiting dispatch.
             </p>
           </div>
 

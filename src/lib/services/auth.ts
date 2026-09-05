@@ -1,3 +1,5 @@
+import { VendorSpecialty } from '@/types';
+
 export interface CustomerSignUpData {
   email: string;
   password?: string;
@@ -20,7 +22,7 @@ export interface VendorSignUpData {
   phone: string;
   location: string;
   vendorType: 'fashion_designer' | 'boutique_seller';
-  specialty?: 'jewelry' | 'footwear' | 'apparel' | 'multi_department';
+  specialty?: VendorSpecialty;
   vendorSpecialty?: string;
   bankName?: string;
   accountNumber?: string;

@@ -122,20 +122,23 @@ export default function PublishGarmentPage() {
   // Department / Gender Filter: male | female | unisex
   const [genderTarget, setGenderTarget] = useState<GenderTarget>('male');
   const [catFilterTab, setCatFilterTab] = useState<'all' | 'apparel' | 'footwear' | 'accessories'>(
-    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry' ? 'accessories' :
     vendorSpecialty === 'footwear' ? 'footwear' :
-    vendorSpecialty === 'apparel' ? 'apparel' : 'all'
+    vendorSpecialty === 'apparel' || vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear' ? 'apparel' : 'all'
   );
 
   // Core Form State
   const [name, setName] = useState('');
   const [subCategory, setSubCategory] = useState(
+    vendorSpecialty === 'caps' ? 'men_caps_fila' :
     vendorSpecialty === 'jewelry' ? 'men_jewelry_chains' :
+    vendorSpecialty === 'accessories' ? 'men_bags_wallets' :
     vendorSpecialty === 'footwear' ? 'men_slides_palms' :
+    vendorSpecialty === 'native_tailoring' ? 'senator_kaftan' :
     MALE_CATEGORIES[0].id
   );
   const [category, setCategory] = useState<GarmentCategory>(
-    vendorSpecialty === 'jewelry' ? 'accessories' :
+    vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry' ? 'accessories' :
     vendorSpecialty === 'footwear' ? 'footwear' :
     MALE_CATEGORIES[0].generalCat
   );
@@ -155,7 +158,7 @@ export default function PublishGarmentPage() {
 
   // Dynamic Adaptive Size Stock State
   const [sizeStock, setSizeStock] = useState<{ [size: string]: { enabled: boolean; quantity: number | string } }>(
-    vendorSpecialty === 'jewelry'
+    vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry'
       ? { 'One Size': { enabled: true, quantity: 20 } }
       : vendorSpecialty === 'footwear'
       ? {
@@ -294,9 +297,10 @@ export default function PublishGarmentPage() {
   useEffect(() => {
     const list = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
     const allowed = list.filter(c => {
-      if (vendorSpecialty === 'jewelry') return c.group === 'accessories';
+      if (vendorSpecialty === 'caps') return c.group === 'accessories' && (c.id.includes('cap') || c.id.includes('hat') || c.id.includes('fila'));
+      if (vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry') return c.group === 'accessories';
       if (vendorSpecialty === 'footwear') return c.group === 'footwear';
-      if (vendorSpecialty === 'apparel') return c.group === 'apparel';
+      if (vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear' || vendorSpecialty === 'apparel') return c.group === 'apparel';
       if (catFilterTab === 'all') return true;
       return c.group === catFilterTab;
     });
@@ -818,9 +822,10 @@ export default function PublishGarmentPage() {
 
   const currentCategoryList = genderTarget === 'male' ? MALE_CATEGORIES : genderTarget === 'female' ? FEMALE_CATEGORIES : UNISEX_CATEGORIES;
   const filteredCategoryList = currentCategoryList.filter(c => {
-    if (vendorSpecialty === 'jewelry') return c.group === 'accessories';
+    if (vendorSpecialty === 'caps') return c.group === 'accessories' && (c.id.includes('cap') || c.id.includes('hat') || c.id.includes('fila'));
+    if (vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry') return c.group === 'accessories';
     if (vendorSpecialty === 'footwear') return c.group === 'footwear';
-    if (vendorSpecialty === 'apparel') return c.group === 'apparel';
+    if (vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear' || vendorSpecialty === 'apparel') return c.group === 'apparel';
     if (catFilterTab === 'all') return true;
     return c.group === catFilterTab;
   });
@@ -1536,9 +1541,9 @@ export default function PublishGarmentPage() {
               <div className="flex items-center gap-2 mb-3 overflow-x-auto scrollbar-none pb-1">
                 {[
                   { id: 'all', label: 'All Categories', icon: Layers, allowed: vendorSpecialty === 'multi_department' },
-                  { id: 'apparel', label: 'Apparel & Sets', icon: Shirt, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel' },
+                  { id: 'apparel', label: 'Apparel & Sets', icon: Shirt, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel' || vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear' },
                   { id: 'footwear', label: 'Footwear & Slides', icon: Footprints, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'footwear' },
-                  { id: 'accessories', label: 'Jewelry, Caps & Bags', icon: Gem, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry' },
+                  { id: 'accessories', label: 'Caps, Bags & Jewelry', icon: Sparkles, allowed: vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry' || vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' },
                 ].filter(t => t.allowed).map((tab) => {
                   const IconComp = tab.icon;
                   return (

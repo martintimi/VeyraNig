@@ -11,13 +11,13 @@ import {
   LayoutDashboard, UploadCloud, PackageCheck, BarChart3,
   Building, MessageSquare, DollarSign, LogOut, Sun, Moon,
   ExternalLink, Sparkles, ShieldCheck, ShoppingBag, Scissors, Clock, AlertTriangle, Star, Menu, X,
-  Gem, Footprints, Shirt
+  Gem, Footprints, Shirt, Crown
 } from 'lucide-react';
 import VendorNotificationBell from '@/components/vendor/VendorNotificationBell';
 import VendorTourGuide from '@/components/vendor/VendorTourGuide';
 import Image from 'next/image';
 
-import { isBoutiqueVendor, getVendorSpecialty } from '@/types';
+import { isBoutiqueVendor, getVendorSpecialty, getVendorSpecialtyInfo } from '@/types';
 
 export default function VendorPortalLayout({
   children,
@@ -93,6 +93,7 @@ export default function VendorPortalLayout({
 
   const isBoutique = isBoutiqueVendor(vendorProfile);
   const specialty = getVendorSpecialty(vendorProfile);
+  const specialtyInfo = getVendorSpecialtyInfo(specialty, isBoutique);
 
   const navItems = [
     {
@@ -104,7 +105,7 @@ export default function VendorPortalLayout({
     },
     {
       id: 'tour-nav-publish',
-      label: specialty === 'jewelry' ? 'Add Jewelry Drop' : specialty === 'footwear' ? 'Add Footwear Drop' : isBoutique ? 'Add RTW Product' : 'Publish Bespoke Garment',
+      label: specialtyInfo.publishLabel,
       href: '/vendor-portal/publish',
       icon: UploadCloud,
       active: pathname === '/vendor-portal/publish'
@@ -118,7 +119,7 @@ export default function VendorPortalLayout({
     },
     {
       id: 'tour-nav-orders',
-      label: specialty === 'jewelry' ? 'Jewelry Orders to Pack' : specialty === 'footwear' ? 'Footwear Orders to Pack' : isBoutique ? 'Orders to Pack & Dispatch' : 'Tailoring Orders to Cut',
+      label: specialtyInfo.ordersLabel,
       href: '/vendor-portal/orders',
       icon: PackageCheck,
       active: pathname === '/vendor-portal/orders'
@@ -132,7 +133,7 @@ export default function VendorPortalLayout({
     },
     {
       id: 'tour-nav-atelier',
-      label: specialty === 'jewelry' ? 'Jewelry Store Profile' : specialty === 'footwear' ? 'Footwear Store Profile' : isBoutique ? 'Boutique Store Profile' : 'Atelier Store Profile',
+      label: specialtyInfo.storeProfileLabel,
       href: '/vendor-portal/atelier',
       icon: Building,
       active: pathname === '/vendor-portal/atelier'
@@ -188,7 +189,7 @@ export default function VendorPortalLayout({
               Ì R Í S Í
             </span>
             <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-[var(--gold-subtle)] text-[var(--gold-accent)] text-[10px] font-mono-luxury uppercase font-bold border border-[var(--gold-accent)]/20">
-              {specialty === 'jewelry' ? 'Jewelry & Watches' : specialty === 'footwear' ? 'Footwear & Slides' : specialty === 'apparel' ? 'Apparel Designer' : isBoutique ? 'Boutique Merchant' : 'Bespoke Brand'}
+              {specialtyInfo.badge}
             </span>
           </Link>
 
@@ -294,11 +295,17 @@ export default function VendorPortalLayout({
             <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] space-y-2">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-[var(--gold-accent)]/15 text-[var(--gold-accent)] flex items-center justify-center font-editorial font-bold text-lg shrink-0">
-                  {specialty === 'jewelry' ? (
+                  {specialty === 'caps' ? (
+                    <Crown className="h-5 w-5" />
+                  ) : specialty === 'accessories' ? (
+                    <Sparkles className="h-5 w-5" />
+                  ) : specialty === 'jewelry' ? (
                     <Gem className="h-5 w-5" />
                   ) : specialty === 'footwear' ? (
                     <Footprints className="h-5 w-5" />
-                  ) : specialty === 'apparel' ? (
+                  ) : specialty === 'native_tailoring' ? (
+                    <Scissors className="h-5 w-5" />
+                  ) : specialty === 'streetwear' || specialty === 'apparel' ? (
                     <Shirt className="h-5 w-5" />
                   ) : isBoutique ? (
                     <ShoppingBag className="h-5 w-5" />
@@ -319,15 +326,7 @@ export default function VendorPortalLayout({
               <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[10px] font-mono-luxury">
                 <span className="text-[var(--text-muted)]">Type:</span>
                 <span className="text-[var(--gold-accent)] font-bold truncate">
-                  {specialty === 'jewelry'
-                    ? 'Fine Jewelry Merchant'
-                    : specialty === 'footwear'
-                    ? 'Footwear & Slides'
-                    : specialty === 'apparel'
-                    ? 'Designer Apparel'
-                    : isBoutique
-                    ? 'Ready-Made Boutique'
-                    : 'Bespoke Atelier'}
+                  {specialtyInfo.badge}
                 </span>
               </div>
             </div>

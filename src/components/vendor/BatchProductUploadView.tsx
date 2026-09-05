@@ -122,7 +122,7 @@ export default function BatchProductUploadView({
 
   // Initial Drop Mode based on store profile
   const initialDropMode: DropMode = 
-    vendorSpecialty === 'jewelry' ? 'jewelry' :
+    vendorSpecialty === 'caps' || vendorSpecialty === 'accessories' || vendorSpecialty === 'jewelry' ? 'jewelry' :
     vendorSpecialty === 'footwear' ? 'footwear' : 'apparel';
 
   const [dropMode, setDropMode] = useState<DropMode>(initialDropMode);
@@ -144,9 +144,10 @@ export default function BatchProductUploadView({
 
   // Filter Categories by Active Drop Mode / Specialty
   const availableCategories = ALL_CATEGORY_OPTIONS.filter(c => {
-    if (vendorSpecialty === 'jewelry' || dropMode === 'jewelry') return c.group === 'jewelry';
+    if (vendorSpecialty === 'caps') return c.group === 'jewelry' && (c.id.includes('cap') || c.id.includes('hat') || c.id.includes('fila'));
+    if (vendorSpecialty === 'jewelry' || vendorSpecialty === 'accessories' || dropMode === 'jewelry') return c.group === 'jewelry';
     if (vendorSpecialty === 'footwear' || dropMode === 'footwear') return c.group === 'footwear';
-    if (vendorSpecialty === 'apparel' || dropMode === 'apparel') return c.group === 'apparel';
+    if (vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear' || vendorSpecialty === 'apparel' || dropMode === 'apparel') return c.group === 'apparel';
     return true;
   });
 
@@ -679,7 +680,7 @@ export default function BatchProductUploadView({
             </button>
           )}
 
-          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel') && (
+          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'apparel' || vendorSpecialty === 'native_tailoring' || vendorSpecialty === 'streetwear') && (
             <button
               type="button"
               onClick={() => handleSwitchDropMode('apparel')}
@@ -694,7 +695,7 @@ export default function BatchProductUploadView({
             </button>
           )}
 
-          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry') && (
+          {(vendorSpecialty === 'multi_department' || vendorSpecialty === 'jewelry' || vendorSpecialty === 'caps' || vendorSpecialty === 'accessories') && (
             <button
               type="button"
               onClick={() => handleSwitchDropMode('jewelry')}
@@ -704,8 +705,8 @@ export default function BatchProductUploadView({
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
-              <Gem className="h-3.5 w-3.5" />
-              <span>Jewelry &amp; Watches</span>
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Caps, Bags &amp; Accessories</span>
             </button>
           )}
         </div>

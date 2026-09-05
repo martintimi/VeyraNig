@@ -672,6 +672,8 @@ export default function VendorTourGuide({ isOpen: controlledIsOpen, onClose: con
   }
 
   const portalDescriptor = 
+    specialty === 'caps' ? 'Headwear Studio' :
+    specialty === 'accessories' ? 'Accessories Studio' :
     specialty === 'jewelry' ? 'Jewelry Studio' :
     specialty === 'footwear' ? 'Footwear Hub' :
     isBoutique ? 'Boutique' : 'Atelier';

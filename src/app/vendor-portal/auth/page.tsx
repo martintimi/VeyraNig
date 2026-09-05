@@ -12,7 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import confetti from 'canvas-confetti';
 import { signUpVendor, signInVendor, verifyOtpCode, resendOtpCode } from '@/lib/services/auth';
-import { isBoutiqueVendor } from '@/types';
+import { isBoutiqueVendor, VendorSpecialty } from '@/types';
 import BrandWordmark from '@/components/common/BrandWordmark';
 
 const vendorEditorialSlides = [
@@ -75,7 +75,7 @@ export default function VendorAuthPage() {
     confirmPassword: '',
     location: '',
     vendorType: 'boutique_seller' as 'fashion_designer' | 'boutique_seller',
-    specialty: 'jewelry' as 'jewelry' | 'footwear' | 'apparel' | 'multi_department',
+    specialty: 'streetwear' as VendorSpecialty,
     bankName: 'Guaranty Trust Bank (GTBank)',
     accountNumber: '',
     accountName: '',
@@ -691,20 +691,22 @@ export default function VendorAuthPage() {
                   Store Specialty &amp; Department
                 </label>
                 <select
-                  value={regForm.specialty || 'multi_department'}
+                  value={regForm.specialty || 'streetwear'}
                   onChange={(e) => {
-                    const spec = e.target.value;
+                    const spec = e.target.value as VendorSpecialty;
                     setRegForm({
                       ...regForm,
-                      specialty: spec as any,
-                      vendorType: spec === 'apparel' ? 'fashion_designer' : 'boutique_seller'
+                      specialty: spec,
+                      vendorType: spec === 'native_tailoring' ? 'fashion_designer' : 'boutique_seller'
                     });
                   }}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs focus:border-[var(--gold-accent)] focus:outline-none cursor-pointer font-bold"
                 >
-                  <option value="jewelry">Jewelry, Watches &amp; Luxury Accessories (Chains, Bracelets, Rings, Watches, Caps, Bags)</option>
-                  <option value="footwear">Footwear &amp; Slides Atelier (Slides, Palms, Loafers, Sneakers, Heels)</option>
-                  <option value="apparel">Clothing &amp; Streetwear Boutique (Kaftans, Hoodies, Two-Piece Sets, Native, Dresses)</option>
+                  <option value="native_tailoring">Bespoke Native Tailoring Atelier (Agbada, Kaftans, Senator — Made to Measure)</option>
+                  <option value="streetwear">Ready-to-Wear Clothing Boutique (Streetwear, Hoodies, Two-Piece Sets, Dresses)</option>
+                  <option value="footwear">Footwear &amp; Slides (Palms, Slides, Loafers, Sneakers)</option>
+                  <option value="caps">Caps, Hats &amp; Headwear (Fila, Dad Caps, Beanies, Bucket Hats)</option>
+                  <option value="accessories">Jewelry, Watches &amp; Luxury Accessories (Chains, Watches, Bags, Belts)</option>
                   <option value="multi_department">Multi-Department Boutique (All Fashion &amp; Accessories)</option>
                 </select>
               </div>

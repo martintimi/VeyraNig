@@ -345,13 +345,22 @@ export default function VendorAtelierProfilePage() {
               </label>
               <select
                 disabled={isFieldsDisabled}
-                value={form.specialty || 'multi_department'}
-                onChange={(e) => setForm({ ...form, specialty: e.target.value as any })}
+                value={form.specialty || 'streetwear'}
+                onChange={(e) => {
+                  const spec = e.target.value as any;
+                  setForm({
+                    ...form,
+                    specialty: spec,
+                    vendorType: spec === 'native_tailoring' ? 'fashion_designer' : 'boutique_seller'
+                  });
+                }}
                 className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-bold focus:border-[var(--gold-accent)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
-                <option value="jewelry">Jewelry, Watches &amp; Luxury Accessories (Chains, Bracelets, Rings, Watches, Caps, Bags)</option>
-                <option value="footwear">Footwear &amp; Slides Atelier (Slides, Palms, Loafers, Sneakers, Heels)</option>
-                <option value="apparel">Clothing &amp; Streetwear Boutique (Kaftans, Hoodies, Two-Piece Sets, Native, Dresses)</option>
+                <option value="native_tailoring">Bespoke Native Tailoring Atelier (Agbada, Kaftans, Senator — Made to Measure)</option>
+                <option value="streetwear">Ready-to-Wear Clothing Boutique (Streetwear, Hoodies, Two-Piece Sets, Dresses)</option>
+                <option value="footwear">Footwear &amp; Slides (Palms, Slides, Loafers, Sneakers)</option>
+                <option value="caps">Caps, Hats &amp; Headwear (Fila, Dad Caps, Beanies, Bucket Hats)</option>
+                <option value="accessories">Jewelry, Watches &amp; Luxury Accessories (Chains, Watches, Bags, Belts)</option>
                 <option value="multi_department">Multi-Department Boutique (All Fashion &amp; Accessories)</option>
               </select>
             </div>
