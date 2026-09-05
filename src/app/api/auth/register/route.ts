@@ -139,7 +139,7 @@ export async function POST(request: Request) {
         contact_person: designerName || fullName,
         email: normalizedEmail,
         phone: cleanPhone,
-        location: location || 'Lagos, Nigeria',
+        location: (location && location.trim()) || '',
         vendor_type: vendorType || 'fashion_designer',
         bank_name: bankName || 'Guaranty Trust Bank (GTBank)',
         account_number: accountNumber || '',

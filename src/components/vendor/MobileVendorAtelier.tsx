@@ -230,11 +230,10 @@ export default function MobileVendorAtelier({
               value={form.state}
               onChange={(e) => {
                 const newState = e.target.value;
-                const availableCities = getCitiesForState(newState);
                 setForm({
                   ...form,
                   state: newState,
-                  city: availableCities.length > 0 ? availableCities[0] : ''
+                  city: ''
                 });
               }}
               className="w-full px-3 py-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"

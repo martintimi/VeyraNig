@@ -66,7 +66,7 @@ export default function VendorOverviewPage() {
           contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || vendorProfile.contactPerson,
           email: v.email || vendorProfile.email,
           phone: v.phone || vendorProfile.phone,
-          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || 'Lagos, Nigeria',
+          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || '',
           vendorType: normalizedType,
           bankName: v.bankName || v.bank_name || vendorProfile.bankName,
           accountNumber: v.accountNumber || v.account_number || vendorProfile.accountNumber,

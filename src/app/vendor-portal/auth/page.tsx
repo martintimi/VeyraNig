@@ -73,7 +73,7 @@ export default function VendorAuthPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    location: 'Victoria Island, Lagos',
+    location: '',
     vendorType: 'boutique_seller' as 'fashion_designer' | 'boutique_seller',
     specialty: 'jewelry' as 'jewelry' | 'footwear' | 'apparel' | 'multi_department',
     bankName: 'Guaranty Trust Bank (GTBank)',
@@ -150,7 +150,7 @@ export default function VendorAuthPage() {
           contactPerson: res.vendor.contact_person || res.vendor.designer_name,
           email: res.vendor.email || loginIdentifier.trim(),
           phone: res.vendor.phone || '',
-          location: res.vendor.location || 'Lagos, Nigeria',
+          location: res.vendor.location || '',
           vendorType: isBoutiqueVendor(res.vendor) ? 'boutique_seller' : 'fashion_designer',
           specialty: res.vendor.specialty || res.vendor.vendorSpecialty || 'multi_department',
           vendorSpecialty: res.vendor.specialty || res.vendor.vendorSpecialty || 'multi_department',
@@ -777,7 +777,7 @@ export default function VendorAuthPage() {
                     required
                     value={regForm.location}
                     onChange={(e) => setRegForm({ ...regForm, location: e.target.value })}
-                    placeholder="e.g. 14B Adeola Odeku, Victoria Island, Lagos"
+                    placeholder="e.g. 14B Commercial Avenue, Yaba, Lagos"
                     className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none"
                   />
                 </div>

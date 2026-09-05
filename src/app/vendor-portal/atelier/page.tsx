@@ -129,7 +129,7 @@ export default function VendorAtelierProfilePage() {
           contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || 'Manager',
           email: v.email || '',
           phone: v.phone || '',
-          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : '') || 'Lagos, Nigeria',
+          location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : '') || '',
           vendorType: normalizedType,
           specialty: spec,
           bankName: v.bankName || v.bank_name || 'Guaranty Trust Bank (GTBank)',
@@ -460,11 +460,10 @@ export default function VendorAtelierProfilePage() {
                   value={form.state}
                   onChange={(e) => {
                     const newState = e.target.value;
-                    const availableCities = getCitiesForState(newState);
                     setForm({
                       ...form,
                       state: newState,
-                      city: availableCities.length > 0 ? availableCities[0] : ''
+                      city: ''
                     });
                   }}
                   className="w-full px-3.5 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:border-[var(--gold-accent)] focus:outline-none font-bold disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
@@ -702,7 +701,7 @@ export default function VendorAtelierProfilePage() {
               <p className="text-xs text-[var(--text-secondary)] font-mono-luxury flex items-center gap-1.5 mt-1">
                 <MapPin className="h-3.5 w-3.5 text-[var(--gold-accent)]" />
                 <span>
-                  {form.city && form.state ? `${form.city}, ${form.state}` : form.location || 'Victoria Island, Lagos'}
+                  {form.city && form.state ? `${form.city}, ${form.state}` : form.location || 'Location not specified'}
                 </span>
               </p>
               {form.bio && (

@@ -70,7 +70,7 @@ export default function VendorPortalLayout({
             contactPerson: v.contactPerson || v.contact_person || v.designerName || v.designer_name || vendorProfile.contactPerson,
             email: v.email || vendorProfile.email,
             phone: v.phone || vendorProfile.phone,
-            location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || 'Lagos, Nigeria',
+            location: v.location || (v.city && v.state ? `${v.city}, ${v.state}` : vendorProfile.location) || '',
             vendorType: normalizedType,
             specialty: spec,
             vendorSpecialty: spec,
@@ -311,7 +311,7 @@ export default function VendorPortalLayout({
                     {vendorProfile.brandName}
                   </div>
                   <div className="text-[10px] text-[var(--text-muted)] font-mono-luxury truncate">
-                    {vendorProfile.location}
+                    {vendorProfile.location || 'Location not set'}
                   </div>
                 </div>
               </div>
