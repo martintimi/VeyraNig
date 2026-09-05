@@ -35,6 +35,8 @@ export async function POST(request: Request) {
       mimeType = normalized.mimeType;
     }
 
+    const shouldTrim = data.get('trim') === 'true';
+
     // 1. Cloudinary Upload (Direct high-speed CDN video streaming)
     if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
       const uploadResult: any = await new Promise((resolve, reject) => {
@@ -51,9 +53,14 @@ export async function POST(request: Request) {
         ).end(buffer);
       });
 
+      let finalUrl = uploadResult.secure_url || uploadResult.url;
+      if (isVideo && shouldTrim && finalUrl && finalUrl.includes('/upload/')) {
+        finalUrl = finalUrl.replace('/upload/', '/upload/so_0,eo_5/');
+      }
+
       return NextResponse.json({
         success: true,
-        url: uploadResult.secure_url || uploadResult.url,
+        url: finalUrl,
         publicId: uploadResult.public_id,
         fileName: file.name,
         fileSize: file.size,

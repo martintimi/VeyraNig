@@ -31,6 +31,16 @@ export async function trimVideoInBrowser(
     video.playsInline = true;
     video.crossOrigin = 'anonymous';
 
+    // Temporarily attach to DOM to prevent browser autoplay/decoding restrictions
+    video.style.position = 'fixed';
+    video.style.top = '-9999px';
+    video.style.left = '-9999px';
+    video.style.opacity = '0';
+    video.style.width = '1px';
+    video.style.height = '1px';
+    video.style.pointerEvents = 'none';
+    document.body.appendChild(video);
+
     const objectUrl = URL.createObjectURL(file);
     video.src = objectUrl;
 
@@ -42,6 +52,9 @@ export async function trimVideoInBrowser(
         video.pause();
         video.removeAttribute('src');
         video.load();
+        if (video.parentNode) {
+          video.parentNode.removeChild(video);
+        }
       } catch {}
       try {
         URL.revokeObjectURL(objectUrl);
@@ -79,6 +92,13 @@ export async function trimVideoInBrowser(
           return reject(new Error('Canvas 2D context not available'));
         }
 
+        // Check for captureStream support (Safari fallback)
+        const captureFn = (canvas as any).captureStream || (canvas as any).mozCaptureStream || (canvas as any).webkitCaptureStream;
+        if (typeof captureFn !== 'function') {
+          cleanup();
+          return reject(new Error('Canvas captureStream is not supported in this browser'));
+        }
+
         // Determine supported mime type
         let mimeType = 'video/webm';
         if (typeof MediaRecorder !== 'undefined') {
@@ -98,25 +118,10 @@ export async function trimVideoInBrowser(
           return reject(new Error('MediaRecorder is not supported in this browser'));
         }
 
-        // Get media stream from canvas
-        const canvasStream = canvas.captureStream(30);
+        // Capture video track from canvas (product showcase clips are silent luxury loops)
+        const canvasStream = captureFn.call(canvas, 30);
 
-        // Try to capture audio track from video if available
-        let finalStream: MediaStream = canvasStream;
-        if ((video as any).captureStream) {
-          try {
-            const vStream = (video as any).captureStream();
-            const audioTracks = vStream.getAudioTracks();
-            if (audioTracks && audioTracks.length > 0) {
-              finalStream = new MediaStream([
-                ...canvasStream.getVideoTracks(),
-                audioTracks[0]
-              ]);
-            }
-          } catch {}
-        }
-
-        const recorder = new MediaRecorder(finalStream, {
+        const recorder = new MediaRecorder(canvasStream, {
           mimeType,
           videoBitsPerSecond: videoBitrate
         });
@@ -135,6 +140,11 @@ export async function trimVideoInBrowser(
           const ext = isMp4 ? '.mp4' : '.webm';
           const baseName = file.name.replace(/\.[^/.]+$/, '');
           const trimmedBlob = new Blob(chunks, { type: baseMime });
+
+          if (trimmedBlob.size < 500) {
+            return reject(new Error('Trimmed video blob is empty'));
+          }
+
           const trimmedFile = new File([trimmedBlob], `${baseName}-trimmed${ext}`, {
             type: baseMime,
             lastModified: Date.now()
@@ -147,7 +157,7 @@ export async function trimVideoInBrowser(
         video.currentTime = 0;
         await new Promise((res) => {
           video.onseeked = () => res(true);
-          setTimeout(res, 300);
+          setTimeout(res, 250);
         });
 
         recorder.start(100);
@@ -155,11 +165,13 @@ export async function trimVideoInBrowser(
         try {
           await video.play();
         } catch {
-          // If autoplay fails, still proceed
+          // If autoplay promise rejects, still continue frame loop
         }
 
         let animationFrameId: number;
         let isStopped = false;
+        const startTime = Date.now();
+        const maxRecordMs = (targetSeconds + 0.3) * 1000;
 
         const stopRecording = () => {
           if (isStopped) return;
@@ -174,7 +186,10 @@ export async function trimVideoInBrowser(
         const drawLoop = () => {
           if (isStopped) return;
 
-          if (video.currentTime >= targetSeconds || video.ended || video.paused) {
+          const elapsedMs = Date.now() - startTime;
+
+          // Stop when targetSeconds reached or video finished
+          if (video.currentTime >= targetSeconds || video.ended || elapsedMs >= maxRecordMs) {
             stopRecording();
             return;
           }
@@ -182,7 +197,8 @@ export async function trimVideoInBrowser(
           ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
 
           if (onProgress) {
-            const percent = Math.min(99, Math.round((video.currentTime / targetSeconds) * 100));
+            const currentProgressTime = Math.max(video.currentTime, elapsedMs / 1000);
+            const percent = Math.min(99, Math.round((currentProgressTime / targetSeconds) * 100));
             onProgress(percent);
           }
 

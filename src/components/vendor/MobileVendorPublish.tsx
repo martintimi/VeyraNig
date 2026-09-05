@@ -461,12 +461,16 @@ export default function MobileVendorPublish({
     }
   };
 
-  const processAndUploadVideo = async (fileToUpload: File) => {
+  const processAndUploadVideo = async (fileToUpload: File, fallbackTrim = false) => {
     setIsVideoUploading(true);
     setVideoError('');
+    setPendingTrimFile(null);
     try {
       const formData = new FormData();
       formData.append('file', fileToUpload);
+      if (fallbackTrim) {
+        formData.append('trim', 'true');
+      }
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -475,11 +479,15 @@ export default function MobileVendorPublish({
       if (res.ok && data.url) {
         setVideoPreview(data.url);
         setVideoFile(fileToUpload);
+        setVideoError('');
+        setPendingTrimFile(null);
       } else {
         const reader = new FileReader();
         reader.onloadend = () => {
           setVideoPreview(reader.result as string);
           setVideoFile(fileToUpload);
+          setVideoError('');
+          setPendingTrimFile(null);
         };
         reader.readAsDataURL(fileToUpload);
       }
@@ -489,10 +497,14 @@ export default function MobileVendorPublish({
       reader.onloadend = () => {
         setVideoPreview(reader.result as string);
         setVideoFile(fileToUpload);
+        setVideoError('');
+        setPendingTrimFile(null);
       };
       reader.readAsDataURL(fileToUpload);
     } finally {
       setIsVideoUploading(false);
+      setVideoError('');
+      setPendingTrimFile(null);
     }
   };
 
@@ -536,22 +548,25 @@ export default function MobileVendorPublish({
 
   const handleAutoTrimVideo = async () => {
     if (!pendingTrimFile) return;
+    const fileToTrim = pendingTrimFile;
     setIsTrimmingVideo(true);
     setTrimProgress(0);
     setVideoError('');
+    setPendingTrimFile(null);
     try {
-      const trimmed = await trimVideoInBrowser(pendingTrimFile, {
+      const trimmed = await trimVideoInBrowser(fileToTrim, {
         targetSeconds: 5,
         onProgress: (p) => setTrimProgress(p)
       });
-      setPendingTrimFile(null);
       await processAndUploadVideo(trimmed);
     } catch (err: any) {
-      console.error('Trimming error:', err);
-      setVideoError('Could not trim video automatically. Please upload a shorter clip.');
+      console.warn('Browser video trimming fallback to server-side trim:', err);
+      await processAndUploadVideo(fileToTrim, true);
     } finally {
       setIsTrimmingVideo(false);
       setTrimProgress(0);
+      setVideoError('');
+      setPendingTrimFile(null);
     }
   };
 
@@ -1102,7 +1117,7 @@ export default function MobileVendorPublish({
           </span>
         </div>
 
-        {videoError && (
+        {!videoPreview && videoError && (
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-mono-luxury space-y-2 animate-fadeIn">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />

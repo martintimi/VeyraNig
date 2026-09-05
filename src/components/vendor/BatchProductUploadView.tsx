@@ -277,11 +277,14 @@ export default function BatchProductUploadView({
   };
 
   // Video handlers for a batch item
-  const processAndUploadBatchVideo = async (itemId: string, fileToUpload: File) => {
+  const processAndUploadBatchVideo = async (itemId: string, fileToUpload: File, fallbackTrim = false) => {
     updateItem(itemId, { isVideoUploading: true, videoError: '', pendingTrimVideo: null });
     try {
       const formData = new FormData();
       formData.append('file', fileToUpload);
+      if (fallbackTrim) {
+        formData.append('trim', 'true');
+      }
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -360,19 +363,20 @@ export default function BatchProductUploadView({
     const item = items.find(i => i.id === itemId);
     if (!item || !item.pendingTrimVideo) return;
 
-    updateItem(itemId, { isTrimmingVideo: true, trimProgress: 0, videoError: '' });
+    const fileToTrim = item.pendingTrimVideo;
+    updateItem(itemId, { isTrimmingVideo: true, trimProgress: 0, videoError: '', pendingTrimVideo: null });
 
     try {
-      const trimmed = await trimVideoInBrowser(item.pendingTrimVideo, {
+      const trimmed = await trimVideoInBrowser(fileToTrim, {
         targetSeconds: 5,
         onProgress: (p) => updateItem(itemId, { trimProgress: p })
       });
       await processAndUploadBatchVideo(itemId, trimmed);
     } catch (err) {
-      console.error('Batch video trim error:', err);
-      updateItem(itemId, { videoError: 'Could not trim video automatically. Please upload a shorter clip.' });
+      console.warn('Batch video trimming fallback to server-side trim:', err);
+      await processAndUploadBatchVideo(itemId, fileToTrim, true);
     } finally {
-      updateItem(itemId, { isTrimmingVideo: false, trimProgress: 0 });
+      updateItem(itemId, { isTrimmingVideo: false, trimProgress: 0, videoError: '', pendingTrimVideo: null });
     }
   };
 
@@ -1294,7 +1298,7 @@ export default function BatchProductUploadView({
                       </div>
 
                       {/* Video Error & Auto-Trim Prompt for Batch Item */}
-                      {item.videoError && (
+                      {!item.videoPreview && item.videoError && (
                         <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-mono-luxury space-y-1.5 animate-fadeIn">
                           <div className="flex items-start gap-1.5">
                             <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400 mt-0.5" />
