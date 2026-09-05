@@ -58,6 +58,22 @@ button, a {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Suppress native mobile WebKit video play button overlay */
+video::-webkit-media-controls {
+  display: none !important;
+}
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+video::-webkit-media-controls-play-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+video {
+  outline: none;
+}
+
 button:active, a:active {
   transform: scale(0.97);
 }

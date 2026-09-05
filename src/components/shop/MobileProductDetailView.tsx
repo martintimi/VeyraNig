@@ -239,10 +239,10 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
         <motion.div
           ref={carouselRef}
           onScroll={handleCarouselScroll}
-          animate={hasNudged || mediaItems.length <= 1 ? { x: 0 } : { x: [0, -50, 0, -25, 0] }}
+          animate={hasNudged || mediaItems.length <= 1 ? { x: 0 } : { x: [0, -55, 0, -30, 0] }}
           transition={{
-            delay: 0.8,
-            duration: 1.3,
+            delay: 0.5,
+            duration: 1.4,
             times: [0, 0.3, 0.6, 0.8, 1],
             ease: [0.25, 1, 0.5, 1],
           }}
@@ -254,9 +254,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
             <div
               key={idx}
               className="min-w-full w-full h-full snap-center relative flex-shrink-0 cursor-pointer"
-              onClick={() => {
-                if (item.type === 'image') setIsImageModalOpen(true);
-              }}
+              onClick={() => setIsImageModalOpen(true)}
             >
               {item.type === 'video' ? (
                 <div className="relative w-full h-full bg-black">
@@ -267,9 +265,23 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
                     loop
                     muted
                     playsInline
+                    webkit-playsinline="true"
+                    x5-playsinline="true"
                     controls={false}
                     disablePictureInPicture
                     preload="auto"
+                    onTimeUpdate={(e) => {
+                      const v = e.currentTarget;
+                      // Seamless infinite loop without hitting native ended pause state
+                      if (v.duration && v.currentTime >= v.duration - 0.15) {
+                        v.currentTime = 0;
+                        v.play().catch(() => {});
+                      }
+                    }}
+                    onEnded={(e) => {
+                      e.currentTarget.currentTime = 0;
+                      e.currentTarget.play().catch(() => {});
+                    }}
                     onLoadedData={playVideo}
                     onCanPlay={playVideo}
                     className="w-full h-full object-cover pointer-events-none"
@@ -316,23 +328,18 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
           </div>
         )}
 
-        {/* Bottom Floating Controls */}
-        <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between text-xs font-mono-luxury">
-          <div className="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white/90 text-[10px] font-bold flex items-center gap-1.5 shadow-lg">
-            <ZoomIn className="h-3 w-3 text-[var(--gold-accent)]" />
-            <span>Tap to View</span>
-          </div>
-
+        {/* Bottom Floating Controls (Tap to View only, Try on 3D Twin removed) */}
+        <div className="absolute bottom-3 left-3 z-10 text-xs font-mono-luxury">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setOutfitItem(product);
+              setIsImageModalOpen(true);
             }}
-            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--gold-accent)] to-amber-600 text-black font-bold uppercase text-[10px] active:scale-95 transition-transform flex items-center gap-1 shadow-xl cursor-pointer"
+            className="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-white/20 text-white/90 text-[10px] font-bold flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
           >
-            <Sparkles className="h-3 w-3 fill-black" />
-            <span>Try on 3D Twin</span>
+            <ZoomIn className="h-3 w-3 text-[var(--gold-accent)]" />
+            <span>Tap to View</span>
           </button>
         </div>
       </div>
@@ -656,7 +663,7 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
               </button>
             </div>
 
-            {/* Centered Image with smooth scale transition */}
+            {/* Centered Media with smooth scale transition */}
             <motion.div
               initial={{ scale: 0.86, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -665,14 +672,29 @@ export default function MobileProductDetailView({ product, reviewsData }: Mobile
               className="relative w-full h-[62vh] my-auto flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <Image
-                src={product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
-                alt={product.name}
-                fill
-                unoptimized
-                priority
-                className="object-contain"
-              />
+              {mediaItems[activeMediaIndex]?.type === 'video' ? (
+                <div className="relative w-full h-full max-h-[62vh] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
+                  <video
+                    src={mediaItems[activeMediaIndex].url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    webkit-playsinline="true"
+                    controls={false}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <Image
+                  src={mediaItems[activeMediaIndex]?.url || product.imageUrl || '/images/products/BlackTrapStarHoodie.jpg'}
+                  alt={product.name}
+                  fill
+                  unoptimized
+                  priority
+                  className="object-contain"
+                />
+              )}
             </motion.div>
 
             {/* Bottom Actions inside Lightbox */}
