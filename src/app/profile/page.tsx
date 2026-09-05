@@ -5,13 +5,18 @@ import { useStore } from '@/lib/store/useStore';
 import {
   User, Phone, Mail, MapPin, Package, Bell, Star, ShieldCheck,
   CheckCircle2, Clock, Sparkles, ArrowRight, Layers, LogOut,
-  Scissors, ChevronRight, Check, Heart, Edit3, MessageSquare, Loader2, Truck
+  Scissors, ChevronRight, Check, Heart, Edit3, MessageSquare, Loader2, Truck,
+  Settings, KeyRound, HelpCircle, Lightbulb, ExternalLink
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import MobileProfileView from '@/components/profile/MobileProfileView';
+import ChangePasswordModal from '@/components/profile/ChangePasswordModal';
+import FaqHelpModal from '@/components/profile/FaqHelpModal';
+import RateAppModal from '@/components/profile/RateAppModal';
+import HelpImproveModal from '@/components/profile/HelpImproveModal';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -21,9 +26,15 @@ export default function ProfilePage() {
     userAuth, setUserAuth, logout
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'body_twin' | 'orders' | 'notifications'>('orders');
+  const [activeTab, setActiveTab] = useState<'profile' | 'body_twin' | 'orders' | 'notifications' | 'settings'>('orders');
   const [isLoading, setIsLoading] = useState(false);
   const [liveOrders, setLiveOrders] = useState<any[]>([]);
+
+  // Settings Modals State
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isFaqOpen, setIsFaqOpen] = useState(false);
+  const [isRateAppOpen, setIsRateAppOpen] = useState(false);
+  const [isHelpImproveOpen, setIsHelpImproveOpen] = useState(false);
 
   // Fetch real orders from PostgreSQL on mount
   useEffect(() => {
@@ -274,6 +285,18 @@ export default function ProfilePage() {
         >
           <User className="h-4 w-4" />
           <span>Account & Delivery Details</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-mono-luxury uppercase tracking-wider font-bold transition-all shrink-0 ${
+            activeTab === 'settings'
+              ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-md'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <Settings className="h-4 w-4" />
+          <span>Settings & Support</span>
         </button>
       </div>
 
@@ -737,6 +760,157 @@ export default function ProfilePage() {
       )}
 
       {/* ======================================================== */}
+      {/* TAB 5: SETTINGS & PATRON CARE */}
+      {/* ======================================================== */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div>
+            <h2 className="font-editorial text-2xl font-bold text-[var(--text-primary)]">
+              Settings & Patron Support
+            </h2>
+            <p className="text-xs font-mono-luxury text-[var(--text-secondary)] mt-1">
+              Manage security credentials, explore atelier FAQs, rate the platform, or submit feedback.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Card 1: Change Password */}
+            <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="h-12 w-12 rounded-2xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/30 text-[var(--gold-accent)] flex items-center justify-center">
+                  <KeyRound className="h-6 w-6" />
+                </div>
+                <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                  Account Password & Security
+                </h3>
+                <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed">
+                  Update your Supabase authentication password. Protect your bespoke measurements and order vault.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsChangePasswordOpen(true)}
+                className="w-full py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-[var(--gold-accent)] text-[var(--text-primary)] hover:text-[var(--gold-accent)] font-mono-luxury text-xs uppercase font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                <span>Change Password</span>
+              </button>
+            </div>
+
+            {/* Card 2: Need Help / FAQs */}
+            <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="h-12 w-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center">
+                  <HelpCircle className="h-6 w-6" />
+                </div>
+                <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                  Need Help / FAQ Topics
+                </h3>
+                <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed">
+                  Clear answers on 3D Digital Twin sizing, escrow guarantees, courier tracking, and atelier returns.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsFaqOpen(true)}
+                  className="flex-1 py-3 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-mono-luxury text-xs uppercase font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all cursor-pointer shadow-sm"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  <span>Browse FAQ Topics</span>
+                </button>
+
+                <a
+                  href="https://wa.me/2348120000000?text=Hello%20%C3%8Cr%C3%ADs%C3%AD%20Concierge,%20I%20need%20assistance"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer"
+                  title="WhatsApp Concierge"
+                >
+                  <Phone className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Card 3: Rate This App */}
+            <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[var(--gold-accent)] flex items-center justify-center">
+                  <Star className="h-6 w-6 fill-current" />
+                </div>
+                <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                  Rate Ìrísí Experience
+                </h3>
+                <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed">
+                  Leave a 5-star rating for our platform experience. Your reviews empower authentic African couture designers.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsRateAppOpen(true)}
+                className="w-full py-3 rounded-xl bg-[var(--gold-accent)] text-black font-mono-luxury text-xs uppercase font-bold flex items-center justify-center gap-2 hover:brightness-110 active:scale-98 transition-all cursor-pointer shadow-md"
+              >
+                <Star className="h-3.5 w-3.5 fill-black" />
+                <span>Rate This App</span>
+              </button>
+            </div>
+
+            {/* Card 4: Help Improve This App */}
+            <div className="p-6 rounded-3xl surface-card border border-[var(--border-subtle)] space-y-4 shadow-sm flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="h-12 w-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <Lightbulb className="h-6 w-6" />
+                </div>
+                <h3 className="font-editorial text-xl font-bold text-[var(--text-primary)]">
+                  Help Improve Ìrísí
+                </h3>
+                <p className="text-xs font-mono-luxury text-[var(--text-secondary)] leading-relaxed">
+                  Have a suggestion or found a glitch? Tell our engineering team directly so we can build a better platform for you.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsHelpImproveOpen(true)}
+                className="w-full py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] hover:border-purple-400/50 text-[var(--text-primary)] hover:text-purple-300 font-mono-luxury text-xs uppercase font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+              >
+                <Lightbulb className="h-3.5 w-3.5" />
+                <span>Send Platform Feedback</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Concierge Banner */}
+          <div className="p-6 rounded-3xl bg-[var(--gold-subtle)] border border-[var(--gold-accent)]/40 flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono-luxury uppercase text-[var(--gold-accent)] font-bold tracking-wider">
+                Direct Atelier Support
+              </span>
+              <h4 className="font-editorial text-lg font-bold text-[var(--text-primary)]">
+                Need real-time assistance with a live custom order?
+              </h4>
+              <p className="text-xs font-mono-luxury text-[var(--text-secondary)]">
+                Our bespoke concierge is available Monday to Saturday via WhatsApp hotline.
+              </p>
+            </div>
+
+            <a
+              href="https://wa.me/2348120000000?text=Hello%20%C3%8Cr%C3%ADs%C3%AD%20Concierge,%20I%20need%20assistance"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-3 rounded-xl bg-[var(--gold-accent)] text-black font-mono-luxury text-xs uppercase font-bold flex items-center gap-2 hover:brightness-110 transition-all shrink-0 cursor-pointer shadow-lg"
+            >
+              <Phone className="h-3.5 w-3.5" />
+              <span>Chat Concierge</span>
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
       {/* 5-STAR RATING & REVIEW MODAL */}
       {/* ======================================================== */}
       {ratingModalOrder && (
@@ -799,6 +973,29 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Settings & Support Modals */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        userEmail={userAuth.email || profileForm.email}
+      />
+      <FaqHelpModal
+        isOpen={isFaqOpen}
+        onClose={() => setIsFaqOpen(false)}
+      />
+      <RateAppModal
+        isOpen={isRateAppOpen}
+        onClose={() => setIsRateAppOpen(false)}
+        userEmail={userAuth.email || profileForm.email}
+        userName={displayName}
+      />
+      <HelpImproveModal
+        isOpen={isHelpImproveOpen}
+        onClose={() => setIsHelpImproveOpen(false)}
+        userEmail={userAuth.email || profileForm.email}
+        userName={displayName}
+      />
 
       </div>
     </>
